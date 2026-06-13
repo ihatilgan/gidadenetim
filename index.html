@@ -437,7 +437,6 @@ var MAHALLE_KALIPLARI = {
 };
 var SORUMLU_MAHALLELER = TUM_MAHALLELER.slice();
 var SORUMLU_FAALIYET_ANAHTAR = ['gıda ile temas','madde ve malzeme üretimi','meyve ve/veya sebze işleme','meyve sebze paketleme','yeniden ambalajlama','alkolsüz içecek üretimi','alkollü içki üretimi','dondurulmuş gıda','gıda katkı','aroma maddesi'];
-var SATIS_TOPLU_TÜKETIM_ANAHTAR = ['market','lokanta','restaurant','kahvehane','çay ocağı','fast-food','kasap','büfe','manav','şarküteri','dönerci','cafe','bar','otel','kantin','yemekhane','satış','pazar','toptancı','depo','aktarlar','kuru yemiş'];
 
 var KOY_ISLETMELERI = {"Değirmendere":[{"no":"1","isletmeAdi":"Doğan Bakkaliye-Murat DOĞAN","kayitNo":"TR-03-K-009873","faaliyetAlani":"Her Türlü Market","adres":"Değirmendere Küme evleri No:189/1/C Değirmendere Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"01/03/2026","telefon":"5077379709","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Değirmendere"}],"Nuribey":[{"no":"1","isletmeAdi":"Emre Market -Merve AYDOĞMUŞ","kayitNo":"TR-03-K-015441","faaliyetAlani":"Her Türlü Market","adres":"Mareşal Fevzi Çakmak Mah. Adnan Menderes Cad. No:11 Nuribey Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"14/07/2026","telefon":"5421638940","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Nuribey"},{"no":"2","isletmeAdi":"Çağdaş Eczanesi-Hayriye ÇAĞDAŞ","kayitNo":"TR-03-K-015222","faaliyetAlani":"Diğer-Gıda Satış","adres":"Fatih Mah. Karayiğit 2 Cad. No:14/2 Nuribey Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"15/02/2027","telefon":"","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Nuribey"},{"no":"3","isletmeAdi":"Ercan ORAK-Orak Market","kayitNo":"TR-03-K-014797","faaliyetAlani":"Her Türlü Market","adres":"Mareşal Fevzi Çakmak Mah. Oğuzhan Cad. No:18/1 İç Kapı No:1  Nuribey Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"23/12/2026","telefon":"5468670557","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Nuribey"},{"no":"4","isletmeAdi":"Kantinoğlu Market-Ahmet BORAN","kayitNo":"TR-03-K-012448","faaliyetAlani":"Her Türlü Market","adres":"Mareşal Fevzi Çakmak Mah. Afyon Yolu Cad. Nuribey Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"23/12/2026","telefon":"5366538982","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Nuribey"},{"no":"5","isletmeAdi":"Yunusun Yeri-Yunus Niyazi ÇARKÇEVİREN","kayitNo":"TR-03-K-011922","faaliyetAlani":"Fast-Food","adres":"Fatih Mah. Adnan Menderes Bul. No:10 Nuribey Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"25/10/2026","telefon":"5468130335","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Nuribey"},{"no":"6","isletmeAdi":"Arslan Petrol-Ümit ARSLAN","kayitNo":"TR-03-K-009893","faaliyetAlani":"Her Türlü Market","adres":"Fatih Mah. Afyon Yolu Cad. No:9 Nuribey Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"02/01/2027","telefon":"5444628769","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Nuribey"},{"no":"7","isletmeAdi":"Yörükoğlu Eczanesi-Ali Yücel OKYAR","kayitNo":"TR-03-K-006476","faaliyetAlani":"Diğer-Gıda Satış","adres":"Karayiğit-3. Cad. No: 2/3/1 Nuribey Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"01/02/2027","telefon":"","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Nuribey"},{"no":"8","isletmeAdi":"Nuribey Kasabası Tahsile Muhtaç Talebelere Yardım Derneği Ortaokul Kız Öğrenci Yurdu","kayitNo":"TR-03-K-005667","faaliyetAlani":"Diğer-Her Türlü Yemekhane","adres":"Mareşal Fevzi Çakmak Mah. Afyon Yolu No:46-2 Nuribey Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"17/11/2026","telefon":"","firmaTuru":"Tüzel Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Nuribey"},{"no":"9","isletmeAdi":"Ahmet Boran-Un Yem Kepek Tic.","kayitNo":"TR-03-K-004696","faaliyetAlani":"Diğer-Gıda Satış","adres":"Fatih Mah. Nuribey Kasabası Nuribey Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"17/11/2025","telefon":"","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Nuribey"},{"no":"10","isletmeAdi":"Güngör Bakkaliye (Abdullah Güngör) Nuribey","kayitNo":"TR-03-K-004183","faaliyetAlani":"Her Türlü Market","adres":"Mareşal Fevzi Çakmak Mah. Nuribey Kasabası Mareşal Fevzi Çakmak Mah. Nuribey Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"23/12/2026","telefon":"5452494066","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Nuribey"},{"no":"11","isletmeAdi":"Nuribey Pide Salonu-Tuğba ÇINGIRAK","kayitNo":"TR-03-K-003691","faaliyetAlani":"Lokanta-Restaurant","adres":"Fatih Mah. Adnan Menderes Sok. No:6  Nuribey Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"17/11/2026","telefon":"5363750444","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Nuribey"},{"no":"12","isletmeAdi":"Ediz Bakkaliye-İsmail EDİZ","kayitNo":"TR-03-K-003684","faaliyetAlani":"Her Türlü Market, Diğer-Toplu Tüketim Yeri","adres":"Mareşal Fevzi Çakmak Mah. Nuribey  Nuribey Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"01/09/2024","telefon":"5368519761","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Nuribey"},{"no":"13","isletmeAdi":"H.Üçok Bakkaliye-Hüseyin ÜÇOK Nuribey","kayitNo":"TR-03-K-003673","faaliyetAlani":"Her Türlü Market, Diğer-Toplu Tüketim Yeri","adres":"Fatih Mah. Fatih Mah. Sazak Cad.  Nuribey Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"02/01/2027","telefon":"5437288549","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Nuribey"}],"Değirmenayvalı":[{"no":"1","isletmeAdi":"Gümüş Şarküteri - İbrahim GÜMÜŞ","kayitNo":"TR-03-K-015386","faaliyetAlani":"Şarküteri","adres":"Şehit Ahmet Mah. Kümeevler No:60/1 Değirmenayvalı Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"07/05/2026","telefon":"5457154583","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Değirmenayvalı"},{"no":"2","isletmeAdi":"Karagöz Ticaret Mehmet KARAGÖZ-Un SAtış 2","kayitNo":"TR-03-K-015175","faaliyetAlani":"Diğer-Gıda Satış","adres":"Pelit Yanı Sok. No:2 Değirmenayvalı Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"15/02/2027","telefon":"5464877201","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Değirmenayvalı"},{"no":"3","isletmeAdi":"Kurtuluş Gıda-Zafer AKÇA","kayitNo":"TR-03-K-013125","faaliyetAlani":"Her Türlü Market","adres":"Şehit Ahmet Mah. Afyon Cad. No:46/1 Değirmenayvalı Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"26/05/2026","telefon":"5373981497","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Değirmenayvalı"},{"no":"4","isletmeAdi":"Karagöz Ticaret-Mehmet KARAGÖZ (Un Satış)","kayitNo":"TR-03-K-012471","faaliyetAlani":"Diğer-Gıda Satış","adres":"Kurtuluş Mah. Hamamönü Sok. No:10 Değirmenayvalı Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"15/02/2027","telefon":"5464877201","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Değirmenayvalı"},{"no":"5","isletmeAdi":"Kahvehane-Mustafa HALIPINAR","kayitNo":"TR-03-K-003881","faaliyetAlani":"Kahvehane-Çay Ocağı","adres":"Kurtuluş Mah. Aralık Sok. (Eski Merkez Camiye varmadan solda) Değirmenayvalı Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"15/02/2027","telefon":"5438078794","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Değirmenayvalı"},{"no":"6","isletmeAdi":"Çağrı Bakkaliye-(Tellioğlu Market)Ali Osman DERİN","kayitNo":"TR-03-K-003829","faaliyetAlani":"Her Türlü Market","adres":"Değirmenayvalı Kasabası Değirmenayvalı Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"09/05/2026","telefon":"","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Değirmenayvalı"},{"no":"7","isletmeAdi":"Bakkaliye-Ahmet ÇETİN","kayitNo":"TR-03-K-003828","faaliyetAlani":"Her Türlü Market","adres":"Kurtuluş Mah. Kurtuluş Mahallesi Aralık Sokak No:1 Değirmenayvalı Merkez - Afyonkarahisar / Türkiye  Değirmenayvalı Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"14/12/2026","telefon":"5444239435","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Değirmenayvalı"},{"no":"8","isletmeAdi":"Göbel Market-Ahmet ÇİRAK","kayitNo":"TR-03-K-001727","faaliyetAlani":"Her Türlü Market","adres":"Şehit Ahmet Mah. Kur'an Kursu Caddesi Değirmenayvalı Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"09/05/2026","telefon":"","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Değirmenayvalı"},{"no":"9","isletmeAdi":"Karagöz Ticaret Mehmet KARAGÖZ","kayitNo":"TR-03-K-000500","faaliyetAlani":"Her Türlü Market","adres":"Kurtuluş Mah. Hamam önü Sokak No:10   Değirmenayvalı Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"06/06/2026","telefon":"","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Değirmenayvalı"}],"Gebeceler":[{"no":"1","isletmeAdi":"Aralık Sonu Ocak Başı Lokantası-İsmail Kurban KIRKA","kayitNo":"TR-03-K-016069","faaliyetAlani":"Lokanta-Restaurant","adres":"Fatih Mah. Mevlana Cad. 1/1 No:2 Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"11/01/2027","telefon":"5437174037","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"2","isletmeAdi":"BİM Birleşik Mağazalar Anonim Şirketi- Gebeceler Şubesi","kayitNo":"TR-03-K-014515","faaliyetAlani":"Her Türlü Market","adres":"Zafer Mah. Derya Bulvarı No:17 Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"05/04/2027","telefon":"5511117705","firmaTuru":"Tüzel Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"3","isletmeAdi":"Yeni Mağazacılık Anonim Şirketi A.101-Gebeceler","kayitNo":"TR-03-K-014502","faaliyetAlani":"Her Türlü Market","adres":"Fatih Mah. Mustafa Yaşar Cad. No:5/1 Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"08/11/2026","telefon":"5438679080","firmaTuru":"Tüzel Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"4","isletmeAdi":"Ahmet Bakkaliye-Abdullah DANE","kayitNo":"TR-03-K-014450","faaliyetAlani":"Her Türlü Market","adres":"Fatih Mah. Belediye İş Hanı No:1 Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"05/04/2027","telefon":"5442725535","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"5","isletmeAdi":"Gökay Market - Zeki GÖKAY","kayitNo":"TR-03-K-014372","faaliyetAlani":"Her Türlü Market","adres":"Fatih Mah. Mevlana Caddesi No:1/1 Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"18/05/2026","telefon":"5321135066","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"6","isletmeAdi":"Yaşar Market - Halil GÜLSEVEN","kayitNo":"TR-03-K-013104","faaliyetAlani":"Her Türlü Market","adres":"Zafer Mah. Ergenekon Sokak No:4/1 Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"18/02/2027","telefon":"","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"7","isletmeAdi":"Turman Tekel - Sultan TURMAN","kayitNo":"TR-03-K-012792","faaliyetAlani":"Diğer-Gıda Satış","adres":"Kocatepe Mah. Turgut Özal Bulvarı No:6 Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"29/12/2026","telefon":"5446159924","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"8","isletmeAdi":"Furkan Eczanesi-Taha Furkan ŞİŞİK","kayitNo":"TR-03-K-012154","faaliyetAlani":"Diğer-Gıda Satış","adres":"Fatih Mah. Huzur Cad. No:2/1 Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"29/12/2026","telefon":"5547865210","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"9","isletmeAdi":"Koç Market-Adnan KOÇ","kayitNo":"TR-03-K-010781","faaliyetAlani":"Her Türlü Market","adres":"Kocatepe Mah. Turgut Özal 1 Blv. No:11/A Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"18/02/2027","telefon":"5492473700","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"10","isletmeAdi":"Gelincik Pide Salonu-Şaduman GELİNCİK","kayitNo":"TR-03-K-010697","faaliyetAlani":"Lokanta-Restaurant","adres":"İstiklal Mah. Derya Bulvarı No:10 Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"20/10/2026","telefon":"","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"11","isletmeAdi":"Seziler Petrol - Muhammet SEZİ","kayitNo":"TR-03-K-009429","faaliyetAlani":"Her Türlü Market","adres":"Fatih Mah. Halil İbrahim Özsoy Bulvarı No:52 Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"05/04/2027","telefon":"5395919967","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"12","isletmeAdi":"Arslan Manav-Osman ARSLAN","kayitNo":"TR-03-K-009371","faaliyetAlani":"Manav","adres":"İstiklal Mah. Belediye Dükkanları Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"05/04/2027","telefon":"5434705107","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"13","isletmeAdi":"2812 Sayılı Gebeceler Tarım Kredi Kooperatifi (Gıda Satışı Yeri)","kayitNo":"TR-03-K-008313","faaliyetAlani":"Her Türlü Market","adres":"Fatih Mah. Halil İbrahim Özsoy Bulvarı No:5/Gebeceler/AFYONKARAHİSAR Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"18/02/2027","telefon":"5493086508","firmaTuru":"Tüzel Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"14","isletmeAdi":"Kasap-Ömer GELİNCİK","kayitNo":"TR-03-K-008035","faaliyetAlani":"Kasap","adres":"İstiklal Mah. Derya Bulvarı No:10 Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"11/01/2027","telefon":"5446872522","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"15","isletmeAdi":"Emek Market-Kadir KALKAN","kayitNo":"TR-03-K-007739","faaliyetAlani":"Her Türlü Market","adres":"İstiklal Mah. Göktürk Cad. No:4/A Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"29/03/2021","telefon":"5449411511","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"16","isletmeAdi":"Furkan Gıda-Ali GÖKAY","kayitNo":"TR-03-K-004928","faaliyetAlani":"Diğer-Gıda Satış","adres":"Gebeceler Kasabası Yeni Mahallesi Sungü Sokak Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"17/04/2022","telefon":"5469681245","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"17","isletmeAdi":"Kazak Bakkaliyesi-Ahmet KAZAK","kayitNo":"TR-03-K-004415","faaliyetAlani":"Her Türlü Market","adres":"Zafer Mah. Derya Bulvarı No:13/A Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"18/02/2027","telefon":"5359505592","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"},{"no":"18","isletmeAdi":"Hilal Market Hafriyat ve İnşaat Malzemeleri-Yakup İshak KAZAK","kayitNo":"TR-03-K-004140","faaliyetAlani":"Her Türlü Market","adres":"İbrahim Özsoy Bulvarı No:3  Gebeceler Merkez - Afyonkarahisar / Türkiye","ilce":"Merkez","izinDurumu":"Aktif","riskeDayaliDenetimTarihi":"18/02/2027","telefon":"5416012010","firmaTuru":"Gerçek Kişi","sorumluBirim":"Afyonkarahisar TİM","koy":"Gebeceler"}]};
 
@@ -905,6 +904,24 @@ function sayfaGoster(id, btn) {
   if (id === 'liste') listeGuncelle();
   if (id === 'ozet') ozetGuncelle();
   if (id === 'ikazlar') ikazlariGoster();
+  if (id === 'kullanicilar') { if (typeof kullaniciListesiYukle === 'function') kullaniciListesiYukle(); }
+  if (id === 'raporlar') { if (typeof raporSifirla === 'function') raporSifirla(); }
+  if (id === 'yeni' && !duzenlemeModu) {
+    denetciler = mevcutKullaniciAdi ? [mevcutKullaniciAdi] : [];
+    if (typeof denetciListesiGuncelle === 'function') denetciListesiGuncelle();
+  }
+  if (id === 'isletmeler') {
+    var el = document.getElementById('isletme-liste');
+    var sonucEl = document.getElementById('isletme-liste-sonuc');
+    if (el) el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gri);"><div style="font-size:40px;margin-bottom:12px;">🔍</div><p>Aramak istediğiniz işletme adı, kayıt no veya ilçeyi yazın.</p></div>';
+    if (sonucEl) sonucEl.textContent = '';
+    var filtre = document.getElementById('isletme-filtre');
+    if (filtre) filtre.value = '';
+  }
+  if (id === 'sorumluluklarim') {
+    var secKat = typeof seciliKategoriler !== 'undefined';
+    if (secKat) { seciliKategoriler = []; seciliMahalleler = []; }
+  }
 }
 
 // ---- DENETÇİ ----
@@ -1190,7 +1207,7 @@ function formuSifirla() {
   document.getElementById('denetim-no').value = '';
   document.getElementById('genel-sonuc').value = '';
   document.getElementById('denetim-notlari').value = '';
-  denetciler = [];
+  denetciler = mevcutKullaniciAdi ? [mevcutKullaniciAdi] : [];
   denetciListesiGuncelle();
   // ceza
   const ct = document.getElementById('ceza-toggle');
@@ -1547,39 +1564,70 @@ function ikaz_sayisiGuncelle() {
 
 // ---- ÖZET ----
 function ozetGuncelle() {
-  const toplam = denetimler.length;
-  const olumlu = denetimler.filter(d => d.sonuc === 'olumlu').length;
-  const olumsuz = denetimler.filter(d => d.sonuc === 'olumsuz').length;
-  const cezali = denetimler.filter(d => d.cezalar?.length).length;
-  const numuneli = denetimler.filter(d => d.numuneler?.length > 0).length;
-  const ikazSayisi = denetimler.filter(d => kontrolIkaz(d)).length;
+  var toplam = denetimler.length;
+  var olumlu = denetimler.filter(function(d){return d.sonuc==='olumlu';}).length;
+  var olumsuz = denetimler.filter(function(d){return d.sonuc==='olumsuz';}).length;
+  var cezali = denetimler.filter(function(d){return d.cezalar&&d.cezalar.length;}).length;
+  var numuneli = denetimler.filter(function(d){return d.numuneler&&d.numuneler.length>0;}).length;
+  var ikazSayisi = denetimler.filter(function(d){return kontrolIkaz(d);}).length;
 
-  document.getElementById('ozet-grid').innerHTML = `
-    <div class="ozet-kart gri"><div class="sayi">${toplam}</div><div class="aciklama">Toplam Denetim</div></div>
-    <div class="ozet-kart yesil"><div class="sayi">${olumlu}</div><div class="aciklama">Olumlu</div></div>
-    <div class="ozet-kart kirmizi"><div class="sayi">${olumsuz}</div><div class="aciklama">Olumsuz</div></div>
-    <div class="ozet-kart turuncu"><div class="sayi">${cezali}</div><div class="aciklama">Ceza Uygulanan</div></div>
-    <div class="ozet-kart gri"><div class="sayi">${numuneli}</div><div class="aciklama">Numune Alınan</div></div>
-    <div class="ozet-kart turuncu"><div class="sayi">${ikazSayisi}</div><div class="aciklama">Aktif İkaz</div></div>
-  `;
-
-  const sonBes = denetimler.slice(0, 5);
-  const sonEl = document.getElementById('ozet-son-liste');
-  if (sonBes.length === 0) {
-    sonEl.innerHTML = `<div class="bos-durum"><div class="ikon">📋</div><p>Henüz denetim kaydı yok.</p></div>`;
-    return;
+  var bugun = bugunTarih();
+  var uretimGecen = 0, digerGecen = 0;
+  if (typeof URETIM_YERLERI !== 'undefined') {
+    URETIM_YERLERI.forEach(function(i) {
+      if (typeof haricTutulanlar !== 'undefined' && haricTutulanlar.includes(i.kayitNo)) return;
+      if (!i.riskeDayaliDenetimTarihi) return;
+      var t = tarihParse(i.riskeDayaliDenetimTarihi);
+      if (t && gunFarki(bugun, t) < 0) uretimGecen++;
+    });
   }
-  sonEl.innerHTML = sonBes.map(d => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--sinir);cursor:pointer;" onclick="detayGoster(${d.id})">
-      <div>
-        <div style="font-weight:600;font-size:14px;">${d.isletme}</div>
-        <div style="font-size:12px;color:var(--gri);">${tarihFormat(d.tarih)}</div>
-      </div>
-      ${d.sonuc === 'olumlu' ? '<span class="etiket etiket-yesil">✅ Olumlu</span>' :
-        d.sonuc === 'olumsuz' ? '<span class="etiket etiket-kirmizi">❌ Olumsuz</span>' :
-        '<span class="etiket etiket-turuncu">⏳ Beklemede</span>'}
-    </div>
-  `).join('');
+  if (typeof ISLETMELER !== 'undefined') {
+    ISLETMELER.forEach(function(i) {
+      if (!isletmeSorumluMu(i) || !i.riskeDayaliDenetimTarihi) return;
+      var t = tarihParse(i.riskeDayaliDenetimTarihi);
+      if (t && gunFarki(bugun, t) < 0) digerGecen++;
+    });
+  }
+  if (typeof KOY_ISLETMELERI !== 'undefined') {
+    Object.keys(KOY_ISLETMELERI).forEach(function(k) {
+      KOY_ISLETMELERI[k].forEach(function(i) {
+        if (!i.riskeDayaliDenetimTarihi) return;
+        var t = tarihParse(i.riskeDayaliDenetimTarihi);
+        if (t && gunFarki(bugun, t) < 0) digerGecen++;
+      });
+    });
+  }
+
+  var grid = document.getElementById('ozet-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  var kartlar = [
+    {sayi:toplam,     aciklama:'Toplam Denetim',     renk:'gri',     label:'Tüm Denetimler',     filtre:null},
+    {sayi:olumlu,     aciklama:'Olumlu',              renk:'yesil',   label:'Olumlu Denetimler',  filtre:function(d){return d.sonuc==='olumlu';}},
+    {sayi:olumsuz,    aciklama:'Olumsuz',             renk:'kirmizi', label:'Olumsuz Denetimler', filtre:function(d){return d.sonuc==='olumsuz';}},
+    {sayi:cezali,     aciklama:'Ceza Uygulanan',      renk:'turuncu', label:'Ceza Uygulanan',     filtre:function(d){return d.cezalar&&d.cezalar.length;}},
+    {sayi:numuneli,   aciklama:'Numune Alınan',       renk:'gri',     label:'Numune Alınan',      filtre:function(d){return d.numuneler&&d.numuneler.length;}},
+    {sayi:ikazSayisi, aciklama:'Aktif İkaz',          renk:'turuncu', label:'Aktif İkazlar',      filtre:function(d){return kontrolIkaz(d);}},
+    {sayi:uretimGecen,aciklama:'Üretim Risk Geçen',   renk:'kirmizi', label:'',                   filtre:null, ozel:'uretim'},
+    {sayi:digerGecen, aciklama:'Satış/Köy Risk Geçen',renk:'kirmizi', label:'',                   filtre:null, ozel:'diger'},
+  ];
+
+  kartlar.forEach(function(v) {
+    var div = document.createElement('div');
+    div.className = 'ozet-kart ' + v.renk;
+    div.style.cursor = 'pointer';
+    div.innerHTML = '<div class="sayi">'+v.sayi+'</div><div class="aciklama">'+v.aciklama+'</div>';
+    div.addEventListener('click', (function(vv) {
+      return function(e) {
+        e.stopPropagation();
+        if (vv.ozel === 'uretim') { ozetUretimGit(); return; }
+        if (vv.ozel === 'diger') { ozetDigerGit(); return; }
+        ozetSonListeGoster(vv.label, vv.filtre);
+      };
+    })(v));
+    grid.appendChild(div);
+  });
 }
 
 // ---- EXCEL ----
@@ -1790,40 +1838,63 @@ function sorumlulukFiltresiToggle() {
 }
 
 function isletmeListesiGuncelle() {
-  const q = document.getElementById('isletme-filtre').value.toLocaleLowerCase('tr');
-  const ilce = document.getElementById('isletme-filtre-ilce').value;
-  let sonuclar = ISLETMELER;
-  if (sorumlulukFiltreAktif) sonuclar = sonuclar.filter(i => isletmeSorumluMu(i));
-  if (q) sonuclar = sonuclar.filter(i => 
-    i.isletmeAdi.toLocaleLowerCase('tr').includes(q) || 
-    i.kayitNo.toLocaleLowerCase('tr').includes(q) ||
-    i.ilce.toLocaleLowerCase('tr').includes(q) ||
-    i.faaliyetAlani.toLocaleLowerCase('tr').includes(q)
-  );
-  if (ilce) sonuclar = sonuclar.filter(i => i.ilce === ilce);
-  
-  document.getElementById('isletme-liste-sonuc').textContent = `${sonuclar.length.toLocaleString('tr-TR')} işletme`;
-  
-  const goster = sonuclar.slice(0, 100);
-  const el = document.getElementById('isletme-liste');
-  if (goster.length === 0) {
+  var q = (document.getElementById('isletme-filtre').value||'').toLocaleLowerCase('tr');
+  var ilce = (document.getElementById('isletme-filtre-ilce')||{}).value || '';
+  var el = document.getElementById('isletme-liste');
+  var sonucEl = document.getElementById('isletme-liste-sonuc');
+
+  if (q.length < 2 && !ilce) {
+    if (el) el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gri);"><div style="font-size:40px;margin-bottom:12px;">🔍</div><p>Aramak istediğiniz işletme adı, kayıt no veya ilçeyi yazın.</p></div>';
+    if (sonucEl) sonucEl.textContent = '';
+    return;
+  }
+
+  var sonuclar = ISLETMELER.slice();
+  if (q) sonuclar = sonuclar.filter(function(i) {
+    return (i.isletmeAdi||'').toLocaleLowerCase('tr').includes(q) ||
+      (i.kayitNo||'').toLocaleLowerCase('tr').includes(q) ||
+      (i.ilce||'').toLocaleLowerCase('tr').includes(q) ||
+      (i.faaliyetAlani||'').toLocaleLowerCase('tr').includes(q) ||
+      (i.adres||'').toLocaleLowerCase('tr').includes(q);
+  });
+  if (ilce) sonuclar = sonuclar.filter(function(i) { return i.ilce === ilce; });
+
+  if (sonucEl) sonucEl.textContent = sonuclar.length.toLocaleString('tr-TR') + ' işletme bulundu';
+  if (!el) return;
+  el.innerHTML = '';
+
+  if (!sonuclar.length) {
     el.innerHTML = '<div class="bos-durum"><div class="ikon">🏢</div><p>Sonuç bulunamadı.</p></div>';
     return;
   }
-  el.innerHTML = goster.map(i => `
-    <div style="border-bottom:1px solid var(--sinir);padding:10px 4px;cursor:pointer;" 
-         onclick="isletmeDetayModal(${ISLETMELER.indexOf(i)})">
-      <div style="font-weight:600;font-size:14px;">${i.isletmeAdi}</div>
-      <div style="font-size:12px;color:var(--gri);display:flex;gap:12px;flex-wrap:wrap;margin-top:2px;">
-        <span>📋 ${i.kayitNo}</span>
-        <span>📍 ${i.ilce}</span>
-        <span>🍽️ ${i.faaliyetAlani}</span>
-        ${i.riskeDayaliDenetimTarihi ? `<span>📅 Risk: ${i.riskeDayaliDenetimTarihi}</span>` : ''}
-      </div>
-    </div>
-  `).join('');
+
+  var goster = sonuclar.slice(0, 100);
+  goster.forEach(function(isletme) {
+    var row = document.createElement('div');
+    row.style.cssText = 'border-bottom:1px solid var(--sinir);padding:10px 4px;cursor:pointer;';
+    row.addEventListener('mouseenter', function(){ this.style.background='var(--gri-acik)'; });
+    row.addEventListener('mouseleave', function(){ this.style.background=''; });
+    row.addEventListener('click', (function(i) {
+      return function() {
+        var idx2 = ISLETMELER.indexOf(i);
+        if (idx2 >= 0) isletmeDetayModal(idx2);
+      };
+    })(isletme));
+    row.innerHTML = '<div style="font-weight:600;font-size:14px;">'+isletme.isletmeAdi+'</div>' +
+      '<div style="font-size:12px;color:var(--gri);display:flex;gap:12px;flex-wrap:wrap;margin-top:2px;">' +
+      '<span>📋 '+isletme.kayitNo+'</span>' +
+      '<span>📍 '+(isletme.ilce||'-')+'</span>' +
+      '<span>🍽️ '+(isletme.faaliyetAlani||'-')+'</span>' +
+      (isletme.telefon ? '<span>📞 '+isletme.telefon+'</span>' : '') +
+      '</div>';
+    el.appendChild(row);
+  });
+
   if (sonuclar.length > 100) {
-    el.innerHTML += `<div style="text-align:center;padding:14px;color:var(--gri);font-size:13px;">... ve ${(sonuclar.length-100).toLocaleString('tr-TR')} kayıt daha. Aramayı daraltın.</div>`;
+    var more = document.createElement('div');
+    more.style.cssText = 'text-align:center;padding:14px;color:var(--gri);font-size:13px;';
+    more.textContent = '... ve ' + (sonuclar.length-100).toLocaleString('tr-TR') + ' kayıt daha. Aramayı daraltın.';
+    el.appendChild(more);
   }
 }
 
@@ -1903,7 +1974,6 @@ let seciliKategoriler = JSON.parse(localStorage.getItem('seciliKategoriler') || 
 let seciliMahalleler = JSON.parse(localStorage.getItem('seciliMahalleler') || JSON.stringify(TUM_MAHALLELER));
 
 // Sorumluluklarımdan manuel çıkarılanlar (kayıt no ile saklanır)
-let haricTutulanlar = JSON.parse(localStorage.getItem('haricTutulanlar') || '[]');
 
 function haricTutulanlariKaydet() {
   localStorage.setItem('haricTutulanlar', JSON.stringify(haricTutulanlar));
@@ -1915,6 +1985,8 @@ function sorumluTabDegistir(tab) {
   aktifSorumluTab = tab;
   document.getElementById('tab-uretim').className = tab === 'uretim' ? 'btn btn-yesil' : 'btn btn-gri';
   document.getElementById('tab-satis').className = tab === 'satis' ? 'btn btn-yesil' : 'btn btn-gri';
+  var tabKoy = document.getElementById('tab-koy');
+  if (tabKoy) tabKoy.className = tab === 'koy' ? 'btn btn-yesil' : 'btn btn-gri';
   document.getElementById('panel-uretim').style.display = tab === 'uretim' ? 'block' : 'none';
   document.getElementById('panel-satis').style.display = tab === 'satis' ? 'block' : 'none';
   sorumluluklarimGoster();
@@ -2042,6 +2114,40 @@ function sorumluluklarimGoster() {
       </div>
     </div>`;
   }).join('');
+
+  // Köy/Kasaba sekmesini doldur
+  var panelKoy = document.getElementById('panel-koy');
+  if (panelKoy && aktifSorumluTab === 'koy') {
+    panelKoy.innerHTML = '';
+    Object.keys(KOY_ISLETMELERI).forEach(function(koyAdi) {
+      var koyIsletmeleri = KOY_ISLETMELERI[koyAdi];
+      var blok = document.createElement('div');
+      blok.style.cssText = 'margin-bottom:12px;border:1.5px solid var(--sinir);border-radius:10px;overflow:hidden;';
+      var header = document.createElement('div');
+      header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--gri-acik);cursor:pointer;';
+      header.innerHTML = '<span style="font-weight:700;">🏘️ '+koyAdi+'</span>' +
+        '<span style="background:var(--yesil-acik);color:var(--yesil);padding:2px 8px;border-radius:10px;font-size:12px;">'+koyIsletmeleri.length+' işletme</span>';
+      var icerik = document.createElement('div');
+      koyIsletmeleri.forEach(function(isletme, idx2) {
+        var row = document.createElement('div');
+        row.style.cssText = 'border-bottom:1px solid var(--sinir);padding:10px 14px;cursor:pointer;';
+        row.addEventListener('click', (function(k, i) { return function() { koyIsletmeDetay(k, i); }; })(koyAdi, idx2));
+        var rd = isletme.riskeDayaliDenetimTarihi ? riskDurumHesapla(isletme.riskeDayaliDenetimTarihi, bugunTarih()) : null;
+        row.innerHTML = '<div style="font-weight:600;font-size:13px;">'+isletme.isletmeAdi+'</div>' +
+          '<div style="font-size:12px;color:var(--gri);margin-top:2px;">📋 '+isletme.kayitNo+
+          (rd ? ' • <span style="color:'+rd.renk+';">'+rd.etiket+'</span>' : '') + '</div>';
+        icerik.appendChild(row);
+      });
+      header.addEventListener('click', function() {
+        var acik = icerik.style.display !== 'none';
+        icerik.style.display = acik ? 'none' : 'block';
+      });
+      blok.appendChild(header);
+      blok.appendChild(icerik);
+      panelKoy.appendChild(blok);
+    });
+  }
+
 }
 
 function tarihSiralamaSkoru(tarihStr) {
@@ -2416,6 +2522,591 @@ function girisYap() {
     });
 }
 
+
+
+function ozetSonListeGoster(baslik, filtreFn) {
+  var filtered = filtreFn ? denetimler.filter(filtreFn) : denetimler.slice();
+  var kart = document.getElementById('ozet-liste-kart');
+  var baslikEl = document.getElementById('ozet-liste-baslik');
+  var el = document.getElementById('ozet-son-liste');
+  if (!kart || !el) return;
+  kart.style.display = 'block';
+  baslikEl.innerHTML = '';
+  var txt = document.createTextNode(baslik + ' (' + filtered.length + ')');
+  baslikEl.appendChild(txt);
+  if (filtreFn) {
+    var temBtn = document.createElement('button');
+    temBtn.style.cssText = 'font-size:12px;padding:3px 10px;border:1px solid var(--sinir);border-radius:6px;cursor:pointer;background:white;margin-left:10px;vertical-align:middle;';
+    temBtn.textContent = '✕ Kapat';
+    temBtn.onclick = function() { kart.style.display = 'none'; };
+    baslikEl.appendChild(temBtn);
+  }
+  el.innerHTML = '';
+  if (!filtered.length) {
+    el.innerHTML = '<div class="bos-durum"><div class="ikon">📋</div><p>Bu kategoride denetim bulunamadı.</p></div>';
+    kart.scrollIntoView({behavior:'smooth', block:'start'});
+    return;
+  }
+  filtered.slice(0, 50).forEach(function(d) {
+    var etiket = d.sonuc==='olumlu' ? '<span class="etiket etiket-yesil">✅ Olumlu</span>' :
+                 d.sonuc==='olumsuz' ? '<span class="etiket etiket-kirmizi">❌ Olumsuz</span>' :
+                 '<span class="etiket etiket-turuncu">⏳ Beklemede</span>';
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--sinir);cursor:pointer;';
+    row.innerHTML = '<div><div style="font-weight:600;font-size:14px;">'+d.isletme+'</div>' +
+      '<div style="font-size:12px;color:var(--gri);">'+tarihFormat(d.tarih)+'</div></div>' + etiket;
+    row.addEventListener('click', function() { detayGoster(d.id); });
+    el.appendChild(row);
+  });
+  if (filtered.length > 50) {
+    var more = document.createElement('div');
+    more.style.cssText = 'text-align:center;padding:12px;font-size:13px;color:var(--gri);';
+    more.textContent = '... ve ' + (filtered.length-50) + ' denetim daha';
+    el.appendChild(more);
+  }
+  kart.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function ozetUretimGit() {
+  var bugun = bugunTarih();
+  var liste = URETIM_YERLERI.filter(function(i) {
+    if (typeof haricTutulanlar !== 'undefined' && haricTutulanlar.includes(i.kayitNo)) return false;
+    if (!i.riskeDayaliDenetimTarihi) return false;
+    var t = tarihParse(i.riskeDayaliDenetimTarihi);
+    return t && gunFarki(bugun, t) < 0;
+  });
+  ozetIsletmeListeGoster('Üretim — Risk Tarihi Geçen', liste, 'faaliyet');
+}
+
+function ozetDigerGit() {
+  var bugun = bugunTarih();
+  var uretimKayitlar = {};
+  URETIM_YERLERI.forEach(function(i){ uretimKayitlar[i.kayitNo] = true; });
+  var liste = [];
+  ISLETMELER.forEach(function(i) {
+    if (uretimKayitlar[i.kayitNo]) return;
+    if (!isletmeSorumluMu(i) || !i.riskeDayaliDenetimTarihi) return;
+    var t = tarihParse(i.riskeDayaliDenetimTarihi);
+    if (t && gunFarki(bugun, t) < 0) liste.push(i);
+  });
+  Object.keys(KOY_ISLETMELERI).forEach(function(k) {
+    KOY_ISLETMELERI[k].forEach(function(i) {
+      if (!i.riskeDayaliDenetimTarihi) return;
+      var t = tarihParse(i.riskeDayaliDenetimTarihi);
+      if (t && gunFarki(bugun, t) < 0) {
+        var kopyaI = Object.assign({}, i);
+        kopyaI.koy = k;
+        liste.push(kopyaI);
+      }
+    });
+  });
+  ozetIsletmeListeGoster('Satış/Köy — Risk Tarihi Geçen', liste, 'mahalle');
+}
+
+function ozetIsletmeListeGoster(baslik, isletmeListe, grupTipi) {
+  var kart = document.getElementById('ozet-liste-kart');
+  var baslikEl = document.getElementById('ozet-liste-baslik');
+  var el = document.getElementById('ozet-son-liste');
+  if (!kart || !el) return;
+  kart.style.display = 'block';
+  baslikEl.innerHTML = '';
+  var txt = document.createTextNode(baslik + ' (' + isletmeListe.length + ')');
+  baslikEl.appendChild(txt);
+  var temBtn = document.createElement('button');
+  temBtn.style.cssText = 'font-size:12px;padding:3px 10px;border:1px solid var(--sinir);border-radius:6px;cursor:pointer;background:white;margin-left:10px;vertical-align:middle;';
+  temBtn.textContent = '✕ Kapat';
+  temBtn.onclick = function() { kart.style.display = 'none'; };
+  baslikEl.appendChild(temBtn);
+  el.innerHTML = '';
+  if (!isletmeListe.length) {
+    el.innerHTML = '<div class="bos-durum"><div class="ikon">✅</div><p>Risk tarihi geçen işletme yok.</p></div>';
+    kart.scrollIntoView({behavior:'smooth', block:'start'});
+    return;
+  }
+  var bugun2 = bugunTarih();
+  if (grupTipi === 'faaliyet') {
+    var gruplar = {};
+    isletmeListe.forEach(function(i) {
+      var f = (i.faaliyetAlani||'Diğer').trim();
+      if (!gruplar[f]) gruplar[f] = [];
+      gruplar[f].push(i);
+    });
+    Object.keys(gruplar).sort(function(a,b){return gruplar[b].length-gruplar[a].length;}).forEach(function(g) {
+      var liste2 = gruplar[g];
+      liste2.sort(function(a,b){return a.isletmeAdi.localeCompare(b.isletmeAdi,'tr');});
+      ozetGrupBlok(el, g, liste2, bugun2);
+    });
+  } else if (grupTipi === 'mahalle') {
+    var gruplar2 = {}, koylar = {};
+    isletmeListe.forEach(function(i) {
+      if (i.koy) {
+        var kKey = '🏘️ ' + i.koy;
+        if (!koylar[kKey]) koylar[kKey] = [];
+        koylar[kKey].push(i);
+      } else {
+        var adres = (i.adres||'').toLocaleLowerCase('tr');
+        var grup = null;
+        if (typeof TUM_MAHALLELER !== 'undefined') {
+          TUM_MAHALLELER.forEach(function(m) {
+            var kalip = (typeof MAHALLE_KALIPLARI !== 'undefined' && MAHALLE_KALIPLARI[m] ? MAHALLE_KALIPLARI[m] : m+' Mah').toLocaleLowerCase('tr');
+            if (adres.includes(kalip) && !grup) grup = '📍 '+m+' Mahallesi';
+          });
+        }
+        if (!grup) grup = '📍 ' + (i.ilce||'Diğer');
+        if (!gruplar2[grup]) gruplar2[grup] = [];
+        gruplar2[grup].push(i);
+      }
+    });
+    Object.keys(gruplar2).sort(function(a,b){return a.localeCompare(b,'tr');}).forEach(function(g) {
+      var l = gruplar2[g];
+      l.sort(function(a,b){return a.isletmeAdi.localeCompare(b.isletmeAdi,'tr');});
+      ozetGrupBlok(el, g, l, bugun2);
+    });
+    Object.keys(koylar).sort(function(a,b){return a.localeCompare(b,'tr');}).forEach(function(k) {
+      var l = koylar[k];
+      l.sort(function(a,b){return a.isletmeAdi.localeCompare(b.isletmeAdi,'tr');});
+      ozetGrupBlok(el, k, l, bugun2);
+    });
+  }
+  kart.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function ozetGrupBlok(container, baslik, liste, bugun2) {
+  var blok = document.createElement('div');
+  blok.style.cssText = 'margin-bottom:8px;border:1.5px solid var(--sinir);border-radius:10px;overflow:hidden;';
+  var header = document.createElement('div');
+  header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--gri-acik);cursor:pointer;user-select:none;';
+  header.innerHTML = '<span style="font-weight:700;font-size:14px;">'+baslik+'</span>' +
+    '<span style="display:flex;align-items:center;gap:8px;">' +
+    '<span style="background:var(--kirmizi-acik);color:var(--kirmizi);padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;">'+liste.length+' işletme</span>' +
+    '<span class="toggl-ikon" style="font-size:16px;">▼</span></span>';
+  var icerik = document.createElement('div');
+  liste.forEach(function(i) { ozetIsletmeSatir(icerik, i, bugun2); });
+  header.addEventListener('click', function() {
+    var acik = icerik.style.display !== 'none';
+    icerik.style.display = acik ? 'none' : 'block';
+    header.querySelector('.toggl-ikon').textContent = acik ? '▶' : '▼';
+  });
+  blok.appendChild(header);
+  blok.appendChild(icerik);
+  container.appendChild(blok);
+}
+
+function ozetIsletmeSatir(container, i, bugun2) {
+  var rd = riskDurumHesapla(i.riskeDayaliDenetimTarihi, bugun2);
+  var row = document.createElement('div');
+  row.style.cssText = 'border-bottom:1px solid var(--sinir);padding:10px 14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;cursor:pointer;';
+  row.addEventListener('mouseenter', function(){ this.style.background='var(--gri-acik)'; });
+  row.addEventListener('mouseleave', function(){ this.style.background=''; });
+  row.addEventListener('click', (function(isletme) {
+    return function() {
+      if (isletme.koy) {
+        var koyIdx = KOY_ISLETMELERI[isletme.koy] ? KOY_ISLETMELERI[isletme.koy].findIndex(function(x){ return x.kayitNo===isletme.kayitNo; }) : -1;
+        if (koyIdx >= 0) { koyIsletmeDetay(isletme.koy, koyIdx); return; }
+      }
+      var uIdx = URETIM_YERLERI.findIndex(function(x){ return x.kayitNo===isletme.kayitNo; });
+      if (uIdx >= 0) { isletmeDetayModalUretim(uIdx); return; }
+      var iIdx = ISLETMELER.findIndex(function(x){ return x.kayitNo===isletme.kayitNo; });
+      if (iIdx >= 0) { isletmeDetayModal(iIdx); }
+    };
+  })(i));
+  var sol = document.createElement('div');
+  sol.style.flex = '1';
+  sol.innerHTML = '<div style="font-weight:600;font-size:13px;">'+i.isletmeAdi+'</div>' +
+    '<div style="font-size:12px;color:var(--gri);margin-top:2px;">📋 '+i.kayitNo+
+    (i.telefon ? ' • 📞 '+i.telefon : '')+'</div>';
+  var sag = document.createElement('div');
+  sag.style.cssText = 'text-align:right;flex-shrink:0;';
+  sag.innerHTML = '<div style="font-size:11px;font-weight:700;color:'+rd.renk+';">'+rd.etiket+'</div>' +
+    '<div style="font-size:12px;color:var(--gri);">'+i.riskeDayaliDenetimTarihi+'</div>';
+  row.appendChild(sol); row.appendChild(sag);
+  container.appendChild(row);
+}
+
+function kullaniciEkle() {
+  if (!isAdmin) return;
+  var ad = document.getElementById('yeni-kullanici-ad').value.trim();
+  var email = document.getElementById('yeni-kullanici-email').value.trim();
+  var parola = document.getElementById('yeni-kullanici-parola').value;
+  var rol = document.getElementById('yeni-kullanici-rol').value;
+  var hataEl = document.getElementById('kullanici-ekle-hata');
+  var btn = document.getElementById('kullanici-ekle-btn');
+
+  if (!ad || !email || !parola) {
+    hataEl.textContent = 'Tüm alanları doldurun.';
+    hataEl.style.display = 'block';
+    return;
+  }
+  btn.disabled = true; btn.textContent = 'Ekleniyor...';
+  hataEl.style.display = 'none';
+
+  // Firebase Auth'ta kullanıcı oluştur
+  var secondApp;
+  try {
+    secondApp = firebase.initializeApp(firebase.app().options, 'tempApp_' + Date.now());
+  } catch(e) {
+    secondApp = firebase.app('tempApp');
+  }
+
+  secondApp.auth().createUserWithEmailAndPassword(email, parola)
+    .then(function(result) {
+      var uid = result.user.uid;
+      return firebase.firestore().collection('kullanicilar').doc(uid).set({
+        ad: ad,
+        email: email,
+        rol: rol,
+        ilkGiris: true,
+        olusturma: Date.now()
+      }).then(function() {
+        return secondApp.auth().signOut();
+      });
+    })
+    .then(function() {
+      btn.disabled = false; btn.textContent = '+ Kullanıcı Ekle';
+      document.getElementById('yeni-kullanici-ad').value = '';
+      document.getElementById('yeni-kullanici-email').value = '';
+      document.getElementById('yeni-kullanici-parola').value = '';
+      bildirimGoster('✅ Kullanıcı eklendi!');
+      kullaniciListesiYukle();
+    })
+    .catch(function(err) {
+      btn.disabled = false; btn.textContent = '+ Kullanıcı Ekle';
+      var mesaj = err.message;
+      if (err.code === 'auth/email-already-in-use') mesaj = 'Bu e-posta zaten kullanımda.';
+      if (err.code === 'auth/weak-password') mesaj = 'Parola en az 6 karakter olmalı.';
+      hataEl.textContent = mesaj;
+      hataEl.style.display = 'block';
+    });
+}
+
+function kullaniciListesiYukle() {
+  if (!isAdmin) return;
+  var el = document.getElementById('kullanici-listesi');
+  if (!el) return;
+  el.innerHTML = '<div style="color:var(--gri);padding:10px;">Yükleniyor...</div>';
+
+  firebase.firestore().collection('kullanicilar').get().then(function(snap) {
+    el.innerHTML = '';
+    if (snap.empty) {
+      el.innerHTML = '<p style="color:var(--gri);padding:12px 0;">Henüz kullanıcı yok.</p>';
+      return;
+    }
+    snap.forEach(function(d) {
+      var u = d.data();
+      var uid = d.id;
+      var row = document.createElement('div');
+      row.style.cssText = 'border:1.5px solid var(--sinir);border-radius:10px;padding:14px;margin-bottom:10px;';
+      var bilgi = document.createElement('div');
+      bilgi.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;';
+      var sol = document.createElement('div');
+      sol.innerHTML = '<div style="font-weight:600;font-size:15px;">'+(u.ad||'İsimsiz')+'</div>' +
+        '<div style="font-size:13px;color:var(--gri);margin-top:3px;">📧 '+u.email+'</div>' +
+        '<div style="font-size:12px;margin-top:4px;">' +
+        (u.rol==='admin' ? '<span style="background:#fff3e0;color:#e65100;padding:2px 8px;border-radius:10px;font-weight:600;">👑 Admin</span>' :
+          '<span style="background:var(--yesil-acik);color:var(--yesil);padding:2px 8px;border-radius:10px;font-weight:600;">👤 Denetçi</span>') +
+        (u.ilkGiris ? ' <span style="background:#fdecea;color:var(--kirmizi);padding:2px 6px;border-radius:10px;font-size:11px;">İlk giriş bekleniyor</span>' : '') +
+        '</div>';
+      var sag = document.createElement('div');
+      sag.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;';
+
+      var duzBtn = document.createElement('button');
+      duzBtn.className = 'btn btn-gri btn-kucuk';
+      duzBtn.textContent = '✏️ Düzenle';
+      duzBtn.onclick = (function(uid2, u2) { return function() { kullaniciDuzenle(uid2, u2); }; })(uid, u);
+
+      var resetBtn = document.createElement('button');
+      resetBtn.className = 'btn btn-gri btn-kucuk';
+      resetBtn.textContent = '🔑 Parola';
+      resetBtn.onclick = (function(email2) { return function() { parolaSifirla(email2); }; })(u.email);
+
+      sag.appendChild(duzBtn);
+      sag.appendChild(resetBtn);
+
+      if (uid !== (mevcutKullanici ? mevcutKullanici.uid : '')) {
+        var silBtn = document.createElement('button');
+        silBtn.className = 'btn btn-kirmizi btn-kucuk';
+        silBtn.textContent = '🗑️ Sil';
+        silBtn.onclick = (function(uid2, ad2) { return function() { kullaniciSil(uid2, ad2); }; })(uid, u.ad||'Bu kullanıcı');
+        sag.appendChild(silBtn);
+      }
+
+      bilgi.appendChild(sol); bilgi.appendChild(sag);
+      row.appendChild(bilgi);
+      el.appendChild(row);
+    });
+  }).catch(function(err) {
+    el.innerHTML = '<div style="color:var(--kirmizi);padding:10px;">Hata: '+err.message+'</div>';
+  });
+}
+
+function kullaniciDuzenle(uid, u) {
+  var modal = document.getElementById('modal-icerik');
+  modal.innerHTML = '';
+  var baslik = document.createElement('div');
+  baslik.className = 'modal-baslik';
+  var h2 = document.createElement('h2');
+  h2.textContent = '✏️ Kullanıcı Düzenle';
+  var kb = document.createElement('button');
+  kb.className = 'modal-kapat'; kb.textContent = '✕'; kb.onclick = modalKapat;
+  baslik.appendChild(h2); baslik.appendChild(kb);
+  modal.appendChild(baslik);
+  var form = document.createElement('div');
+  form.style.cssText = 'display:flex;flex-direction:column;gap:14px;margin-top:16px;';
+  var adLabel = document.createElement('div');
+  adLabel.innerHTML = '<label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Ad Soyad</label>';
+  var adInput = document.createElement('input');
+  adInput.type='text'; adInput.value=u.ad||'';
+  adInput.style.cssText='width:100%;padding:10px 12px;border:1.5px solid var(--sinir);border-radius:8px;font-size:14px;box-sizing:border-box;';
+  adLabel.appendChild(adInput);
+  var rolLabel = document.createElement('div');
+  rolLabel.innerHTML = '<label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Rol</label>';
+  var rolSelect = document.createElement('select');
+  rolSelect.style.cssText='width:100%;padding:10px 12px;border:1.5px solid var(--sinir);border-radius:8px;font-size:14px;';
+  ['denetci','admin'].forEach(function(r) {
+    var opt = document.createElement('option');
+    opt.value=r; opt.textContent=r==='admin'?'👑 Admin':'👤 Denetçi';
+    if (u.rol===r) opt.selected=true;
+    rolSelect.appendChild(opt);
+  });
+  rolLabel.appendChild(rolSelect);
+  var hataEl = document.createElement('div');
+  hataEl.style.cssText='display:none;background:var(--kirmizi-acik);color:var(--kirmizi);padding:10px;border-radius:8px;font-size:13px;';
+  form.appendChild(adLabel); form.appendChild(rolLabel); form.appendChild(hataEl);
+  modal.appendChild(form);
+  var altDiv = document.createElement('div');
+  altDiv.className='buton-satir'; altDiv.style.marginTop='16px';
+  var iptal = document.createElement('button');
+  iptal.className='btn btn-gri'; iptal.textContent='İptal'; iptal.onclick=modalKapat;
+  var kaydet = document.createElement('button');
+  kaydet.className='btn btn-yesil'; kaydet.textContent='💾 Kaydet';
+  kaydet.onclick = function() {
+    var yeniAd = adInput.value.trim();
+    if (!yeniAd) { hataEl.textContent='Ad boş olamaz.'; hataEl.style.display='block'; return; }
+    kaydet.disabled=true; kaydet.textContent='Kaydediliyor...';
+    firebase.firestore().collection('kullanicilar').doc(uid).update({ad:yeniAd, rol:rolSelect.value})
+      .then(function() { modalKapat(); kullaniciListesiYukle(); bildirimGoster('✅ Güncellendi!'); })
+      .catch(function(err) { hataEl.textContent='Hata: '+err.message; hataEl.style.display='block'; kaydet.disabled=false; kaydet.textContent='💾 Kaydet'; });
+  };
+  altDiv.appendChild(iptal); altDiv.appendChild(kaydet);
+  modal.appendChild(altDiv);
+  document.getElementById('modal-arkaplan').classList.add('acik');
+}
+
+function kullaniciSil(uid, ad) {
+  onayKutusu(ad + ' kullanıcısını silmek istiyor musunuz?', function() {
+    firebase.firestore().collection('kullanicilar').doc(uid).delete()
+      .then(function() { kullaniciListesiYukle(); bildirimGoster('✅ Kullanıcı silindi!'); })
+      .catch(function(err) { alert('Hata: '+err.message); });
+  });
+}
+
+function parolaSifirla(email) {
+  firebase.auth().sendPasswordResetEmail(email)
+    .then(function() { bildirimGoster('✅ Parola sıfırlama e-postası gönderildi!'); })
+    .catch(function(err) { alert('Hata: '+err.message); });
+}
+
+function bildirimGoster(mesaj, tip) {
+  var eski = document.getElementById('bildirim-popup');
+  if (eski) eski.remove();
+  var div = document.createElement('div');
+  div.id = 'bildirim-popup';
+  var renk = tip === 'hata' ? '#e74c3c' : '#27ae60';
+  div.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:'+renk+';color:white;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.2);transition:opacity 0.4s;';
+  div.textContent = mesaj;
+  document.body.appendChild(div);
+  setTimeout(function() {
+    div.style.opacity = '0';
+    setTimeout(function() { div.remove(); }, 400);
+  }, 1500);
+}
+
+function raporFiltrele() {
+  var basTarih = document.getElementById('rapor-bas-tarih').value;
+  var bitTarih = document.getElementById('rapor-bit-tarih').value;
+  var isletmeQ = (document.getElementById('rapor-isletme').value||'').toLocaleLowerCase('tr');
+  var faaliyetQ = (document.getElementById('rapor-faaliyet').value||'').toLocaleLowerCase('tr');
+  var denetciQ = (document.getElementById('rapor-denetci').value||'').toLocaleLowerCase('tr');
+  var sonucF = document.getElementById('rapor-sonuc').value;
+  var cezaF = document.getElementById('rapor-ceza').value;
+  var numuneF = document.getElementById('rapor-numune').value;
+
+  return denetimler.filter(function(d) {
+    if (basTarih && d.tarih < basTarih) return false;
+    if (bitTarih && d.tarih > bitTarih) return false;
+    if (isletmeQ && !(d.isletme||'').toLocaleLowerCase('tr').includes(isletmeQ)) return false;
+    if (faaliyetQ && !(d.isletmeFaaliyet||'').toLocaleLowerCase('tr').includes(faaliyetQ)) return false;
+    if (denetciQ) {
+      var dc = (d.denetciler||[]).join(' ').toLocaleLowerCase('tr');
+      if (!dc.includes(denetciQ)) return false;
+    }
+    if (sonucF && d.sonuc !== sonucF) return false;
+    if (cezaF === 'var' && !(d.cezalar && d.cezalar.length)) return false;
+    if (cezaF === 'yok' && (d.cezalar && d.cezalar.length)) return false;
+    if (numuneF === 'var' && !(d.numuneler && d.numuneler.length)) return false;
+    if (numuneF === 'yok' && (d.numuneler && d.numuneler.length)) return false;
+    return true;
+  });
+}
+
+function raporOlustur() {
+  var liste = raporFiltrele();
+  var bilgiEl = document.getElementById('rapor-sonuc-bilgi');
+  var listEl = document.getElementById('rapor-liste');
+  bilgiEl.textContent = liste.length.toLocaleString('tr-TR') + ' denetim bulundu';
+  listEl.innerHTML = '';
+
+  if (!liste.length) {
+    listEl.innerHTML = '<div class="bos-durum"><div class="ikon">📊</div><p>Kriterlere uygun denetim bulunamadı.</p></div>';
+    return;
+  }
+
+  var olumlu = liste.filter(function(d){return d.sonuc==='olumlu';}).length;
+  var olumsuz = liste.filter(function(d){return d.sonuc==='olumsuz';}).length;
+  var cezali = liste.filter(function(d){return d.cezalar&&d.cezalar.length;}).length;
+  var numuneli = liste.filter(function(d){return d.numuneler&&d.numuneler.length;}).length;
+
+  var raporTumListe = liste.slice();
+  var ozet = document.createElement('div');
+  ozet.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;';
+
+  [
+    {label:'Toplam', sayi:liste.length, renk:'var(--gri)', filtre:null},
+    {label:'✅ Olumlu', sayi:olumlu, renk:'var(--yesil)', filtre:function(d){return d.sonuc==='olumlu';}},
+    {label:'❌ Olumsuz', sayi:olumsuz, renk:'var(--kirmizi)', filtre:function(d){return d.sonuc==='olumsuz';}},
+    {label:'⚖️ Cezalı', sayi:cezali, renk:'var(--turuncu)', filtre:function(d){return d.cezalar&&d.cezalar.length;}},
+    {label:'🧪 Numuneli', sayi:numuneli, renk:'#8e44ad', filtre:function(d){return d.numuneler&&d.numuneler.length;}},
+  ].forEach(function(s) {
+    var div = document.createElement('div');
+    div.style.cssText = 'padding:10px 16px;border-radius:8px;background:var(--gri-acik);text-align:center;min-width:80px;cursor:pointer;';
+    div.innerHTML = '<div style="font-size:20px;font-weight:700;color:'+s.renk+';">'+s.sayi+'</div><div style="font-size:12px;color:var(--gri);">'+s.label+'</div>';
+    div.addEventListener('mouseenter', function(){ this.style.boxShadow='0 2px 8px rgba(0,0,0,0.12)'; });
+    div.addEventListener('mouseleave', function(){ this.style.boxShadow=''; });
+    div.addEventListener('click', (function(filtre, tum) {
+      return function() { raporListeGoster(filtre ? tum.filter(filtre) : tum); };
+    })(s.filtre, raporTumListe));
+    ozet.appendChild(div);
+  });
+  listEl.appendChild(ozet);
+  raporListeGoster(liste);
+}
+
+function raporListeGoster(liste) {
+  var listEl = document.getElementById('rapor-liste');
+  var bilgiEl = document.getElementById('rapor-sonuc-bilgi');
+  bilgiEl.textContent = liste.length.toLocaleString('tr-TR') + ' denetim';
+
+  // Özet kartları koru, eski listeyi temizle
+  var children = Array.from(listEl.children);
+  children.forEach(function(c) {
+    if (!c.style.cssText.includes('flex')) c.remove();
+  });
+
+  if (!liste.length) {
+    var bos = document.createElement('div');
+    bos.className = 'bos-durum';
+    bos.innerHTML = '<div class="ikon">📊</div><p>Bu kategoride denetim bulunamadı.</p>';
+    listEl.appendChild(bos);
+    return;
+  }
+
+  liste.forEach(function(d) {
+    var row = document.createElement('div');
+    row.style.cssText = 'border-bottom:1px solid var(--sinir);padding:10px 4px;cursor:pointer;';
+    row.addEventListener('click', function() { detayGoster(d.id); });
+    var sonucEtiket = d.sonuc==='olumlu' ? '<span class="etiket etiket-yesil">✅ Olumlu</span>' :
+                      d.sonuc==='olumsuz' ? '<span class="etiket etiket-kirmizi">❌ Olumsuz</span>' :
+                      '<span class="etiket etiket-turuncu">⏳ Beklemede</span>';
+    row.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
+      '<div><div style="font-weight:600;font-size:14px;">'+d.isletme+'</div>' +
+      '<div style="font-size:12px;color:var(--gri);display:flex;gap:10px;flex-wrap:wrap;margin-top:3px;">' +
+      '<span>📅 '+tarihFormat(d.tarih)+'</span>' +
+      (d.denetciler&&d.denetciler.length ? '<span>👤 '+d.denetciler.join(', ')+'</span>' : '') +
+      (d.isletmeFaaliyet ? '<span>🍽️ '+d.isletmeFaaliyet.substring(0,30)+'</span>' : '') +
+      (d.cezalar&&d.cezalar.length ? '<span style="color:var(--kirmizi);">⚖️ Ceza</span>' : '') +
+      (d.numuneler&&d.numuneler.length ? '<span style="color:#8e44ad;">🧪 Numune</span>' : '') +
+      '</div></div>' +
+      '<div>'+sonucEtiket+'</div></div>';
+    listEl.appendChild(row);
+  });
+}
+
+function raporSifirla() {
+  ['rapor-bas-tarih','rapor-bit-tarih','rapor-isletme','rapor-faaliyet','rapor-denetci'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ['rapor-sonuc','rapor-ceza','rapor-numune'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  var bilgi = document.getElementById('rapor-sonuc-bilgi');
+  if (bilgi) bilgi.textContent = '';
+  var liste = document.getElementById('rapor-liste');
+  if (liste) liste.innerHTML = '';
+}
+
+function raporExcel() {
+  var liste = raporFiltrele();
+  if (!liste.length) { alert('Önce rapor oluşturun.'); return; }
+  if (typeof XLSX === 'undefined') { alert('Excel kütüphanesi yüklenmedi.'); return; }
+  var wb = XLSX.utils.book_new();
+  var rows = [['Tarih','İşletme','Kayıt No','İlçe','Faaliyet','Denetçi(ler)','Sonuç','Ceza','Numune','Denetim No','Notlar']];
+  liste.forEach(function(d) {
+    rows.push([
+      tarihFormat(d.tarih), d.isletme||'', d.isletmeKayitNo||'', d.isletmeIlce||'',
+      d.isletmeFaaliyet||'', (d.denetciler||[]).join(', '),
+      d.sonuc==='olumlu'?'Olumlu':d.sonuc==='olumsuz'?'Olumsuz':'Beklemede',
+      (d.cezalar&&d.cezalar.length)?'Var':'Yok',
+      (d.numuneler&&d.numuneler.length)?'Var':'Yok',
+      d.denetimNo||'', d.notlar||''
+    ]);
+  });
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, 'Denetimler');
+  var tarih = new Date().toLocaleDateString('tr-TR').replace(/\./g,'-');
+  XLSX.writeFile(wb, 'Denetim_Raporu_'+tarih+'.xlsx');
+}
+
+function koyIsletmeDetay(koyAdi, idx) {
+  var isletme = KOY_ISLETMELERI[koyAdi] && KOY_ISLETMELERI[koyAdi][idx];
+  if (!isletme) return;
+  var modal = document.getElementById('modal-icerik');
+  modal.innerHTML = '';
+  var baslik = document.createElement('div');
+  baslik.className = 'modal-baslik';
+  var h2 = document.createElement('h2');
+  h2.textContent = isletme.isletmeAdi;
+  var kb = document.createElement('button');
+  kb.className = 'modal-kapat'; kb.textContent = '✕'; kb.onclick = modalKapat;
+  baslik.appendChild(h2); baslik.appendChild(kb);
+  modal.appendChild(baslik);
+  var satirlar = [
+    ['Kayıt No', isletme.kayitNo],
+    ['Köy/Kasaba', koyAdi],
+    ['İlçe', isletme.ilce||'-'],
+    ['Faaliyet', isletme.faaliyetAlani||'-'],
+  ];
+  if (isletme.riskeDayaliDenetimTarihi) satirlar.push(['Risk Tarihi', isletme.riskeDayaliDenetimTarihi]);
+  if (isletme.telefon) satirlar.push(['📞 Telefon', isletme.telefon]);
+  var bilgi = document.createElement('div');
+  bilgi.style.cssText = 'margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;';
+  satirlar.forEach(function(s) {
+    var div = document.createElement('div');
+    div.style.cssText = 'background:var(--gri-acik);border-radius:8px;padding:10px;';
+    div.innerHTML = '<div style="font-size:11px;color:var(--gri);margin-bottom:3px;">'+s[0]+'</div><div style="font-weight:600;font-size:14px;">'+s[1]+'</div>';
+    bilgi.appendChild(div);
+  });
+  modal.appendChild(bilgi);
+  var altDiv = document.createElement('div');
+  altDiv.className = 'buton-satir'; altDiv.style.marginTop = '16px';
+  var kapat = document.createElement('button');
+  kapat.className = 'btn btn-gri'; kapat.textContent = 'Kapat'; kapat.onclick = modalKapat;
+  altDiv.appendChild(kapat);
+  modal.appendChild(altDiv);
+  document.getElementById('modal-arkaplan').classList.add('acik');
+}
 </script>
 </body>
 </html>
