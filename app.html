@@ -1804,12 +1804,15 @@ window.addEventListener('fb-hazir', function() {
   <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
     <span id="bugun-tarih" style="font-size:11px;color:rgba(255,255,255,0.75);margin-right:4px;"></span>
     <span id="sync-durum" style="font-size:11px;color:rgba(255,255,255,0.7);"></span>
-    <div id="kullanici-bilgi" style="display:none;align-items:center;gap:6px;">
-      <span id="kullanici-ad" style="font-size:11px;color:rgba(255,255,255,0.8);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+    <div id="kullanici-bilgi" style="display:none;align-items:center;gap:6px;position:relative;">
       <button id="mesaj-btn" onclick="sohbetPanelAc()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:4px 8px;border-radius:5px;font-size:14px;cursor:pointer;position:relative;">💬<span id="mesaj-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e74c3c;color:#fff;border-radius:50%;width:15px;height:15px;font-size:10px;line-height:15px;text-align:center;"></span></button>
       <button id="yenile-btn" onclick="location.reload()" title="Yenile" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:4px 8px;border-radius:5px;font-size:14px;cursor:pointer;">🔄</button>
-      <button id="parola-degistir-btn" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:4px 8px;border-radius:5px;font-size:11px;cursor:pointer;">🔑</button>
-      <button id="cikis-btn" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:4px 8px;border-radius:5px;font-size:11px;cursor:pointer;">Çıkış</button>
+      <button id="kullanici-ad-btn" onclick="kullaniciMenuToggle(event)" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:4px 9px;border-radius:5px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;max-width:130px;"><span id="kullanici-ad" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span><span style="opacity:0.8;">▾</span></button>
+      <div id="kullanici-menu" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:#fff;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.22);min-width:190px;z-index:10000;overflow:hidden;">
+        <button onclick="kullaniciMenuKapat();kullaniciAyarlariAc()" style="display:block;width:100%;text-align:left;padding:12px 15px;border:none;background:none;font-size:14px;color:#333;cursor:pointer;">⚙️ Kullanıcı ayarları</button>
+        <button onclick="kullaniciMenuKapat();var pe=document.getElementById('parola-ekrani');if(pe)pe.style.display='flex';" style="display:block;width:100%;text-align:left;padding:12px 15px;border:none;border-top:1px solid #eee;background:none;font-size:14px;color:#333;cursor:pointer;">🔑 Şifre Yönetimi</button>
+        <button onclick="kullaniciMenuKapat();cikisYap()" style="display:block;width:100%;text-align:left;padding:12px 15px;border:none;border-top:1px solid #eee;background:none;font-size:14px;color:#c0392b;cursor:pointer;">🚪 Çıkış yap</button>
+      </div>
     </div>
   </div>
 </header>
@@ -4738,6 +4741,9 @@ function ozetGuncelle() {
   var grid = document.getElementById('ozet-grid');
   if (!grid) return;
   grid.innerHTML = '';
+  // Ekip değişince / yenilenince altta açık kalan risk listesini kapat
+  var _olk=document.getElementById('ozet-liste-kart'); if(_olk) _olk.style.display='none';
+  ['ozet-risk-uretim','ozet-risk-diger'].forEach(function(id){ var e=document.getElementById(id); if(e){ e.style.display='none'; e.setAttribute('data-acik','0'); e.innerHTML=''; } });
 
   // Toplam denetim altındaki kırılım için ikinci grid (varsayılan gizli)
   var detayGrid = document.getElementById('ozet-detay-grid');
@@ -4764,13 +4770,13 @@ function ozetGuncelle() {
           if (dg) dg.style.display = (dg.style.display === 'none' ? 'grid' : 'none');
           return;
         }
+        if (vv.ozel === 'uretim') { ozetUretimGit(); return; }
+        if (vv.ozel === 'diger') { ozetDigerGit(); return; }
         var kart = document.getElementById('ozet-liste-kart');
         var baslikEl = document.getElementById('ozet-liste-baslik');
         var acik = kart && kart.style.display !== 'none';
         var ayniKart = acik && baslikEl && baslikEl.textContent.trim().startsWith(vv.label.trim().split('(')[0].trim());
         if (ayniKart) { kart.style.display = 'none'; return; }
-        if (vv.ozel === 'uretim') { ozetUretimGit(); return; }
-        if (vv.ozel === 'diger') { ozetDigerGit(); return; }
         ozetSonListeGoster(vv.label, vv.filtre);
       };
     })(v));
@@ -5538,12 +5544,15 @@ function sorumluluklarimGoster() {
       h+='<div style="margin:0 0 10px 4px;">';
       var sirali=g.isl.slice().sort(function(a,b){ return tarihSiralamaSkoru(a.riskeDayaliDenetimTarihi) - tarihSiralamaSkoru(b.riskeDayaliDenetimTarihi); });
       sirali.forEach(function(i){
-        var rg=(typeof riskGecmisMi==='function')&&riskGecmisMi(i);
         var risk=i.riskeDayaliDenetimTarihi||'';
+        var _t=(typeof tarihParse==='function')?tarihParse(risk):null;
+        var _gun=_t?gunFarki(bugunTarih(),_t):null;
+        var _cok=(_gun!==null && _gun < -1000), _gecti=(_gun!==null && _gun < 0);
         var kn=_ekipEsc(i.kayitNo||'').replace(/'/g,"\\'");
+        var riskHtml = risk ? (' • '+(_cok?'<span style="color:#c0392b;font-weight:600;">⚠️ '+_ekipEsc(risk)+' · GGBS\'de kontrol et</span>':(_gecti?'<span style="color:#c0392b;">'+_ekipEsc(risk)+'</span>':_ekipEsc(risk)))) : '';
         h+='<div onclick="event.stopPropagation();isletmeDetayModal(\''+kn+'\')" style="padding:9px 11px;border:1px solid var(--sinir);border-radius:9px;margin-bottom:6px;cursor:pointer;background:#fff;">';
         h+='<div style="font-size:13px;font-weight:500;">'+_ekipEsc(i.isletmeAdi||'(isimsiz)')+'</div>';
-        h+='<div style="font-size:11px;color:var(--gri);margin-top:2px;">'+_ekipEsc(i.kayitNo||'')+(risk?(' • '+(rg?'<span style="color:#c0392b;">⚠️ '+_ekipEsc(risk)+'</span>':_ekipEsc(risk))):'')+'</div>';
+        h+='<div style="font-size:11px;color:var(--gri);margin-top:2px;">'+_ekipEsc(i.kayitNo||'')+riskHtml+'</div>';
         h+='</div>';
       });
       h+='</div>';
@@ -6351,7 +6360,11 @@ function kullaniciBilgiYukle(user) {
     };
     if (!snap.exists) kullaniciRef.set(data);
     mevcutKullaniciAdi = data.ad || user.email;
-    if (data.ekipId && typeof aktifEkibeGec === 'function') { try { aktifEkibeGec(data.ekipId, false); } catch(e){} }
+    if (!isAdmin) {
+      aktifEkipId = data.ekipId || null;
+      try { localStorage.setItem(AKTIF_EKIP_KEY, aktifEkipId || ''); } catch(e){}
+      if (data.ekipId && typeof aktifEkibeGec === 'function') { try { aktifEkibeGec(data.ekipId, false); } catch(e){} }
+    } else if (data.ekipId && typeof aktifEkibeGec === 'function') { try { aktifEkibeGec(data.ekipId, false); } catch(e){} }
     
     document.getElementById('giris-ekrani').style.display = 'none';
     document.querySelector('header').style.display = '';
@@ -6380,6 +6393,7 @@ function kullaniciBilgiYukle(user) {
     var eswO = document.getElementById('ekip-secici-wrap-ozet');
     if (eswO) { eswO.style.display = isAdmin ? 'flex' : 'none'; }
     if (isAdmin && typeof ekipSeciciDoldur === 'function') ekipSeciciDoldur();
+    try { if (typeof sayfaGoster === 'function') sayfaGoster('ozet', document.querySelector('nav button')); } catch(e){}
     
     if (data.ilkGiris && !isAdmin) {
       setTimeout(function() {
@@ -6752,15 +6766,42 @@ function ozetSonListeGoster(baslik, filtreFn) {
   kart.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-function ozetUretimGit() {
-  var liste = uretimTumRiskGecenListesiGetir();
-  ozetIsletmeListeGoster('Üretim — Risk Tarihi Geçen', liste, 'faaliyet');
+function _ozetRiskRender(el, isletmeListe, grupTipi){
+  el.innerHTML='';
+  if(!isletmeListe.length){ el.innerHTML='<div class="bos-durum"><div class="ikon">✅</div><p>Risk tarihi geçen işletme yok.</p></div>'; return; }
+  var bugun2=bugunTarih();
+  if(grupTipi==='faaliyet'){
+    var gruplar={};
+    isletmeListe.forEach(function(i){ var f=(i.faaliyetAlani||'Diğer').trim(); if(!gruplar[f])gruplar[f]=[]; gruplar[f].push(i); });
+    Object.keys(gruplar).sort(function(a,b){return gruplar[b].length-gruplar[a].length;}).forEach(function(g){ var l=gruplar[g]; l.sort(function(a,b){return (a.isletmeAdi||'').localeCompare(b.isletmeAdi||'','tr');}); ozetGrupBlok(el,g,l,bugun2,true); });
+  } else {
+    var gruplar2={},koylar={};
+    isletmeListe.forEach(function(i){
+      if(i.koy){ var kKey='🏘️ '+i.koy; if(!koylar[kKey])koylar[kKey]=[]; koylar[kKey].push(i); }
+      else { var grup=null; if(typeof TUM_MAHALLELER!=='undefined'&&typeof mahalleAdreseUyuyorMu==='function'){ for(var mi=0;mi<TUM_MAHALLELER.length;mi++){ if(mahalleAdreseUyuyorMu(i.adres,TUM_MAHALLELER[mi])){ grup='📍 '+TUM_MAHALLELER[mi]+' Mahallesi'; break; } } } if(!grup)grup='📍 '+(i.ilce||'Diğer'); if(!gruplar2[grup])gruplar2[grup]=[]; gruplar2[grup].push(i); }
+    });
+    Object.keys(gruplar2).sort(function(a,b){return a.localeCompare(b,'tr');}).forEach(function(g){ var l=gruplar2[g]; l.sort(function(a,b){return (a.isletmeAdi||'').localeCompare(b.isletmeAdi||'','tr');}); ozetGrupBlok(el,g,l,bugun2,true); });
+    Object.keys(koylar).sort(function(a,b){return a.localeCompare(b,'tr');}).forEach(function(k){ var l=koylar[k]; l.sort(function(a,b){return (a.isletmeAdi||'').localeCompare(b.isletmeAdi||'','tr');}); ozetGrupBlok(el,k,l,bugun2,true); });
+  }
 }
-
-function ozetDigerGit() {
-  var liste = satisKoyRiskGecenListesiGetir();
-  ozetIsletmeListeGoster('Satış/Köy — Risk Tarihi Geçen', liste, 'mahalle');
+function _ozetRiskKutuOlustur(id){
+  var k=document.getElementById(id); if(k) return k;
+  var grid=document.getElementById('ozet-grid'); if(!grid||!grid.parentNode) return null;
+  k=document.createElement('div'); k.id=id; k.style.cssText='margin-top:12px;display:none;border:1.5px solid var(--sinir);border-radius:12px;padding:14px;';
+  if(id==='ozet-risk-diger'){ var u=document.getElementById('ozet-risk-uretim'); grid.parentNode.insertBefore(k, (u?u.nextSibling:grid.nextSibling)); }
+  else { grid.parentNode.insertBefore(k, grid.nextSibling); }
+  return k;
 }
+function _ozetRiskKutu(id, baslik, liste, grupTipi){
+  var k=_ozetRiskKutuOlustur(id); if(!k) return;
+  if(k.getAttribute('data-acik')==='1'){ k.style.display='none'; k.setAttribute('data-acik','0'); return; }
+  k.innerHTML='<div style="font-weight:700;font-size:14px;margin-bottom:10px;">'+baslik+' ('+liste.length+')</div>';
+  var icer=document.createElement('div'); k.appendChild(icer);
+  _ozetRiskRender(icer, liste, grupTipi);
+  k.style.display='block'; k.setAttribute('data-acik','1');
+}
+function ozetUretimGit(){ _ozetRiskKutu('ozet-risk-uretim','🏭 Üretim — Risk Tarihi Geçen', uretimTumRiskGecenListesiGetir(), 'faaliyet'); }
+function ozetDigerGit(){ _ozetRiskKutu('ozet-risk-diger','🏘️ Satış/Köy — Risk Tarihi Geçen', satisKoyRiskGecenListesiGetir(), 'mahalle'); }
 
 function ozetIsletmeListeGoster(baslik, isletmeListe, grupTipi) {
   var kart = document.getElementById('ozet-liste-kart');
@@ -6861,13 +6902,8 @@ function ozetIsletmeSatir(container, i, bugun2) {
   row.addEventListener('mouseleave', function(){ this.style.background=''; });
   row.addEventListener('click', (function(isletme) {
     return function() {
-      if (isletme.koy) {
-        var koyIdx = KOY_ISLETMELERI[isletme.koy] ? KOY_ISLETMELERI[isletme.koy].findIndex(function(x){ return x.kayitNo===isletme.kayitNo; }) : -1;
-        if (koyIdx >= 0) { koyIsletmeDetay(isletme.koy, koyIdx); return; }
-      }
-      var uIdx = URETIM_YERLERI.findIndex(function(x){ return x.kayitNo===isletme.kayitNo; });
-      if (uIdx >= 0) { isletmeDetayModalUretim(uIdx); return; }
-      var iIdx = ISLETMELER.findIndex(function(x){ return x.kayitNo===isletme.kayitNo; });
+      if (isletme.kayitNo) { isletmeDetayModal(isletme.kayitNo); return; }
+      var iIdx = ISLETMELER.findIndex(function(x){ return x===isletme; });
       if (iIdx >= 0) { isletmeDetayModal(iIdx); }
     };
   })(i));
@@ -9891,5 +9927,29 @@ window.bildirimMesajiGonder=bildirimMesajiGonder;
 window.ekipKullanicilarinaBildir=ekipKullanicilarinaBildir;
 </script>
 
+<script>
+function kullaniciMenuToggle(e){ if(e&&e.stopPropagation)e.stopPropagation(); var m=document.getElementById('kullanici-menu'); if(m) m.style.display=(m.style.display==='none'||!m.style.display)?'block':'none'; }
+function kullaniciMenuKapat(){ var m=document.getElementById('kullanici-menu'); if(m) m.style.display='none'; }
+document.addEventListener('click', function(e){ var m=document.getElementById('kullanici-menu'); var b=document.getElementById('kullanici-ad-btn'); if(m&&m.style.display==='block'&&!m.contains(e.target)&&b&&!b.contains(e.target)) m.style.display='none'; });
+function cikisYap(){ try{ if(typeof firestoreDinleyici!=='undefined'&&firestoreDinleyici){ firestoreDinleyici(); firestoreDinleyici=null; } }catch(e){} if(typeof firebase!=='undefined'&&firebase.auth) firebase.auth().signOut(); }
+function kullaniciAyarlariAc(){
+  var ov=document.getElementById('kullanici-ayar-overlay'); if(ov)ov.remove();
+  ov=document.createElement('div'); ov.id='kullanici-ayar-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100003;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.addEventListener('click',function(e){ if(e.target===ov) ov.remove(); });
+  var ekip=(typeof aktifEkip==='function')?aktifEkip():null;
+  var ad=(typeof mevcutKullaniciAdi!=='undefined'?mevcutKullaniciAdi:'');
+  var email=(typeof mevcutKullanici!=='undefined'&&mevcutKullanici?mevcutKullanici.email:'');
+  var box=document.createElement('div');
+  box.style.cssText='background:#fff;border-radius:14px;padding:20px;max-width:340px;width:100%;';
+  box.innerHTML='<div style="font-weight:700;font-size:16px;margin-bottom:16px;">⚙️ Kullanıcı Ayarları</div>'
+    +'<div style="font-size:12px;color:var(--gri);">Ad</div><div style="font-size:14px;margin-bottom:12px;">'+_ekipEsc(ad)+'</div>'
+    +'<div style="font-size:12px;color:var(--gri);">E-posta</div><div style="font-size:14px;margin-bottom:12px;">'+_ekipEsc(email)+'</div>'
+    +(ekip?('<div style="font-size:12px;color:var(--gri);">Ekip</div><div style="font-size:14px;margin-bottom:12px;">'+_ekipEsc(ekip.ad||ekip.id)+'</div>'):'')
+    +'<button class="btn btn-gri" style="width:100%;" onclick="var o=document.getElementById(\'kullanici-ayar-overlay\');if(o)o.remove();">Kapat</button>';
+  ov.appendChild(box); document.body.appendChild(ov);
+}
+window.kullaniciMenuToggle=kullaniciMenuToggle; window.kullaniciMenuKapat=kullaniciMenuKapat; window.cikisYap=cikisYap; window.kullaniciAyarlariAc=kullaniciAyarlariAc;
+</script>
 </body>
 </html>
