@@ -9492,27 +9492,37 @@ function ekstraBasliklarYukle() {
       if (!doc.exists) return;
       var d = doc.data()||{};
       var degisti = false;
-      if (Array.isArray(d.mahalleler) && JSON.stringify(d.mahalleler)!==JSON.stringify(MAHALLE_EKSTRA)) {
-        MAHALLE_EKSTRA = d.mahalleler;
-        d.mahalleler.forEach(function(m){ if(MERKEZ_MAHALLE_MASTER.indexOf(m)<0) MERKEZ_MAHALLE_MASTER.push(m); });
-        try{localStorage.setItem('ekstra_mahalleler',JSON.stringify(MAHALLE_EKSTRA));}catch(e){}
-        degisti = true;
+      var fbSyncGerekli = false;
+      if (Array.isArray(d.mahalleler)) {
+        d.mahalleler.forEach(function(m){
+          if(MAHALLE_EKSTRA.indexOf(m)<0){ MAHALLE_EKSTRA.push(m); degisti=true; }
+          if(MERKEZ_MAHALLE_MASTER.indexOf(m)<0) MERKEZ_MAHALLE_MASTER.push(m);
+        });
+        if(degisti){ try{localStorage.setItem('ekstra_mahalleler',JSON.stringify(MAHALLE_EKSTRA));}catch(e){} }
+        if(MAHALLE_EKSTRA.length > d.mahalleler.length) fbSyncGerekli=true;
       }
-      if (Array.isArray(d.koyler) && JSON.stringify(d.koyler)!==JSON.stringify(KOY_EKSTRA)) {
-        KOY_EKSTRA = d.koyler;
-        d.koyler.forEach(function(k){ if(KOY_MASTER.indexOf(k)<0) KOY_MASTER.push(k); });
-        try{localStorage.setItem('ekstra_koyler',JSON.stringify(KOY_EKSTRA));}catch(e){}
-        degisti = true;
+      if (Array.isArray(d.koyler)) {
+        var koyDegisti=false;
+        d.koyler.forEach(function(k){
+          if(KOY_EKSTRA.indexOf(k)<0){ KOY_EKSTRA.push(k); koyDegisti=true; degisti=true; }
+          if(KOY_MASTER.indexOf(k)<0) KOY_MASTER.push(k);
+        });
+        if(koyDegisti){ try{localStorage.setItem('ekstra_koyler',JSON.stringify(KOY_EKSTRA));}catch(e){} }
+        if(KOY_EKSTRA.length > d.koyler.length) fbSyncGerekli=true;
       }
-      if (Array.isArray(d.kategoriler) && JSON.stringify(d.kategoriler)!==JSON.stringify(KAT_EKSTRA)) {
-        KAT_EKSTRA = d.kategoriler;
+      if (Array.isArray(d.kategoriler)) {
+        var katDegisti=false;
         d.kategoriler.forEach(function(k){
+          if(!KAT_EKSTRA.find(function(x){return x.id===k.id;})){
+            KAT_EKSTRA.push(k); katDegisti=true; degisti=true;
+          }
           if(!TUM_URETIM_KATEGORILER.find(function(x){return x.id===k.id;}))
             TUM_URETIM_KATEGORILER.push({id:k.id,label:k.label,anahtar:[],ekstra:true});
         });
-        try{localStorage.setItem('ekstra_kategoriler',JSON.stringify(KAT_EKSTRA));}catch(e){}
-        degisti = true;
+        if(katDegisti){ try{localStorage.setItem('ekstra_kategoriler',JSON.stringify(KAT_EKSTRA));}catch(e){} }
+        if(KAT_EKSTRA.length > d.kategoriler.length) fbSyncGerekli=true;
       }
+      if(fbSyncGerekli && typeof ekstraBasliklarKaydet==='function') ekstraBasliklarKaydet();
       if (degisti && typeof basliklarGoster==='function' && document.getElementById('basliklar-root')) basliklarGoster();
     })
     .catch(function(e){ console.warn('ekstra başlık yükleme hatası:', e&&e.message); });
