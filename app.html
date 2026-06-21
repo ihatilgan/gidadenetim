@@ -10197,13 +10197,17 @@ function isletmeNotEkle(an){
   if(!isletmeNotlari[an]) isletmeNotlari[an]=[];
   var kim=(typeof mevcutKullaniciAdi!=='undefined'&&mevcutKullaniciAdi)?mevcutKullaniciAdi:'';
   isletmeNotlari[an].unshift({t:new Date().toISOString(), m:v, kim:kim});
+  var _ist=(typeof ISLETMELER!=='undefined'?ISLETMELER:[]).find(function(x){return (x.kayitNo||x.isletmeAdi)===an;});
+  if(typeof aktiviteKaydet==='function') aktiviteKaydet('not_ekle', (_ist?_ist.isletmeAdi:an)+' - not eklendi', {kayitNo:an});
   isletmeNotKaydet();
   _g7DetayTazele(an);
 }
 function isletmeNotSil(an, ix){
   if(!isletmeNotlari[an]) return;
+  var _ist=(typeof ISLETMELER!=='undefined'?ISLETMELER:[]).find(function(x){return (x.kayitNo||x.isletmeAdi)===an;});
   isletmeNotlari[an].splice(ix,1);
   if(!isletmeNotlari[an].length) delete isletmeNotlari[an];
+  if(typeof aktiviteKaydet==='function') aktiviteKaydet('not_sil', (_ist?_ist.isletmeAdi:an)+' - not silindi', {kayitNo:an});
   isletmeNotKaydet();
   _g7DetayTazele(an);
 }
