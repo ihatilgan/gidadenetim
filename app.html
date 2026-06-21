@@ -1790,11 +1790,11 @@ window.addEventListener('fb-hazir', function() {
     <div style="display:flex;flex-direction:column;gap:14px;">
       <div>
         <label style="font-size:13px;font-weight:600;color:#2c3e50;display:block;margin-bottom:5px;">E-posta</label>
-        <input type="email" id="giris-email" placeholder="ornek@tarimorman.gov.tr" style="width:100%;padding:10px 12px;border:1.5px solid #dce3e8;border-radius:8px;font-size:14px;box-sizing:border-box;">
+        <input type="email" id="giris-email" placeholder="ornek@tarimorman.gov.tr" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('giris-parola').focus();}" style="width:100%;padding:10px 12px;border:1.5px solid #dce3e8;border-radius:8px;font-size:14px;box-sizing:border-box;">
       </div>
       <div>
         <label style="font-size:13px;font-weight:600;color:#2c3e50;display:block;margin-bottom:5px;">Parola</label>
-        <input type="password" id="giris-parola" placeholder="Parolanız" style="width:100%;padding:10px 12px;border:1.5px solid #dce3e8;border-radius:8px;font-size:14px;box-sizing:border-box;">
+        <input type="password" id="giris-parola" placeholder="Parolanız" onkeydown="if(event.key==='Enter'){event.preventDefault();girisYap();}" style="width:100%;padding:10px 12px;border:1.5px solid #dce3e8;border-radius:8px;font-size:14px;box-sizing:border-box;">
       </div>
       <button id="giris-btn" onclick="girisYap()" style="background:#1a6b3c;color:white;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px;">Giriş Yap</button>
       <button type="button" onclick="sifremiUnuttum()" style="background:none;border:none;color:#1a6b3c;font-size:13px;cursor:pointer;margin-top:2px;text-decoration:underline;">Şifremi unuttum / bilmiyorum</button>
@@ -10257,7 +10257,7 @@ window.ekipKullanicilarinaBildir=ekipKullanicilarinaBildir;
 function kullaniciMenuToggle(e){ if(e&&e.stopPropagation)e.stopPropagation(); var m=document.getElementById('kullanici-menu'); if(m) m.style.display=(m.style.display==='none'||!m.style.display)?'block':'none'; }
 function kullaniciMenuKapat(){ var m=document.getElementById('kullanici-menu'); if(m) m.style.display='none'; }
 document.addEventListener('click', function(e){ var m=document.getElementById('kullanici-menu'); var b=document.getElementById('kullanici-ad-btn'); if(m&&m.style.display==='block'&&!m.contains(e.target)&&b&&!b.contains(e.target)) m.style.display='none'; });
-function cikisYap(){ try{ if(typeof firestoreDinleyici!=='undefined'&&firestoreDinleyici){ firestoreDinleyici(); firestoreDinleyici=null; } }catch(e){} if(typeof firebase!=='undefined'&&firebase.auth) firebase.auth().signOut(); }
+function cikisYap(){ try{ if(typeof firestoreDinleyici!=='undefined'&&firestoreDinleyici){ firestoreDinleyici(); firestoreDinleyici=null; } }catch(e){} if(typeof firebase!=='undefined'&&firebase.auth){ firebase.auth().signOut().then(function(){ location.reload(); }).catch(function(){ location.reload(); }); } else { location.reload(); } }
 function kullaniciAyarlariAc(){
   var ov=document.getElementById('kullanici-ayar-overlay'); if(ov)ov.remove();
   ov=document.createElement('div'); ov.id='kullanici-ayar-overlay';
