@@ -522,7 +522,16 @@ function ekipYonetimiGoster(){
   if(isAdmin) h+='<button class="btn btn-gri btn-kucuk" onclick="ekibeKullaniciEkle(\''+_ekipEsc(_duzenlenenEkipId)+'\')">👤 Bu ekibe kullanıcı ekle</button>';
   h+='</div>';
   h+='<div class="bolum">Ekip Adı</div>';
-  h+='<input type="text" value="'+_ekipEsc(ek.ad||'')+'" oninput="ekipAdGuncelle(this.value)" style="width:100%;margin-bottom:14px;">';
+  h+='<input type="text" value="'+_ekipEsc(ek.ad||'')+'" oninput="ekipAdGuncelle(this.value)" style="width:100%;margin-bottom:6px;">';
+  if((ek.personel||[]).length){
+    var kisaIsimler=(ek.personel||[]).map(function(p){
+      var p2=p.trim().split(/\s+/);
+      return (p2[0]?p2[0][0]+'.':'')+' '+(p2.length>1?p2[p2.length-1]:'');
+    }).join(' • ');
+    h+='<div style="font-size:12px;color:var(--gri);margin-bottom:14px;line-height:1.6;">'+_ekipEsc(kisaIsimler)+'</div>';
+  } else {
+    h+='<div style="margin-bottom:14px;"></div>';
+  }
   h+='<div class="bolum">Mahalleler (<span id="ekip-mah-sayac">'+(ek.mahalleler||[]).length+' seçili</span>)</div>';
   h+='<div style="max-height:240px;overflow-y:auto;border:1px solid var(--sinir);border-radius:8px;padding:8px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:2px;">';
   mahOpts.forEach(function(m){ var on=(ek.mahalleler||[]).indexOf(m)>=0; h+='<label style="display:flex;align-items:center;gap:4px;width:48%;font-size:13px;padding:3px;box-sizing:border-box;"><input type="checkbox" value="'+_ekipEsc(m)+'" '+(on?'checked':'')+' onchange="ekipMahalleToggle(this.value,this.checked)">'+_ekipEsc(m)+_ekipSay(say.mah[m])+'</label>'; });
