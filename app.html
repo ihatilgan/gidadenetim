@@ -219,7 +219,7 @@ initFirebase();
 var MERKEZ_MAHALLE_MASTER = ["Akçın","Akmescit","Ali İhsan Paşa","Aliçetinkaya","Ataköy","Barbaros","Battalgazi","Bedrik","Beyazıt","Burmalı","Camikebir","Cumhuriyet","Çakır","Çavuşbaş","Dairecep","Demirçevre","Derviş Paşa","Dörtyol","Dumlupınar","Erenler","Ertuğrulgazi","Esentepe","Eşrefpaşa","Fakıpaşa","Fatih","Gazi","Güvenevler","Hacıabdurrahman","Hacı Mustafa","Hacı Nuh","Hamidiye","Hasan Karaağaç","Hattat Karahisar","Hoca Ahmet Yesevi","İsmail","İstiklal","Kanlıca","Karaman","Karşıyaka","Kasımpaşa","Kayadibi","Kışlacık","Kocatepe","Küçük Çobanlı","Mareşal Fevzi Çakmak","Marulcu","Mecidiye","Mevlana","Nazmi Saatçi","Olucak","Organize Sanayi Bölgesi","Orhangazi","Osmangazi","Örnekevler","Sadıkbey","Sahipata","Selçuklu","Sinanpaşa","Sümer","Tacı Ahmet","Umurbey","Veyselkarani","Yarenler","Yenice","Yeşilyurt","Yunus Emre","Zafer"];
 
 // Köy/kasaba evreni (editörde seçenek listesi)
-var KOY_MASTER = ["Anıtkaya","Bayatçık","Bayramgazi","Belkaracaören","Beyyazı","Bostanlı","Burhaniye","Çakırköy","Çavdarlı","Çayırbağ","Çıkrık","Değirmenayvalı","Değirmendere","Demirçevre","Erkmen","Fethibey","Gebeceler","Halımoru","Işıklar","Karaaslan","Kışlacık","Kızıldağ","Kocatepe","Kozluca","Köprülü","Küçükkalecik","Nuribey","Olucak","Salar","Saraydüzü","Sarık","Susuz","Sülümenli","Sülün"];
+var KOY_MASTER = ["Anıtkaya","Bayatçık","Bayramgazi","Belkaracaören","Beyyazı","Bostanlı","Burhaniye","Çavdarlı","Çayırbağ","Çıkrık","Değirmenayvalı","Değirmendere","Demirçevre","Erkmen","Fethibey","Gebeceler","Halımoru","Işıklar","Karaaslan","Kışlacık","Kızıldağ","Kocatepe","Kozluca","Köprülü","Küçükkalecik","Nuribey","Olucak","Salar","Saraydüzü","Sarık","Susuz","Sülümenli","Sülün"];
 
 // Manuel eklenen başlıklar (localStorage + Firebase)
 var MAHALLE_EKSTRA = [];
@@ -382,7 +382,8 @@ function ekipKurallariUygula(ekip) {
   // Kasabalar
   if (typeof SORUMLU_KASABALAR !== 'undefined') {
     SORUMLU_KASABALAR.length = 0;
-    (ekip.kasabalar||[]).forEach(function(m){ SORUMLU_KASABALAR.push(m); });
+    // KOY_MASTER'da olmayan kasabalar (silinmiş veya mahalleye taşınmış) otomatik atlanır
+    (ekip.kasabalar||[]).forEach(function(m){ if((typeof KOY_MASTER==='undefined')||KOY_MASTER.indexOf(m)>=0) SORUMLU_KASABALAR.push(m); });
   }
   // KOY_ISLETMELERI'ni yeni SORUMLU_KASABALAR'a göre yeniden doldur
   try { if (typeof koyIsletmeleriDoldur === 'function' && typeof ISLETMELER !== 'undefined' && ISLETMELER.length) koyIsletmeleriDoldur(); } catch(e){}
@@ -1239,7 +1240,8 @@ function _normTR(s) {
 var MAHALLE_EK_KALIP = {
   'Organize Sanayi Bölgesi': ['OSB Mah', 'O.S.B. Mah', 'Organize Sanayi Mah'],
   'Camikebir': ['Camii Kebir Mah', 'Cami Kebir Mah'],
-  'Erenler': ['Erenler Merkez']
+  'Erenler': ['Erenler Merkez'],
+  'Çakır': ['Çakırköy', 'Çakır Köy', 'Çakırköy Kasabası', 'Çakırköy Mah', 'Çakır Kasabası']
 };
 
 // Adres satırında mahalle geçiyor mu? Ana kalıp + takma adlar, boşluk/noktalama farkına dayanıklı.
