@@ -1168,6 +1168,8 @@ var TUM_URETIM_KATEGORILER = [
   {id:'u50', label:'Yeniden ambalajlama/Gıda ambalajlama', anahtar:['yeniden ambalajlama/gıda ambalajlama']},
   {id:'u51', label:'Yumurta paketleyen iş yerleri', anahtar:['yumurta paketleyen iş yerleri']},
   {id:'u52', label:'Zeytinyağı üretimi (yağhaneler hariç)', anahtar:['zeytinyağı üretimi (yağhaneler hariç)']},
+  {id:'u53', label:'Haş Haş Ezmesi Üretimi', anahtar:['haş haş ezmesi üretimi','haşhaş ezmesi üretimi','has has ezmesi üretimi']},
+  {id:'u54', label:'Çiğ Köfte Üretimi', anahtar:['çiğ köfte üretimi','cig kofte üretimi']},
   // --- ONAY (03-) üretim kategorileri: faaliyet "(KATEGORİ)..." biçiminde başlar ---
   {id:'o1', label:'Çiğ Süt ve Süt Ürünleri (Onay)', anahtar:['ÇİĞ SÜT VE SÜT ÜRÜNLERİ'], onay:true},
   {id:'o2', label:'Evcil Tırnaklıların Eti (Onay)', anahtar:['EVCİL TIRNAKLILARIN ETİ'], onay:true},
@@ -6333,13 +6335,21 @@ function excelYukle(file) {
         else if (i.riskeDayaliDenetimTarihi && eskiKayitlar[i.kayitNo].riskeDayaliDenetimTarihi !== i.riskeDayaliDenetimTarihi) tarihGuncellenen++;
       });
 
-      // ISLETMELER güncelle
+      // ISLETMELER güncelle — mevcut işletmelerin faaliyetAlani korunur (kategori donması)
+      // Yeni işletmelerde GGBS verisi aynen kullanılır; eski işletmelerde sadece detaylar güncellenir.
+      var birlesikIsletmeler = yeniIsletmeler.map(function(i){
+        var eskiVeri = eskiKayitlar[i.kayitNo];
+        if (eskiVeri) {
+          return Object.assign({}, i, {faaliyetAlani: eskiVeri.faaliyetAlani || i.faaliyetAlani});
+        }
+        return i;
+      });
       ISLETMELER.length = 0;
-      yeniIsletmeler.forEach(function(i){ ISLETMELER.push(i); });
+      birlesikIsletmeler.forEach(function(i){ ISLETMELER.push(i); });
       localStorage.setItem('isletmeler_guncelleme', new Date().toLocaleString('tr-TR'));
       // Ana işletme listesi artık Firestore isletmeler_master koleksiyonuna yazılır.
       // Boş/yanlış Excel zaten yukarıda durdurulduğu için mevcut ana liste ezilmez.
-      isletmelerMasterFirestoreYukle(yeniIsletmeler, durumEl).then(function(){
+      isletmelerMasterFirestoreYukle(birlesikIsletmeler, durumEl).then(function(){
         listeBilgiGuncelle();
         ozetGuncelle();
         ikaz_sayisiGuncelle();
@@ -6452,7 +6462,7 @@ function excelYukle(file) {
       } catch(e) { console.warn('Excel sonrası yeniden kurma hatası:', e); }
 
       // Sonuç mesajı
-      var parcalar = [yeniIsletmeler.length.toLocaleString('tr-TR') + ' işletme yüklendi'];
+      var parcalar = [birlesikIsletmeler.length.toLocaleString('tr-TR') + ' işletme yüklendi'];
       if (eklenen) parcalar.push(eklenen + ' yeni eklendi');
       if (silinen) parcalar.push(silinen + ' Excelde yok / pasif yapılacak');
       if (tarihGuncellenen + uretimGunc > 0) parcalar.push((tarihGuncellenen + uretimGunc) + ' risk tarihi güncellendi');
@@ -6460,31 +6470,36 @@ function excelYukle(file) {
       durumEl.innerHTML = '<div class="ikaz ikaz-yesil"><span class="ikaz-ikon">✅</span><span><strong>' +
         parcalar.join(' • ') + '</strong><br><small>' + new Date().toLocaleString('tr-TR') + '</small></span></div>';
 
-      // Sorumluluğa giren yeni işletmeleri bildir
-      var yeniSorumlu = yeniIsletmeler.filter(function(i) {
+      // Sorumluluğa giren yeni işletmeleri bildir (kategori bilgisiyle)
+      var yeniSorumlu = birlesikIsletmeler.filter(function(i) {
         return !eskiKayitlar[i.kayitNo] && isletmeSorumluMu(i);
       });
       if (yeniSorumlu.length > 0) {
         var uyariDiv = document.createElement('div');
         uyariDiv.className = 'ikaz ikaz-turuncu';
         uyariDiv.style.marginTop = '10px';
-        var uyariHtml = '<span class="ikaz-ikon">🆕</span><div style="flex:1"><strong>' + yeniSorumlu.length + ' yeni işletme sorumluluğunuza eklendi!</strong><ul style="margin:8px 0 0 0;padding-left:18px;font-size:13px;">';
+        var uyariHtml = '<span class="ikaz-ikon">🆕</span><div style="flex:1"><strong>' + yeniSorumlu.length + ' yeni işletme eklendi — kategori kontrolü yapın!</strong><ul style="margin:8px 0 0 0;padding-left:18px;font-size:13px;">';
         yeniSorumlu.forEach(function(i) {
-          var tur = '';
-          var faaliyet = (i.faaliyetAlani || '').toLocaleLowerCase('tr');
-          var sorumluFaaliyet = typeof SORUMLU_FAALIYET_ANAHTAR !== 'undefined' ? SORUMLU_FAALIYET_ANAHTAR : [];
-          var uretimMi = sorumluFaaliyet.some(function(a){ return faaliyet.includes(a.toLocaleLowerCase('tr')); });
-          if (uretimMi) tur = ' <span style="color:var(--mor);font-size:11px;">[Üretim Yeri]</span>';
-          else {
-            var mahalle = (i.adres||'').match(/(\S+\s*Mah[^\s,·]*)/i);
-            tur = mahalle ? ' <span style="color:var(--gri);font-size:11px;">[' + mahalle[0].trim() + ']</span>' : ' <span style="color:var(--gri);font-size:11px;">[Satış/Hizmet]</span>';
+          var etiket = '';
+          // Hangi üretim kategorisine otomatik atandı?
+          var otoKat = null;
+          if (typeof TUM_URETIM_KATEGORILER !== 'undefined' && typeof uretimKatEslesir === 'function') {
+            for (var ci = 0; ci < TUM_URETIM_KATEGORILER.length; ci++) {
+              if (uretimKatEslesir(i.faaliyetAlani, TUM_URETIM_KATEGORILER[ci])) { otoKat = TUM_URETIM_KATEGORILER[ci]; break; }
+            }
           }
-          uyariHtml += '<li><strong>' + i.isletmeAdi + '</strong> ' + i.kayitNo + tur + '</li>';
+          if (otoKat) {
+            etiket = ' <span style="background:#e8f5e9;color:#1a6b3c;font-size:11px;border-radius:4px;padding:1px 5px;">' + _ekipEsc(otoKat.label) + '</span>';
+          } else {
+            var mahalle = (i.adres||'').match(/(\S+\s*Mah[^\s,·]*)/i);
+            etiket = mahalle ? ' <span style="color:var(--gri);font-size:11px;">[' + mahalle[0].trim() + ']</span>' : ' <span style="color:var(--gri);font-size:11px;">[Satış/Hizmet]</span>';
+          }
+          uyariHtml += '<li><strong>' + _ekipEsc(i.isletmeAdi) + '</strong> <span style="color:var(--gri);">' + _ekipEsc(i.kayitNo) + '</span>' + etiket + '</li>';
         });
-        uyariHtml += '</ul></div>';
+        uyariHtml += '</ul><div style="font-size:12px;color:#7f8c8d;margin-top:6px;">Kategoriyi değiştirmek için işletme detayına girin → Kategori kutusuna tıklayın.</div></div>';
         uyariDiv.innerHTML = uyariHtml;
         durumEl.appendChild(uyariDiv);
-        bildirimGoster('🆕 ' + yeniSorumlu.length + ' yeni işletme sorumluluğunuza eklendi!', 'bilgi');
+        bildirimGoster('🆕 ' + yeniSorumlu.length + ' yeni işletme eklendi! Kategori kontrolü yapın.', 'bilgi');
       }
 
       listeBilgiGuncelle();
