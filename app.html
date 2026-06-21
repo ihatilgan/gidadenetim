@@ -1922,6 +1922,7 @@ window.addEventListener('fb-hazir', function() {
     </span>
     <span class="nav-label">Denetimler</span>
   </button>
+<!-- YAPTIRIMLAR_NAV_DEVRE_DISI
   <button onclick="sayfaGoster('yaptirimlar', this)" data-sayfa="yaptirimlar">
     <span class="nav-ikon">
       <svg width="26" height="26" viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg">
@@ -1937,6 +1938,7 @@ window.addEventListener('fb-hazir', function() {
     </span>
     <span class="nav-label">Yaptırım</span>
   </button>
+YAPTIRIMLAR_NAV_DEVRE_DISI -->
   <button onclick="sohbetNavTikla(this)" id="sohbet-nav-btn" style="position:relative;">
     <span class="nav-ikon" style="position:relative;display:inline-block;">
       <svg width="26" height="26" viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg">
@@ -2029,6 +2031,7 @@ window.addEventListener('fb-hazir', function() {
       <div id="ozet-son-liste"></div>
     </div>
 
+<!-- DEVRE_DISI
     <!-- YAPTIRIMLAR ÖZETİ -->
     <div class="kart" id="ozet-yaptirim-kart" style="display:none;padding:0;overflow:hidden;margin-top:14px;">
       <div class="kart-baslik" id="ypt-ozet-baslik" onclick="yptOzetToggle()" style="cursor:pointer;padding:16px 20px;margin-bottom:0;user-select:none;display:flex;justify-content:space-between;align-items:center;">
@@ -2050,6 +2053,7 @@ window.addEventListener('fb-hazir', function() {
         <div id="ypt-son-liste" style="margin-top:12px;"></div>
       </div>
     </div>
+DEVRE_DISI -->
   </div>
 
   <!-- YENİ DENETİM -->
@@ -2485,6 +2489,7 @@ window.addEventListener('fb-hazir', function() {
 
   <!-- İKAZLAR -->
 
+<!-- DEVRE_DISI
   <!-- ===== YAPTIRIMLAR SAYFASI ===== -->
   <div id="sayfa-yaptirimlar" class="sayfa">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
@@ -2510,7 +2515,9 @@ window.addEventListener('fb-hazir', function() {
     </div>
     <div id="yaptirim-listesi" style="display:flex;flex-direction:column;gap:8px;"></div>
   </div>
+DEVRE_DISI -->
 
+<!-- DEVRE_DISI
   <!-- ===== YAPTIRIM YENİ/DÜZENLE SAYFASI ===== -->
   <div id="sayfa-yaptirim-yeni" class="sayfa">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
@@ -2603,6 +2610,7 @@ window.addEventListener('fb-hazir', function() {
       <button class="btn btn-gri" onclick="sayfaGoster('yaptirimlar',null)" style="flex:1;">İptal</button>
     </div>
   </div>
+DEVRE_DISI -->
 
   <div id="sayfa-ikazlar" class="sayfa">
     <div class="kart">
@@ -3642,7 +3650,7 @@ function sayfaGoster(id, btn) {
   document.getElementById('sayfa-' + id).classList.add('aktif');
   document.querySelectorAll('#alt-nav button').forEach(b => b.classList.remove('aktif'));
   if (btn && btn.closest && btn.closest('#alt-nav')) btn.classList.add('aktif');
-  var altNavSayfalar = ['ozet','yeni','liste','sorumluluklarim','yaptirimlar'];
+  var altNavSayfalar = ['ozet','yeni','liste','sorumluluklarim']; /* 'yaptirimlar' DEVRE DISI */
   if (altNavSayfalar.includes(id)) {
     document.querySelectorAll('#alt-nav button[data-sayfa]').forEach(function(b) {
       if (b.dataset.sayfa === id) b.classList.add('aktif');
@@ -3662,7 +3670,7 @@ function sayfaGoster(id, btn) {
   if (id === 'yeni' && !duzenlemeModu) {
     formuSifirla();
   }
-  if (id === 'yaptirimlar') { yaptirimlarGuncelle(); }
+  /* DEVRE DISI: if (id === 'yaptirimlar') { yaptirimlarGuncelle(); } */
   if (id === 'isletmeler') {
     var el = document.getElementById('isletme-liste');
     var sonucEl = document.getElementById('isletme-liste-sonuc');
@@ -5426,6 +5434,7 @@ function isletmeVergiTcDoldur(i) {
     if (!i.vergiNo && _lu.vergiNo) i.vergiNo = _lu.vergiNo;
     if (!i.tcKimlikNo && _lu.tcKimlikNo) i.tcKimlikNo = _lu.tcKimlikNo;
   }
+  /* DEVRE DISI:
   if (!i.tcKimlikNo) {
     var _yp = (yaptirimlar||[]).find(function(y){ return y.isletmeKayitNo===i.kayitNo && y.tc; });
     if (_yp) i.tcKimlikNo = _yp.tc;
@@ -5438,6 +5447,7 @@ function isletmeVergiTcDoldur(i) {
       if (!i.vergiNo && _vp[1]) i.vergiNo = _vp[1];
     }
   }
+  */
 }
 
 function isletmeDetayModal(idx) {
@@ -6140,9 +6150,11 @@ function isletmelerMasterFirestoreYukle(liste, durumEl) {
   });
 }
 
+var isletmelerMasterZorunlu = false;
 function isletmelerMasterFirestoreCek() {
   if (!mevcutKullanici || typeof firebase === 'undefined') return Promise.resolve(false);
   if (isletmelerMasterYukleniyor) return Promise.resolve(false);
+  if (ISLETMELER.length >= 10 && !isletmelerMasterZorunlu) return Promise.resolve(true);
   isletmelerMasterYukleniyor = true;
   return firebase.firestore().collection('isletmeler_master').get().then(function(snapshot) {
     if (snapshot.empty) return false;
@@ -6173,7 +6185,9 @@ function isletmelerMasterVersiyonDinle() {
         isletmelerMasterSonVersion = yeniVersion;
         localStorage.setItem('isletmeler_master_version', yeniVersion);
         localStorage.setItem('isletmeler_guncelleme', new Date().toLocaleString('tr-TR'));
+        isletmelerMasterZorunlu = true;
         isletmelerMasterFirestoreCek().then(function(ok) {
+          isletmelerMasterZorunlu = false;
           if (ok) {
             bildirimGoster('🔄 İşletme listesi güncellendi (' + ((data.count||0).toLocaleString ? data.count.toLocaleString('tr-TR') : data.count) + ' kayıt)', 'bilgi');
             if (typeof riskBildirimYenile === 'function') riskBildirimYenile();
@@ -8918,7 +8932,7 @@ document.addEventListener('DOMContentLoaded', function() {
     try { vergiLookupUygula(URETIM_YERLERI); } catch(e) {}
     try { if (typeof KOY_ISLETMELERI !== 'undefined') Object.keys(KOY_ISLETMELERI).forEach(function(k) { vergiLookupUygula(KOY_ISLETMELERI[k]); }); } catch(e) {}
   }, 1200);
-  setTimeout(yaptirimlarFirebaseYukle, 5000);
+  // setTimeout(yaptirimlarFirebaseYukle, 5000);  // DEVRE DISI
 });
 
 
