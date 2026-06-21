@@ -6678,103 +6678,95 @@ var mevcutKullaniciAdi = '';
 var isAdmin = false;
 var ADMIN_UID = window.ADMIN_UID || 'sIKGnuwKj7cAMGnPvJg3BF1JWXf1';
 
+function _uygulamaGoster(user, ad, ekipId) {
+  mevcutKullaniciAdi = ad || user.email.split('@')[0];
+  document.getElementById('giris-ekrani').style.display = 'none';
+  document.querySelector('header').style.display = '';
+  var nav = document.getElementById('alt-nav'); if (nav) nav.style.display = 'flex';
+  document.querySelector('main').style.display = '';
+  var kDiv = document.getElementById('kullanici-bilgi');
+  if (kDiv) kDiv.style.display = 'flex';
+  var kAd = document.getElementById('kullanici-ad');
+  if (kAd) kAd.textContent = mevcutKullaniciAdi;
+  var adminBtn = document.getElementById('kullanici-yonetim-btn');
+  if (adminBtn) adminBtn.style.display = isAdmin ? '' : 'none';
+  var ayarlarBtn = document.getElementById('ayarlar-btn');
+  if (ayarlarBtn) ayarlarBtn.style.display = isAdmin ? '' : 'none';
+  var apBtn = document.getElementById('admin-panel-btn');
+  if (apBtn) apBtn.style.display = isAdmin ? '' : 'none';
+  var eyBtn = document.getElementById('ekip-yonetim-btn');
+  if (eyBtn) eyBtn.style.display = isAdmin ? '' : 'none';
+  var bbBtn = document.getElementById('basliklar-btn');
+  if (bbBtn) bbBtn.style.display = isAdmin ? '' : 'none';
+  var sbBtn = document.getElementById('sorunlar-btn');
+  if (sbBtn) sbBtn.style.display = isAdmin ? '' : 'none';
+  var esw = document.getElementById('ekip-secici-wrap');
+  if (esw) { esw.style.display = isAdmin ? 'flex' : 'none'; }
+  var eswO = document.getElementById('ekip-secici-wrap-ozet');
+  if (eswO) { eswO.style.display = isAdmin ? 'flex' : 'none'; }
+  if (!isAdmin && ekipId) {
+    if (ekipId !== aktifEkipId) {
+      aktifEkipId = ekipId;
+      try { localStorage.setItem(AKTIF_EKIP_KEY, ekipId); } catch(e){}
+    }
+    if (typeof aktifEkibeGec === 'function') { try { aktifEkibeGec(aktifEkipId, false); } catch(e){} }
+  }
+  if (isAdmin && typeof ekipSeciciDoldur === 'function') ekipSeciciDoldur();
+  if (isAdmin && typeof sorunBadgeDinle === 'function') sorunBadgeDinle();
+  try { if (typeof sayfaGoster === 'function') sayfaGoster('ozet', document.querySelector('nav button')); } catch(e){}
+  firebaseDinle();
+  offlineDurumGuncelle();
+  if (navigator.onLine) offlineKuyruguGonder();
+  isletmelerMasterVersiyonDinle();
+  ggbsRiskTarihleriniYukle().then(function() {
+    ozetGuncelle();
+    ikaz_sayisiGuncelle();
+    if (typeof ekipSeciciDoldur === 'function') try { ekipSeciciDoldur(); } catch(e){}
+    if (typeof riskBildirimYenile === 'function') riskBildirimYenile();
+  }).catch(function() {
+    ozetGuncelle();
+    if (typeof riskBildirimYenile === 'function') riskBildirimYenile();
+  });
+  presenceGuncelle();
+  if (_presenceIntervalId) clearInterval(_presenceIntervalId);
+  _presenceIntervalId = setInterval(presenceGuncelle, 3 * 60 * 1000);
+  sohbetBildirimDinle();
+}
+
 function kullaniciBilgiYukle(user) {
+  // Önce localStorage önbelleğinden anında göster
+  var _cachedAd = '';
+  var _cachedEkip = '';
+  try { _cachedAd = localStorage.getItem('kadi_' + user.uid) || ''; } catch(e){}
+  try { _cachedEkip = localStorage.getItem(AKTIF_EKIP_KEY) || ''; } catch(e){}
+  _uygulamaGoster(user, _cachedAd || user.email.split('@')[0], _cachedEkip || aktifEkipId);
+
+  // Arka planda Firestore'dan gerçek profili çek
   var kullaniciRef = firebase.firestore().collection('kullanicilar').doc(user.uid);
   kullaniciRef.get().then(function(snap) {
     var data = snap.exists ? snap.data() : {
-      ad: user.email.split('@')[0],
-      email: user.email,
-      rol: user.uid === ADMIN_UID ? 'admin' : 'denetci',
-      ilkGiris: user.uid !== ADMIN_UID
+      ad: user.email.split('@')[0], email: user.email,
+      rol: isAdmin ? 'admin' : 'denetci', ilkGiris: !isAdmin
     };
     if (!snap.exists) kullaniciRef.set(data);
-    mevcutKullaniciAdi = data.ad || user.email;
-    if (!isAdmin) {
-      aktifEkipId = data.ekipId || null;
-      try { localStorage.setItem(AKTIF_EKIP_KEY, aktifEkipId || ''); } catch(e){}
-      if (data.ekipId && typeof aktifEkibeGec === 'function') { try { aktifEkibeGec(data.ekipId, false); } catch(e){} }
-    } else if (data.ekipId && typeof aktifEkibeGec === 'function') { try { aktifEkibeGec(data.ekipId, false); } catch(e){} }
-    
-    document.getElementById('giris-ekrani').style.display = 'none';
-    document.querySelector('header').style.display = '';
-    var nav = document.getElementById('alt-nav'); if (nav) nav.style.display = 'flex';
-    document.querySelector('main').style.display = '';
-    
-    var kDiv = document.getElementById('kullanici-bilgi');
-    if (kDiv) kDiv.style.display = 'flex';
-    var kAd = document.getElementById('kullanici-ad');
-    if (kAd) kAd.textContent = mevcutKullaniciAdi;
-    
-    var adminBtn = document.getElementById('kullanici-yonetim-btn');
-    if (adminBtn) adminBtn.style.display = isAdmin ? '' : 'none';
-    var ayarlarBtn = document.getElementById('ayarlar-btn');
-    if (ayarlarBtn) ayarlarBtn.style.display = isAdmin ? '' : 'none';
-    var apBtn = document.getElementById('admin-panel-btn');
-    if (apBtn) apBtn.style.display = isAdmin ? '' : 'none';
-    var eyBtn = document.getElementById('ekip-yonetim-btn');
-    if (eyBtn) eyBtn.style.display = isAdmin ? '' : 'none';
-    var bbBtn = document.getElementById('basliklar-btn');
-    if (bbBtn) bbBtn.style.display = isAdmin ? '' : 'none';
-    var sbBtn = document.getElementById('sorunlar-btn');
-    if (sbBtn) sbBtn.style.display = isAdmin ? '' : 'none';
-    var esw = document.getElementById('ekip-secici-wrap');
-    if (esw) { esw.style.display = isAdmin ? 'flex' : 'none'; }
-    var eswO = document.getElementById('ekip-secici-wrap-ozet');
-    if (eswO) { eswO.style.display = isAdmin ? 'flex' : 'none'; }
-    if (isAdmin && typeof ekipSeciciDoldur === 'function') ekipSeciciDoldur();
-    if (isAdmin && typeof sorunBadgeDinle === 'function') sorunBadgeDinle();
-    try { if (typeof sayfaGoster === 'function') sayfaGoster('ozet', document.querySelector('nav button')); } catch(e){}
-    
-    if (data.ilkGiris && !isAdmin) {
-      setTimeout(function() {
-        var pe = document.getElementById('parola-ekrani');
-        if (pe) pe.style.display = 'flex';
-      }, 500);
+    // Adı güncelle
+    var gercekAd = data.ad || user.email;
+    try { localStorage.setItem('kadi_' + user.uid, gercekAd); } catch(e){}
+    if (gercekAd !== mevcutKullaniciAdi) {
+      mevcutKullaniciAdi = gercekAd;
+      var kAd = document.getElementById('kullanici-ad');
+      if (kAd) kAd.textContent = mevcutKullaniciAdi;
     }
-    
-    firebaseDinle();
-    offlineDurumGuncelle();
-    if (navigator.onLine) offlineKuyruguGonder();
-    isletmelerMasterVersiyonDinle();
-    // ggbs manuel tarihler ve ana işletme listesi yüklendikten sonra özeti güncelle
-    ggbsRiskTarihleriniYukle().then(function() {
-      ozetGuncelle();
-      ikaz_sayisiGuncelle();
-      if (typeof ekipSeciciDoldur === 'function') try { ekipSeciciDoldur(); } catch(e){}
-      if (typeof riskBildirimYenile === 'function') riskBildirimYenile();
-    }).catch(function() {
-      ozetGuncelle();
-      if (typeof ekipSeciciDoldur === 'function') try { ekipSeciciDoldur(); } catch(e){}
-      if (typeof riskBildirimYenile === 'function') riskBildirimYenile();
-    });
-    // Sohbet: presence güncelle ve bildirimleri dinle
-    presenceGuncelle();
-    if (_presenceIntervalId) clearInterval(_presenceIntervalId);
-    _presenceIntervalId = setInterval(presenceGuncelle, 3 * 60 * 1000);
-    sohbetBildirimDinle();
-  }).catch(function(err) {
-    mevcutKullaniciAdi = user.email;
-    document.getElementById('giris-ekrani').style.display = 'none';
-    document.querySelector('header').style.display = '';
-    var nav = document.getElementById('alt-nav'); if (nav) nav.style.display = 'flex';
-    document.querySelector('main').style.display = '';
-    firebaseDinle();
-    offlineDurumGuncelle();
-    if (navigator.onLine) offlineKuyruguGonder();
-    isletmelerMasterVersiyonDinle();
-    ggbsRiskTarihleriniYukle().then(function(){
-      ozetGuncelle();
-      ikaz_sayisiGuncelle();
-      if (typeof riskBildirimYenile === 'function') riskBildirimYenile();
-    }).catch(function(){
-      ozetGuncelle();
-      if (typeof riskBildirimYenile === 'function') riskBildirimYenile();
-    });
-    presenceGuncelle();
-    if (_presenceIntervalId) clearInterval(_presenceIntervalId);
-    _presenceIntervalId = setInterval(presenceGuncelle, 3 * 60 * 1000);
-    sohbetBildirimDinle();
-  });
+    // Ekip değiştiyse güncelle
+    if (!isAdmin && data.ekipId && data.ekipId !== aktifEkipId) {
+      try { localStorage.setItem(AKTIF_EKIP_KEY, data.ekipId); } catch(e){}
+      if (typeof aktifEkibeGec === 'function') { try { aktifEkibeGec(data.ekipId, true); } catch(e){} }
+    }
+    // İlk giriş: şifre değiştirme ekranı
+    if (data.ilkGiris && !isAdmin) {
+      setTimeout(function() { var pe=document.getElementById('parola-ekrani'); if(pe) pe.style.display='flex'; }, 600);
+    }
+  }).catch(function() {});
 }
 
 function denetimlerdenRiskTarihleriniUygula(denetimListesi) {
