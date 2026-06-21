@@ -9895,43 +9895,62 @@ function isletmeBaslikDegistirAc(an){
   ov.appendChild(box);
   document.body.appendChild(ov);
   _baslikDegisCiz(an);
+  setTimeout(function(){var e=document.getElementById('baslik-degis-ara');if(e)e.focus();},80);
 }
 function _baslikDegisCiz(an){
   var i=_isletmeBulAnahtar(an); var box=document.getElementById('baslik-degis-box'); if(!i||!box) return;
   var anEsc=_ekipEsc(an).replace(/'/g,"\\'");
   var se=isletmeSorumluEkip(i);
   var manuelMi = (typeof manuelBaslik!=='undefined' && manuelBaslik[an]);
-  var h='<div style="font-weight:700;font-size:16px;margin-bottom:2px;">'+_ekipEsc(i.isletmeAdi||an)+'</div>';
-  h+='<div style="font-size:12px;color:var(--gri);margin-bottom:4px;">Şu an: '+_ekipEsc(baslikEtiket(se.baslik))+(se.ekip?(' • '+_ekipEsc(se.ekip.ad||se.ekip.id)):' • boşta')+(manuelMi?' • <b>manuel</b>':' • otomatik')+'</div>';
-  h+='<div style="font-size:12px;color:var(--gri);margin-bottom:12px;">Yeni bir başlık seç (işletme o başlığın ekibine geçer). Başlık ara:</div>';
-  h+='<input type="text" id="baslik-degis-ara" placeholder="🔍 mahalle, köy veya üretim..." value="'+_ekipEsc(_baslikDegisArama)+'" oninput="_baslikDegisArama=this.value;_baslikDegisCiz(\''+anEsc+'\');setTimeout(function(){var e=document.getElementById(\'baslik-degis-ara\');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}},0);" style="width:100%;margin-bottom:10px;">';
+  // İlk açılışta statik kısım (input dahil) bir kez oluşturulur; sonraki çağrılarda dokunulmaz.
+  if (!document.getElementById('baslik-degis-ara')) {
+    var h='<div style="font-weight:700;font-size:16px;margin-bottom:2px;">'+_ekipEsc(i.isletmeAdi||an)+'</div>';
+    h+='<div style="font-size:12px;color:var(--gri);margin-bottom:4px;">Şu an: '+_ekipEsc(baslikEtiket(se.baslik))+(se.ekip?(' • '+_ekipEsc(se.ekip.ad||se.ekip.id)):' • boşta')+(manuelMi?' • <b>manuel</b>':' • otomatik')+'</div>';
+    h+='<div style="font-size:12px;color:var(--gri);margin-bottom:12px;">Yeni bir başlık seç (işletme o başlığın ekibine geçer). Başlık ara:</div>';
+    h+='<input type="text" id="baslik-degis-ara" placeholder="🔍 mahalle, köy veya üretim..." style="width:100%;margin-bottom:10px;">';
+    h+='<div id="baslik-degis-sonuclar"></div>';
+    h+='<div id="baslik-degis-alt"></div>';
+    box.innerHTML=h;
+    var inp=document.getElementById('baslik-degis-ara');
+    inp.addEventListener('input',function(){ _baslikDegisArama=this.value; _baslikDegisGuncelle(an); });
+  }
+  _baslikDegisGuncelle(an);
+}
+function _baslikDegisGuncelle(an){
+  var sonuclar=document.getElementById('baslik-degis-sonuclar');
+  var altDiv=document.getElementById('baslik-degis-alt');
+  if(!sonuclar||!altDiv) return;
+  var anEsc=_ekipEsc(an).replace(/'/g,"\\'");
   var ara=_baslikDegisArama.trim().toLocaleLowerCase('tr');
+  var sh='';
   if(ara){
     var liste=(typeof tumBasliklarListe==='function')?tumBasliklarListe():[];
     var bulunan=liste.filter(function(b){ return b.ad.toLocaleLowerCase('tr').indexOf(ara)>=0; }).slice(0,40);
-    if(!bulunan.length) h+='<div style="font-size:13px;color:var(--gri);padding:8px 0;">Eşleşen başlık yok.</div>';
+    if(!bulunan.length) sh='<div style="font-size:13px;color:var(--gri);padding:8px 0;">Eşleşen başlık yok.</div>';
     bulunan.forEach(function(b){
       var ek=(typeof baslikEkibiBul==='function')?baslikEkibiBul(b):null;
       var rozet=ek?'<span style="background:#e8f0fe;color:#1a56c4;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:600;">'+_ekipEsc(ek.ad||ek.id)+'</span>':'<span style="background:#fdecea;color:#c0392b;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:600;">Boşta</span>';
       var tipEt=b.tip==='uretim'?'Üretim':b.tip==='koy'?'Köy':'Mahalle';
       var keyEsc=_ekipEsc(b.key).replace(/'/g,"\\'");
-      h+='<div onclick="isletmeBaslikUygula(\''+anEsc+'\',\''+b.tip+'\',\''+keyEsc+'\')" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--sinir);border-radius:9px;margin-bottom:6px;cursor:pointer;">'
+      sh+='<div onclick="isletmeBaslikUygula(\''+anEsc+'\',\''+b.tip+'\',\''+keyEsc+'\')" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--sinir);border-radius:9px;margin-bottom:6px;cursor:pointer;">'
         +'<div style="min-width:0;"><div style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_ekipEsc(b.ad)+'</div><div style="font-size:10px;color:var(--gri);">'+tipEt+'</div></div>'+rozet+'</div>';
     });
   }
-  h+='<div style="border-top:1px solid var(--sinir);margin-top:10px;padding-top:10px;">';
-  h+='<div style="font-size:12px;font-weight:600;margin-bottom:6px;">Doğrudan ekibe ata (kategorisinden bağımsız):</div>';
+  sonuclar.innerHTML=sh;
+  var manuelBaslikVal=(typeof manuelBaslik!=='undefined')?manuelBaslik[an]:null;
+  var ah='<div style="border-top:1px solid var(--sinir);margin-top:10px;padding-top:10px;">';
+  ah+='<div style="font-size:12px;font-weight:600;margin-bottom:6px;">Doğrudan ekibe ata (kategorisinden bağımsız):</div>';
   (typeof EKIPLER!=='undefined'?EKIPLER:[]).forEach(function(e){
     var _aktif=(typeof manuelEkip!=='undefined' && manuelEkip[an]===e.id);
-    h+='<button class="btn '+(_aktif?'btn-yesil':'btn-gri')+'" style="width:100%;margin-bottom:6px;text-align:left;" onclick="isletmeEkibeAta(\''+anEsc+'\',\''+_ekipEsc(e.id).replace(/\x27/g,"\\x27")+'\')">'+(_aktif?'✓ ':'')+_ekipEsc(e.ad||e.id)+'</button>';
+    ah+='<button class="btn '+(_aktif?'btn-yesil':'btn-gri')+'" style="width:100%;margin-bottom:6px;text-align:left;" onclick="isletmeEkibeAta(\''+anEsc+'\',\''+_ekipEsc(e.id).replace(/\x27/g,"\\x27")+'\')">'+(_aktif?'✓ ':'')+_ekipEsc(e.ad||e.id)+'</button>';
   });
-  if(typeof manuelEkip!=='undefined' && manuelEkip[an]) h+='<button class="btn btn-gri" style="width:100%;margin-bottom:8px;" onclick="isletmeEkipOverrideKaldir(\''+anEsc+'\')">↺ Doğrudan ekip atamasını kaldır</button>';
-  h+='<div style="border-top:1px dashed var(--sinir);margin:10px 0;"></div>';
-  if(manuelMi) h+='<button class="btn btn-gri" style="width:100%;margin-bottom:8px;" onclick="isletmeOtomatigeDondur(\''+anEsc+'\')">↺ Otomatiğe döndür (adresine göre)</button>';
-  h+='<button class="btn" style="width:100%;margin-bottom:8px;background:#fdecea;color:#c0392b;" onclick="isletmeYoksayEt(\''+anEsc+'\')">⏸️ Bu işletmeyi yoksay</button>';
-  h+='<button class="btn btn-gri" style="width:100%;" onclick="var o=document.getElementById(\'baslik-degis-overlay\');if(o)o.remove();">İptal</button>';
-  h+='</div>';
-  box.innerHTML=h;
+  if(typeof manuelEkip!=='undefined' && manuelEkip[an]) ah+='<button class="btn btn-gri" style="width:100%;margin-bottom:8px;" onclick="isletmeEkipOverrideKaldir(\''+anEsc+'\')">↺ Doğrudan ekip atamasını kaldır</button>';
+  ah+='<div style="border-top:1px dashed var(--sinir);margin:10px 0;"></div>';
+  if(manuelBaslikVal) ah+='<button class="btn btn-gri" style="width:100%;margin-bottom:8px;" onclick="isletmeOtomatigeDondur(\''+anEsc+'\')">↺ Otomatiğe döndür (adresine göre)</button>';
+  ah+='<button class="btn" style="width:100%;margin-bottom:8px;background:#fdecea;color:#c0392b;" onclick="isletmeYoksayEt(\''+anEsc+'\')">⏸️ Bu işletmeyi yoksay</button>';
+  ah+='<button class="btn btn-gri" style="width:100%;" onclick="var o=document.getElementById(\'baslik-degis-overlay\');if(o)o.remove();">İptal</button>';
+  ah+='</div>';
+  altDiv.innerHTML=ah;
 }
 function isletmeBaslikUygula(an, tip, key){
   var i=_isletmeBulAnahtar(an);
@@ -9976,6 +9995,7 @@ function isletmeYoksayKaldir(an){
 }
 window.isletmeBaslikDegistirAc=isletmeBaslikDegistirAc;
 window._baslikDegisCiz=_baslikDegisCiz;
+window._baslikDegisGuncelle=_baslikDegisGuncelle;
 window.isletmeBaslikUygula=isletmeBaslikUygula;
 window.isletmeOtomatigeDondur=isletmeOtomatigeDondur;
 window.isletmeYoksayEt=isletmeYoksayEt;
