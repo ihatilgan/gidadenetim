@@ -5504,6 +5504,8 @@ function haricTutulanlariKaydet() {
 
 function sorumluTabDegistir(tab) {
   aktifSorumluTab = tab;
+  _manuelEklemeGrubu = null;
+  _manuelEklemeArama = '';
   ['tab-uretim','tab-satis','tab-koy','tab-haric'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.className = (id === 'tab-'+tab) ? 'btn btn-yesil' : 'btn btn-gri';
@@ -5513,6 +5515,9 @@ function sorumluTabDegistir(tab) {
 
 var _sorumlulukRiskFiltre = false;
 var _sorumlulukAcik = {};
+var _manuelEklemeGrubu = null;
+var _manuelEklemeArama = '';
+var _sonGruplar = {};
 function _baslikAdGoster(b){
   if(!b) return '';
   if(b.tip==='uretim'){ var k=(typeof TUM_URETIM_KATEGORILER!=='undefined'?TUM_URETIM_KATEGORILER:[]).filter(function(x){return x.id===b.key;})[0]; return k?k.label:b.key; }
@@ -5577,6 +5582,7 @@ function sorumluluklarimGoster() {
   });
   var toplam = sayim.uretim+sayim.mahalle+sayim.koy;
   _sorumluTabSayiGuncelle(sayim);
+  _sonGruplar = gruplar;
 
   var h='';
   if(!isAdminF){
@@ -5610,11 +5616,77 @@ function sorumluluklarimGoster() {
         h+='<div style="font-size:11px;color:var(--gri);margin-top:2px;">'+_ekipEsc(i.kayitNo||'')+riskHtml+'</div>';
         h+='</div>';
       });
+      if(isAdminF){
+        var gkDomId='mgr-'+gk.replace(/[^a-zA-Z0-9]/g,'_');
+        if(_manuelEklemeGrubu===gk){
+          h+='<div style="margin-top:6px;">';
+          h+='<input id="mgi-'+gkDomId+'" type="text" placeholder="İşletme adı veya kayıt no..." value="'+_ekipEsc(_manuelEklemeArama)+'" oninput="_manuelEklemeArama=this.value;_manuelGrubaEkleSonuclariGuncelle(\''+gkEsc+'\')" style="width:100%;padding:7px 10px;border:1px solid var(--sinir);border-radius:7px;font-size:13px;box-sizing:border-box;" />';
+          h+='<div id="'+gkDomId+'">'+_manuelGrubaEkleSonucHTML(gk)+'</div>';
+          h+='<button onclick="event.stopPropagation();_manuelEklemeGrubu=null;sorumluluklarimGoster();" style="margin-top:4px;font-size:12px;color:var(--gri);background:none;border:none;cursor:pointer;padding:0;">✕ İptal</button>';
+          h+='</div>';
+        } else {
+          h+='<button onclick="event.stopPropagation();_manuelEklemeGrubu=\''+gkEsc+'\';_manuelEklemeArama=\'\';sorumluluklarimGoster();setTimeout(function(){var el=document.getElementById(\'mgi-mgr-'+gk.replace(/[^a-zA-Z0-9]/g,'_')+'\');if(el)el.focus();},50);" style="width:100%;padding:7px;border:1px dashed var(--sinir);border-radius:7px;background:none;font-size:13px;color:var(--gri);cursor:pointer;margin-top:4px;">+ Manuel İşletme Ekle</button>';
+        }
+      }
       h+='</div>';
     }
   });
   liste.innerHTML=h;
 }
+function _manuelGrubaEkleSonuclariGuncelle(gk) {
+  var el = document.getElementById('mgr-' + gk.replace(/[^a-zA-Z0-9]/g,'_'));
+  if (!el) return;
+  el.innerHTML = _manuelGrubaEkleSonucHTML(gk);
+}
+function _manuelGrubaEkleSonucHTML(gk) {
+  var arama = (_manuelEklemeArama||'').trim().toLocaleLowerCase('tr');
+  if (!arama) return '<div style="font-size:12px;color:var(--gri);padding:4px 0;">İşletme adı veya kayıt no girin…</div>';
+  var g = _sonGruplar[gk];
+  var zatenVarKn = new Set((g ? g.isl : []).map(function(i){ return i.kayitNo; }));
+  var sonuclar = (typeof ISLETMELER!=='undefined'?ISLETMELER:[]).filter(function(i){
+    if (zatenVarKn.has(i.kayitNo)) return false;
+    var ad = (i.isletmeAdi||'').toLocaleLowerCase('tr');
+    var kn = (i.kayitNo||'').toLocaleLowerCase('tr');
+    return ad.indexOf(arama)>=0 || kn.indexOf(arama)>=0;
+  }).slice(0,8);
+  if (!sonuclar.length) return '<div style="font-size:12px;color:var(--gri);padding:4px 0;">Sonuç bulunamadı.</div>';
+  var gkEsc = gk.replace(/'/g,"\\'");
+  var h='<div style="border:1px solid var(--sinir);border-radius:7px;overflow:hidden;margin-top:4px;">';
+  sonuclar.forEach(function(i){
+    var kn = (i.kayitNo||'').replace(/'/g,"\\'");
+    h+='<div onclick="_manuelGrubaEkle(\''+gkEsc+'\',\''+kn+'\')" style="padding:8px 10px;border-bottom:1px solid var(--gri-acik);cursor:pointer;font-size:13px;background:#fff;">';
+    h+=_ekipEsc(i.isletmeAdi||'(isimsiz)')+' <span style="color:var(--gri);font-size:11px;">['+_ekipEsc(i.kayitNo||'')+']</span></div>';
+  });
+  h+='</div>';
+  return h;
+}
+function _manuelGrubaEkle(gk, kayitNo) {
+  if (!isAdmin) { bildirimGoster('Bu işlemi sadece admin yapabilir.', 'hata'); return; }
+  var isletme = (typeof ISLETMELER!=='undefined'?ISLETMELER:[]).find(function(i){ return i.kayitNo===kayitNo; });
+  if (!isletme) { bildirimGoster('İşletme bulunamadı.', 'hata'); return; }
+  var kolonIdx = gk.indexOf(':');
+  var tip = gk.substring(0, kolonIdx);
+  var key = gk.substring(kolonIdx+1);
+  var an = isletmeAnahtari(isletme);
+  if (an) {
+    if (typeof manuelBaslik==='undefined') window.manuelBaslik={};
+    manuelBaslik[an] = {tip:tip, key:key};
+    if (typeof manuelBaslikKaydet==='function') manuelBaslikKaydet();
+  }
+  if (typeof manuelSorumlular==='undefined') window.manuelSorumlular=[];
+  if (!manuelSorumlular.includes(kayitNo)) manuelSorumlular.push(kayitNo);
+  haricTutulanlar = (haricTutulanlar||[]).filter(function(k){ return k!==kayitNo; });
+  if (typeof sorumlulukOverrideKaydet==='function') sorumlulukOverrideKaydet();
+  _ekipSayiCache = null;
+  _manuelEklemeGrubu = null;
+  _manuelEklemeArama = '';
+  bildirimGoster('➕ İşletme gruba eklendi.');
+  sorumluluklarimGoster();
+  ozetGuncelle();
+}
+window._manuelGrubaEkleSonuclariGuncelle = _manuelGrubaEkleSonuclariGuncelle;
+window._manuelGrubaEkle = _manuelGrubaEkle;
+
 function tarihSiralamaSkoru(tarihStr) {
   if (!tarihStr) return 99999999;
   // DD/MM/YYYY formatı
