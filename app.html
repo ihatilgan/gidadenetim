@@ -2899,42 +2899,18 @@ function uretimSorumlulukListesiGetir() {
 }
 
 function satisKoySorumlulukListesiGetir() {
+  var eid = aktifEkipId;
   var gorulen = {};
   var liste = [];
-  function ekle(i, koyAdi) {
-    if (kayitHaricMi(i)) return;
-    var uygun = false;
-    if (koyAdi) {
-      // Kasaba: adresinde kasaba adı geçen her işletme (KOY_ISLETMELERI zaten süzülmüş)
-      uygun = true;
-    } else {
-      // Mahalle: yalnızca pozitif satış/depo/toplu tüketim faaliyetleri
-      if (!satisFaaliyetiMi(i)) return;
-      if (typeof isletmeSorumluMu === 'function' && isletmeSorumluMu(i)) uygun = true;
-    }
-    if (!uygun) return;
-    var anahtar = i.kayitNo || (i.isletmeAdi + '|' + i.adres);
-    if (anahtar && gorulen[anahtar]) return;
-    if (anahtar) gorulen[anahtar] = true;
-    var kopya = koyAdi ? Object.assign({}, i, {koy:koyAdi}) : i;
-    liste.push(kopya);
-  }
-  var kasabalar = (typeof SORUMLU_KASABALAR !== 'undefined') ? SORUMLU_KASABALAR : [];
   (ISLETMELER || []).forEach(function(i){
-    if (kayitHaricMi(i)) return;
-    if (!satisFaaliyetiMi(i)) return;
-    // Kasaba eşleşmesi: SORUMLU_KASABALAR'ı direkt tara (önbellek yok)
-    for (var k = 0; k < kasabalar.length; k++) {
-      if (koyAdreseUyuyorMu((i.adres||'')+' '+(i.ilce||''), kasabalar[k])) {
-        var an2 = i.kayitNo || (i.isletmeAdi + '|' + i.adres);
-        if (an2 && gorulen[an2]) return;
-        if (an2) gorulen[an2] = true;
-        liste.push(Object.assign({}, i, {koy: kasabalar[k]}));
-        return;
-      }
-    }
-    // Mahalle: satış faaliyeti + sorumlu mahalle
-    if (typeof isletmeSorumluMu === 'function' && isletmeSorumluMu(i)) ekle(i, '');
+    if (!i || (typeof kayitHaricMi === 'function' && kayitHaricMi(i))) return;
+    if (isletmeSorumluEkipId(i) !== eid) return;
+    var b = isletmeBaslikBelirle(i);
+    if (!b || b.tip === 'uretim') return;
+    var an = i.kayitNo || (i.isletmeAdi + '|' + i.adres);
+    if (an && gorulen[an]) return;
+    if (an) gorulen[an] = true;
+    liste.push(b.tip === 'koy' ? Object.assign({}, i, {koy: b.key}) : i);
   });
   return liste;
 }
@@ -2965,27 +2941,16 @@ function satisKoyRiskGecenListesiGetir() {
 
 // Üretim sorumluluğu — TÜM kategoriler (kategori seçiminden bağımsız). Özet/bildirim sayacı için.
 function uretimTumSorumlulukListesiGetir() {
-  var gorulen = {};
   var eid = aktifEkipId;
-  return uretimKaynakListesiGetir().filter(function(i) {
-    if (kayitHaricMi(i)) return false;
-    // Elle atanmış üretim başlığı: ekip sorumluluğu ve ilçe kısıtı olmadan dahil et
-    if (typeof manuelBaslik !== 'undefined' && typeof isletmeAnahtari === 'function') {
-      var mb = manuelBaslik[isletmeAnahtari(i)];
-      if (mb && mb.tip === 'uretim') {
-        // Başlık hangi ekibe ait?
-        var baslikEkip = (typeof baslikEkibiBul === 'function') ? baslikEkibiBul({tip:'uretim', key:mb.key}) : null;
-        if (baslikEkip && baslikEkip.id === eid) {
-          var a2 = i.kayitNo || (i.isletmeAdi + '|' + i.adres);
-          if (a2 && gorulen[a2]) return false; if (a2) gorulen[a2] = true;
-          return true;
-        }
-      }
-    }
-    if (typeof _uretimTumKategoriEslesiyor !== 'function' || !_uretimTumKategoriEslesiyor(i)) return false;
-    if (merkezDisindaMi(i)) return false;
-    var a = i.kayitNo || (i.isletmeAdi + '|' + i.adres);
-    if (a && gorulen[a]) return false; if (a) gorulen[a] = true;
+  var gorulen = {};
+  return (ISLETMELER || []).filter(function(i) {
+    if (!i || (typeof kayitHaricMi === 'function' && kayitHaricMi(i))) return false;
+    if (isletmeSorumluEkipId(i) !== eid) return false;
+    var b = isletmeBaslikBelirle(i);
+    if (!b || b.tip !== 'uretim') return false;
+    var an = i.kayitNo || (i.isletmeAdi + '|' + i.adres);
+    if (an && gorulen[an]) return false;
+    if (an) gorulen[an] = true;
     return true;
   });
 }
@@ -5663,13 +5628,11 @@ function sorumluluklarimGoster() {
   var sayim = {uretim:0, mahalle:0, koy:0};
   var riskSay = 0;
   var gruplar = {};
-  // Özet ile aynı kaynakları kullan: isletmeSorumluEkipId yerine uretimTumSorumlulukListesiGetir + satisKoySorumlulukListesiGetir
-  var _sgGorulen = {};
-  function _sgEkle(i, b) {
+  (ISLETMELER||[]).forEach(function(i){
+    if (!i || (typeof kayitHaricMi==='function' && kayitHaricMi(i))) return;
+    if (isletmeSorumluEkipId(i) !== ekip.id) return;
+    var b = isletmeBaslikBelirle(i);
     if (!b) return;
-    var an = i.kayitNo||(i.isletmeAdi+'|'+i.adres);
-    if (an && _sgGorulen[an]) return;
-    if (an) _sgGorulen[an] = true;
     sayim[b.tip] = (sayim[b.tip]||0)+1;
     var rg = (typeof riskGecmisMi==='function') && riskGecmisMi(i);
     if (rg) riskSay++;
@@ -5682,35 +5645,6 @@ function sorumluluklarimGoster() {
     var gk=b.tip+':'+b.key;
     if(!gruplar[gk]) gruplar[gk]={tip:b.tip,key:b.key, ad:_baslikAdGoster(b), isl:[]};
     gruplar[gk].isl.push(i);
-  }
-  // Üretim: özet ile aynı kaynak
-  uretimTumSorumlulukListesiGetir().forEach(function(i){
-    var b = null;
-    if (typeof manuelBaslik!=='undefined' && typeof isletmeAnahtari==='function') { var mb=manuelBaslik[isletmeAnahtari(i)]; if(mb&&mb.tip==='uretim') b=mb; }
-    if (!b) {
-      var kats=(typeof TUM_URETIM_KATEGORILER!=='undefined')?TUM_URETIM_KATEGORILER:[];
-      var izin=(typeof EKIP_URETIM_KATEGORILERI!=='undefined'&&EKIP_URETIM_KATEGORILERI.length)?EKIP_URETIM_KATEGORILERI:null;
-      for(var c=0;c<kats.length;c++){ if(izin&&izin.indexOf(kats[c].id)<0)continue; if(uretimKatEslesir(i.faaliyetAlani,kats[c])){ b={tip:'uretim',key:kats[c].id}; break; } }
-    }
-    if (!b) b=isletmeBaslikBelirle(i);
-    _sgEkle(i, b);
-  });
-  // Satış/Köy: özet ile aynı kaynak
-  satisKoySorumlulukListesiGetir().forEach(function(i){
-    var b;
-    if (i.koy) {
-      b={tip:'koy',key:i.koy};
-    } else {
-      var bx=isletmeBaslikBelirle(i);
-      if(bx&&bx.tip==='mahalle'){ b=bx; }
-      else {
-        var smah=(typeof SORUMLU_MAHALLELER!=='undefined')?SORUMLU_MAHALLELER:[];
-        b=null;
-        for(var mi=0;mi<smah.length;mi++){ if(mahalleAdreseUyuyorMu(i.adres||'',smah[mi])){ b={tip:'mahalle',key:smah[mi]}; break; } }
-        if(!b) b={tip:'mahalle',key:'Diğer'};
-      }
-    }
-    _sgEkle(i, b);
   });
   var toplam = sayim.uretim+sayim.mahalle+sayim.koy;
   _sorumluTabSayiGuncelle(sayim);
