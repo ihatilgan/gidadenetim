@@ -555,7 +555,16 @@ function isletmeBaslikBelirle(i){
   if(!i) return null;
   if(typeof kayitHaricMi==='function' && kayitHaricMi(i)) return null;
   var an=isletmeAnahtari(i);
-  if(an && typeof manuelBaslik!=='undefined' && manuelBaslik[an]) return manuelBaslik[an];
+  if(an && typeof manuelBaslik!=='undefined' && manuelBaslik[an]){
+    var mb=manuelBaslik[an];
+    if(mb.tip==='uretim'){
+      var kats2=(typeof TUM_URETIM_KATEGORILER!=='undefined')?TUM_URETIM_KATEGORILER:[];
+      // Kategori hâlâ yüklüyse geçerli; yoksa boştaya düşsün (silme — Firebase geç yüklenmiş olabilir)
+      if(kats2.find(function(x){return x.id===mb.key;})) return mb;
+      return null;
+    }
+    return mb;
+  }
   var dis=(typeof merkezDisindaMi==='function')&&merkezDisindaMi(i);
   var kats=(typeof TUM_URETIM_KATEGORILER!=='undefined')?TUM_URETIM_KATEGORILER:[];
   if(!dis){ for(var c=0;c<kats.length;c++){ if(uretimKatEslesir(i.faaliyetAlani,kats[c])) return {tip:'uretim',key:kats[c].id}; } }
@@ -9686,14 +9695,34 @@ function basliklarGoster() {
   html+='<input type="text" placeholder="🔍 Başlık ara..." value="'+_ekipEsc(_basliklarArama)+'" oninput="_basliklarArama=this.value;basliklarGoster();" style="width:100%;margin-bottom:6px;">';
 
   // Sınıflandırılamayan (hiçbir başlığa girmeyen) işletmeler — yeni Excel sonrası burada görünür
-  var _bostaIsl=[];
+  var _bostaIsl=[], _eskiKatIsl=[];
+  var kats3=(typeof TUM_URETIM_KATEGORILER!=='undefined')?TUM_URETIM_KATEGORILER:[];
   (typeof ISLETMELER!=='undefined'?ISLETMELER:[]).forEach(function(i){
     if(typeof merkezDisindaMi==='function' && merkezDisindaMi(i)) return;
     var _an=(i.kayitNo||i.isletmeAdi)||'';
     if(typeof yoksayListesi!=='undefined' && yoksayListesi.indexOf(_an)>=0) return;
     if(typeof kayitHaricMi==='function' && kayitHaricMi(i)) return;
+    // Sahipsiz üretim kategorisi ataması — kategori silinmiş/ID değişmiş
+    var mb2=(typeof manuelBaslik!=='undefined')?manuelBaslik[_an]:null;
+    if(mb2 && mb2.tip==='uretim' && !kats3.find(function(x){return x.id===mb2.key;})){
+      _eskiKatIsl.push(i); return;
+    }
     if(!isletmeBaslikBelirle(i)) _bostaIsl.push(i);
   });
+  if(_eskiKatIsl.length){
+    html+='<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:11px 13px;margin-bottom:12px;">';
+    html+='<div style="font-weight:600;color:#856404;font-size:13px;cursor:pointer;" onclick="var e=document.getElementById(\'eski-kat-liste\');if(e)e.style.display=(e.style.display===\'none\'?\'block\':\'none\');">🔶 '+_eskiKatIsl.length+' işletmenin kategorisi silinmiş/değişmiş — yeniden ata</div>';
+    html+='<div style="font-size:11px;color:#856404;margin-bottom:4px;">Bu işletmeler eski bir üretim kategorisine atanmıştı. Tıklayıp yeni başlık seçin.</div>';
+    html+='<div id="eski-kat-liste" style="margin-top:8px;">';
+    _eskiKatIsl.forEach(function(i){
+      var _ae=_ekipEsc((i.kayitNo||i.isletmeAdi)||'').replace(/'/g,"\\'");
+      var mb2=manuelBaslik[isletmeAnahtari(i)]||{};
+      html+='<div onclick="isletmeBaslikDegistirAc(\''+_ae+'\')" style="padding:8px 10px;border:1px solid #ffc107;border-radius:8px;margin-bottom:6px;cursor:pointer;background:#fff;">';
+      html+='<div style="font-size:13px;">'+_ekipEsc(i.isletmeAdi||_ae)+'</div>';
+      html+='<div style="font-size:11px;color:#856404;">Eski ID: '+_ekipEsc(mb2.key||'')+'</div></div>';
+    });
+    html+='</div></div>';
+  }
   if(_bostaIsl.length){
     html+='<div style="background:#fdecea;border:1px solid #f5c6cb;border-radius:10px;padding:11px 13px;margin-bottom:12px;">';
     html+='<div style="font-weight:600;color:#c0392b;font-size:13px;cursor:pointer;" onclick="var e=document.getElementById(\'bosta-isl-liste\');if(e)e.style.display=(e.style.display===\'none\'?\'block\':\'none\');">⚠️ '+_bostaIsl.length+' işletme hiçbir başlığa girmiyor — göster/gizle</div>';
