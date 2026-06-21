@@ -1303,6 +1303,7 @@ function gomuluSorumluGetir() {
 
 <!-- jsQR açılışta yüklenmez; QR tarayıcı açılınca jsqrYukle() ile yüklenir. -->
 <script>
+/* DEVRE_DISI_BASLANGIC
 // ==========================================
 // QR KOD TARAYICI
 // ==========================================
@@ -1633,6 +1634,7 @@ var _orijinalQrSonucIsle = qrSonucIsle;
 window.qrTara = qrTara;
 window.qrTaraDenetim = qrTaraDenetim;
 window.qrKapat = qrKapat;
+DEVRE_DISI_BITIS */
 </script>
 
 <!-- Service Worker Kaydı -->
@@ -2068,7 +2070,7 @@ DEVRE_DISI -->
           <div style="display:flex;gap:8px;">
             <input type="text" id="isletme-adi" placeholder="İşletme adı veya kayıt no ile ara..." 
                    autocomplete="off" oninput="isletmeAra()" onkeydown="isletmeKeyDown(event)" style="flex:1;">
-            <button type="button" onclick="qrTaraDenetim()" title="QR kod ile işletme tara" style="background:var(--gri-acik);border:1.5px solid var(--sinir);border-radius:7px;padding:9px 14px;font-size:18px;cursor:pointer;flex-shrink:0;line-height:1;">📷</button>
+            <!-- QR_DEVRE_DISI <button type="button" onclick="qrTaraDenetim()" title="QR kod ile işletme tara" style="background:var(--gri-acik);border:1.5px solid var(--sinir);border-radius:7px;padding:9px 14px;font-size:18px;cursor:pointer;flex-shrink:0;line-height:1;">📷</button> QR_DEVRE_DISI -->
           </div>
           <div id="isletme-oneri" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--yesil-orta);border-top:none;border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.12);"></div>
         </div>
@@ -2197,7 +2199,7 @@ DEVRE_DISI -->
       <div class="kart-baslik">🔍 İşletme Sorgulama</div>
       <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
         <input type="text" id="isletme-filtre" placeholder="🔍 İşletme adı, kayıt no, ilçe, adres..." style="flex:1;min-width:200px;" oninput="isletmeListesiGuncelle()">
-        <button class="btn btn-gri" onclick="qrTara()" title="QR kod ile işletme ara" style="padding:9px 14px;font-size:18px;line-height:1;flex-shrink:0;">📷</button>
+        <!-- QR_DEVRE_DISI <button class="btn btn-gri" onclick="qrTara()" title="QR kod ile işletme ara" style="padding:9px 14px;font-size:18px;line-height:1;flex-shrink:0;">📷</button> QR_DEVRE_DISI -->
         <select id="isletme-filtre-ilce" onchange="isletmeListesiGuncelle()" style="min-width:130px;"><option value="">Tüm İlçeler</option></select>
         <button id="sorumluluk-btn" class="btn btn-gri" onclick="sorumlulukFiltresiToggle()" style="white-space:nowrap;">👤 Sorumluluklarım</button>
       </div>
@@ -8117,10 +8119,14 @@ window.isletmeDetayModal = isletmeDetayModal;
 window.isletmeDetayModalUretim = isletmeDetayModalUretim;
 window.sorumlulukCikar = sorumlulukCikar;
 
+/* Yaptirimlar modulu devre disi oldugu icin stub degisken: */
+var yaptirimlar = JSON.parse(localStorage.getItem('yaptirimlar') || '[]');
+
+/* YAPTIRIMLAR_DEVRE_DISI_BASLANGIC
 // =============================================
 // YAPTIRIMLAR MODÜLİ
 // =============================================
-var yaptirimlar = JSON.parse(localStorage.getItem('yaptirimlar') || '[]');
+var yaptirimlar = JSON.parse(localStorage.getItem('yaptirimlar') || '[]'); // (stub yukarida tasinidi)
 
 var YPT_TUR_ETIKET = {
   'idari-para':        '💰 İdari Para Cezası',
@@ -8968,6 +8974,7 @@ function yaptirimlarDisaAktar() {
     bildirimGoster('Dışa aktarma hatası: ' + e.message, 'hata');
   }
 }
+YAPTIRIMLAR_DEVRE_DISI_BITIS */
 function isletmeVergiKaydet(kayitNo) {
   var vergiDairesi = (document.getElementById('ist-vergi-dairesi') || {}).value || '';
   var vergiNo      = (document.getElementById('ist-vergi-no')      || {}).value || '';
@@ -9409,19 +9416,18 @@ function sohbetBildirimDinle() {
 </script>
 
 
+<!-- QR_DEVRE_DISI
 <!-- QR Modal -->
 <div id="qr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9000;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
   <div style="background:white;border-radius:14px;padding:20px;max-width:380px;width:92%;text-align:center;">
     <div style="font-size:16px;font-weight:700;margin-bottom:4px;">📷 QR Kod Oku</div>
 
-    <!-- SEKME -->
     <div style="display:flex;gap:6px;margin-bottom:14px;background:#f0f0f0;border-radius:8px;padding:3px;">
       <button id="qr-tab-foto" onclick="qrTabDegistir('foto')" style="flex:1;padding:7px;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;background:white;color:#1a6b3c;">📸 Fotoğraf</button>
       <button id="qr-tab-canli" onclick="qrTabDegistir('canli')" style="flex:1;padding:7px;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:#666;">🎥 Canlı</button>
       <button id="qr-tab-manuel" onclick="qrTabDegistir('manuel')" style="flex:1;padding:7px;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:#666;">⌨️ Elle</button>
     </div>
 
-    <!-- FOTOĞRAF SEKMESİ -->
     <div id="qr-panel-foto">
       <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#795548;text-align:left;">
         💡 <strong>İpucu:</strong> QR kodu ekrana yakın tutun, sadece QR karesini fotoğraflayın. Etraftaki kırmızı/renkli zemin dahil etmeyin.
@@ -9438,12 +9444,10 @@ function sohbetBildirimDinle() {
       </div>
     </div>
 
-    <!-- CANLI SEKMESİ -->
     <div id="qr-panel-canli" style="display:none;">
       <video id="qr-video" style="width:100%;border-radius:8px;background:#000;max-height:240px;object-fit:cover;" playsinline autoplay muted></video>
     </div>
 
-    <!-- MANUEL SEKMESİ -->
     <div id="qr-panel-manuel" style="display:none;">
       <div style="padding:20px 0 10px;">
         <div style="font-size:13px;color:#666;margin-bottom:10px;">Kayıt numarasını yazın:</div>
@@ -9459,6 +9463,7 @@ function sohbetBildirimDinle() {
     <button onclick="qrKapat()" style="margin-top:10px;background:#ecf0f1;border:none;border-radius:8px;padding:10px 24px;font-size:14px;cursor:pointer;width:100%;">İptal</button>
   </div>
 </div>
+QR_DEVRE_DISI -->
 
 <!-- Denetçi Sohbet Modalı -->
 <div id="sohbet-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9002;align-items:flex-end;justify-content:center;">
