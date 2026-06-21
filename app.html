@@ -2903,12 +2903,23 @@ function satisKoySorumlulukListesiGetir() {
     var kopya = koyAdi ? Object.assign({}, i, {koy:koyAdi}) : i;
     liste.push(kopya);
   }
-  (ISLETMELER || []).forEach(function(i){ ekle(i, ''); });
-  if (typeof KOY_ISLETMELERI !== 'undefined') {
-    Object.keys(KOY_ISLETMELERI || {}).forEach(function(k){
-      (KOY_ISLETMELERI[k] || []).forEach(function(i){ ekle(i, k); });
-    });
-  }
+  var kasabalar = (typeof SORUMLU_KASABALAR !== 'undefined') ? SORUMLU_KASABALAR : [];
+  (ISLETMELER || []).forEach(function(i){
+    if (kayitHaricMi(i)) return;
+    if (!satisFaaliyetiMi(i)) return;
+    // Kasaba eşleşmesi: SORUMLU_KASABALAR'ı direkt tara (önbellek yok)
+    for (var k = 0; k < kasabalar.length; k++) {
+      if (koyAdreseUyuyorMu(i.adres, kasabalar[k])) {
+        var an2 = i.kayitNo || (i.isletmeAdi + '|' + i.adres);
+        if (an2 && gorulen[an2]) return;
+        if (an2) gorulen[an2] = true;
+        liste.push(Object.assign({}, i, {koy: kasabalar[k]}));
+        return;
+      }
+    }
+    // Mahalle: satış faaliyeti + sorumlu mahalle
+    if (typeof isletmeSorumluMu === 'function' && isletmeSorumluMu(i)) ekle(i, '');
+  });
   return liste;
 }
 
