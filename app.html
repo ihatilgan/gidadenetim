@@ -333,6 +333,8 @@ function ekiplerFirestoreYukle() {
         // Aktif ekip kuralını tazele
         var ek = ekipBul(aktifEkipId) || EKIPLER[0];
         if (ek) { aktifEkipId = ek.id; ekipKurallariUygula(ek); }
+        // Ekip listesi değişti — sayım önbelleğini iptal et ki yeni dağılım hesaplansın
+        try { _ekipSayiCache = null; _ekipSayiLen = -1; } catch(e){}
         if (typeof ekipSeciciDoldur === 'function') { try { ekipSeciciDoldur(); } catch(e){} }
         if (typeof ozetGuncelle === 'function') { try { ozetGuncelle(); } catch(e){} }
       }
