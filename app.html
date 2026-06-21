@@ -410,6 +410,7 @@ function ekipKurallariUygula(ekip) {
 function aktifEkibeGec(id, yenidenCiz) {
   var ek = ekipBul(id);
   if (!ek) return;
+  if(typeof riskCacheTemizle==='function') riskCacheTemizle();
   ekipKurallariUygula(ek);
   // Gömülü sorumluluk tohumunu bu ekibe göre tekrar hesapla (varsa)
   try { if (typeof sorumluTohumHesapla === 'function') { /* tohum aktif kurala göre yeniden üretilir */ } } catch(e){}
@@ -4974,6 +4975,32 @@ function ozetGuncelle() {
   // İstatistik grafiği ve yaptırım özeti ana sayfada gizli (risk takibi öncelikli)
 }
 
+// ── PERFORMANS: debounce + risk listesi önbelleği ──
+(function(){
+  // 1) ozetGuncelle debounce: 32 ardışık çağrı → tek çalışma
+  var _impl = ozetGuncelle, _t = null, _pending = false;
+  ozetGuncelle = function() {
+    if (!_t) {
+      _impl();
+      _t = setTimeout(function(){ _t=null; if(_pending){_pending=false;_impl();} }, 150);
+    } else {
+      _pending = true;
+    }
+  };
+
+  // 2) Risk listesi önbelleği: aynı ekip+gün+veri uzunluğunda yeniden hesaplama yok
+  var _rv = 0, _rc = {};
+  function _k() { return _rv+'|'+(typeof aktifEkipId!=='undefined'?aktifEkipId:'')+'|'+bugunTarih()+'|'+(typeof denetimler!=='undefined'?denetimler.length:0); }
+
+  var _u0 = uretimTumRiskGecenListesiGetir;
+  uretimTumRiskGecenListesiGetir = function(){ var k=_k()+'u'; if(!_rc[k]) _rc[k]=_u0(); return _rc[k]; };
+
+  var _d0 = satisKoyRiskGecenListesiGetir;
+  satisKoyRiskGecenListesiGetir = function(){ var k=_k()+'d'; if(!_rc[k]) _rc[k]=_d0(); return _rc[k]; };
+
+  window.riskCacheTemizle = function(){ _rv++; _rc={}; };
+})();
+
 // ---- YAPTIRIMLAR ÖZETİ ----
 var _yptOzetAcik = false;
 var _chartYptTur = null;
@@ -6793,6 +6820,7 @@ function denetimlerdenRiskTarihleriniUygula(denetimListesi) {
       (birYilSonra.getMonth()+1).toString().padStart(2,'0') + '/' + birYilSonra.getFullYear();
     riskTarihGuncelle(kayitNo, yeniTarih);
   });
+  if(typeof riskCacheTemizle==='function') riskCacheTemizle();
 }
 
 function ggbsRiskTarihleriniYukle() {
