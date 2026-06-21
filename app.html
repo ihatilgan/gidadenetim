@@ -4833,9 +4833,9 @@ function ekipDenetimleri() {
   return denetimler.filter(function(d) {
     // Yeni kayıtlar: ekipId alanı var
     if (d.ekipId) return d.ekipId === eid;
-    // Eski kayıtlar: işletme üzerinden ekip eşleşmesi
+    // Eski kayıtlar: işletme üzerinden ekip eşleşmesi (tüm başlıklar mantığı)
     var ist = ISLETMELER.find(function(i){ return i.kayitNo === d.isletmeKayitNo || i.isletmeAdi === d.isletme; });
-    if (ist) return isletmeSorumluMu(ist);
+    if (ist) return isletmeSorumluEkipId(ist) === eid;
     // Son çare: kaydeden kullanıcı
     return mevcutKullanici && d.kullaniciId === mevcutKullanici.uid;
   });
