@@ -395,6 +395,7 @@ function ekipKurallariUygula(ekip) {
   }
   aktifEkipId = ekip.id;
   try { localStorage.setItem(AKTIF_EKIP_KEY, aktifEkipId); } catch(e){}
+  try { var _hea=document.getElementById('header-ekip-adi'); if(_hea){ _hea.textContent='👥 '+(ekip.ad||ekip.id); _hea.style.display=''; } }catch(e){}
 }
 
 // Aktif ekibi değiştir + ekranı tazele (admin ekip geçişi / giriş)
@@ -1842,6 +1843,7 @@ window.addEventListener('fb-hazir', function() {
   <div onclick="sayfaGoster('ozet',document.querySelector('[data-sayfa=ozet]'))" style="cursor:pointer;min-width:0;flex:1;overflow:hidden;" title="Ana sayfaya dön">
     <h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🍽️ Gıda Denetim</h1>
     <div style="font-size:10px;opacity:0.65;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">İsmail Hakkı Atılgan</div>
+    <div id="header-ekip-adi" style="display:none;font-size:10px;font-weight:600;color:rgba(255,255,255,0.95);background:rgba(255,255,255,0.18);border-radius:4px;padding:1px 6px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;"></div>
   </div>
   <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
     <span id="bugun-tarih" style="font-size:11px;color:rgba(255,255,255,0.75);margin-right:4px;"></span>
@@ -1853,6 +1855,7 @@ window.addEventListener('fb-hazir', function() {
       <div id="kullanici-menu" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:#fff;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.22);min-width:190px;z-index:10000;overflow:hidden;">
         <button onclick="kullaniciMenuKapat();kullaniciAyarlariAc()" style="display:block;width:100%;text-align:left;padding:12px 15px;border:none;background:none;font-size:14px;color:#333;cursor:pointer;">⚙️ Kullanıcı ayarları</button>
         <button onclick="kullaniciMenuKapat();var pe=document.getElementById('parola-ekrani');if(pe)pe.style.display='flex';" style="display:block;width:100%;text-align:left;padding:12px 15px;border:none;border-top:1px solid #eee;background:none;font-size:14px;color:#333;cursor:pointer;">🔑 Şifre Yönetimi</button>
+        <button onclick="kullaniciMenuKapat();yardimAc()" style="display:block;width:100%;text-align:left;padding:12px 15px;border:none;border-top:1px solid #eee;background:none;font-size:14px;color:#333;cursor:pointer;">❓ Yardım / Hakkında</button>
         <button onclick="kullaniciMenuKapat();cikisYap()" style="display:block;width:100%;text-align:left;padding:12px 15px;border:none;border-top:1px solid #eee;background:none;font-size:14px;color:#c0392b;cursor:pointer;">🚪 Çıkış yap</button>
       </div>
     </div>
@@ -6637,6 +6640,16 @@ function kullaniciBilgiYukle(user) {
       }, 500);
     }
     
+    // İlk açılışta ekip verisinin tam yüklenmesi için bir kere yenile
+    if (!sessionStorage.getItem('_girisYenileme')) {
+      sessionStorage.setItem('_girisYenileme', '1');
+      var _ykEl = document.createElement('div');
+      _ykEl.style.cssText = 'position:fixed;inset:0;background:rgba(26,86,196,0.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;gap:14px;';
+      _ykEl.innerHTML = '<div style="font-size:42px;">⏳</div><div style="font-size:17px;font-weight:700;text-align:center;">Ekibinizin bilgileri yükleniyor…</div><div style="font-size:13px;opacity:0.8;">Sayfa bir kez yenilenecek</div>';
+      document.body.appendChild(_ykEl);
+      setTimeout(function(){ location.reload(); }, 1800);
+      return;
+    }
     firebaseDinle();
     offlineDurumGuncelle();
     if (navigator.onLine) offlineKuyruguGonder();
@@ -10362,6 +10375,37 @@ function kullaniciAyarlariAc(){
     +'<button class="btn btn-gri" style="width:100%;" onclick="var o=document.getElementById(\'kullanici-ayar-overlay\');if(o)o.remove();">Kapat</button>';
   ov.appendChild(box); document.body.appendChild(ov);
 }
+function yardimAc() {
+  var ov = document.getElementById('yardim-overlay'); if (ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'yardim-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:100003;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;-webkit-overflow-scrolling:touch;';
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:14px;padding:22px;max-width:420px;width:100%;margin:auto;';
+  box.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">' +
+      '<div style="font-weight:700;font-size:17px;">❓ Yardım &amp; Hakkında</div>' +
+      '<button onclick="document.getElementById(\'yardim-overlay\').remove()" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px;font-weight:600;">✕ Kapat</button>' +
+    '</div>' +
+    '<div style="font-weight:600;font-size:14px;margin-bottom:6px;color:#1a56c4;">🍽️ Uygulama Hakkında</div>' +
+    '<p style="font-size:13px;color:#444;line-height:1.65;margin-bottom:14px;">Gıda Denetim, ilçe gıda denetçilerinin işletme denetimlerini kayıt altına almasını, sorumluluk listelerini takip etmesini ve risk analizlerini görüntülemesini sağlayan mobil uyumlu bir web uygulamasıdır.</p>' +
+    '<div style="font-weight:600;font-size:14px;margin-bottom:6px;color:#1a56c4;">📋 Temel Kullanım</div>' +
+    '<ul style="font-size:13px;color:#444;line-height:1.9;margin-bottom:14px;padding-left:18px;">' +
+      '<li><b>Özet:</b> Ekibinizin denetim istatistikleri, risk listeleri ve son kayıtlar.</li>' +
+      '<li><b>Denetim Ekle:</b> İşletme seçip denetim notu ve puanı girerek kayıt oluşturun.</li>' +
+      '<li><b>Sorumluluklarım:</b> Ekibinize atanmış tüm işletmeleri listeler ve filtreler.</li>' +
+      '<li><b>Yenile (🔄):</b> Güncel veriyi çekmek için sağ üstteki düğmeye basın.</li>' +
+      '<li><b>QR Tara:</b> İşletme kayıt numarasını QR kodla hızlıca okutabilirsiniz.</li>' +
+    '</ul>' +
+    '<div style="font-weight:600;font-size:14px;margin-bottom:6px;color:#1a56c4;">👥 Ekip Sistemi</div>' +
+    '<p style="font-size:13px;color:#444;line-height:1.65;margin-bottom:16px;">Her denetçi bir ekibe atanır. Özet ve risk listeleri yalnızca kendi ekibinizin sorumluluk alanındaki işletmeleri gösterir. Yönetici tüm ekipleri görebilir ve geçiş yapabilir.</p>' +
+    '<div style="background:#fff8e1;border:1.5px solid #ffca28;border-radius:10px;padding:14px;">' +
+      '<div style="font-weight:700;font-size:13px;color:#7a5c00;margin-bottom:7px;">🔒 KVKK Gizlilik Uyarısı</div>' +
+      '<p style="font-size:12px;color:#5a4200;line-height:1.65;margin:0;">Bu uygulama aracılığıyla erişilen işletme adları, adresleri ve denetim sonuçları <b>gizli kurumsal veri</b> niteliğindedir.<br><br>Bu bilgilerin <b>kasten veya bilmeyerek</b> üçüncü kişilerle paylaşılması, <b>6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK)</b> ve ilgili mevzuat kapsamında yasal sorumluluk doğurabilir.<br><br>Tüm verileri yalnızca resmî görev kapsamında ve yetkili kişilerle paylaşınız.</p>' +
+    '</div>';
+  ov.appendChild(box); document.body.appendChild(ov);
+}
+window.yardimAc = yardimAc;
 window.kullaniciMenuToggle=kullaniciMenuToggle; window.kullaniciMenuKapat=kullaniciMenuKapat; window.cikisYap=cikisYap; window.kullaniciAyarlariAc=kullaniciAyarlariAc;
 </script>
 </body>
