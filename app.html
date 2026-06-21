@@ -337,6 +337,14 @@ function ekiplerFirestoreYukle() {
         try { _ekipSayiCache = null; _ekipSayiLen = -1; } catch(e){}
         if (typeof ekipSeciciDoldur === 'function') { try { ekipSeciciDoldur(); } catch(e){} }
         if (typeof ozetGuncelle === 'function') { try { ozetGuncelle(); } catch(e){} }
+        var _skEl = document.getElementById('sayfa-kullanicilar');
+        if (typeof kullaniciListesiYukle === 'function' && _skEl && _skEl.classList.contains('aktif')) {
+          try { kullaniciListesiYukle(); } catch(e){}
+        }
+        var _sbEl = document.getElementById('sayfa-basliklar');
+        if (typeof basliklarGoster === 'function' && _sbEl && _sbEl.classList.contains('aktif')) {
+          try { basliklarGoster(); } catch(e){}
+        }
       }
     })
     .catch(function(e){ console.warn('ekipler Firestore okuması başarısız:', e.message); });
