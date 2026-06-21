@@ -5492,6 +5492,16 @@ function isletmeDetayModal(idx) {
   isletmeVergiTcDoldur(i);
   // Denetim sayısı
   const denetimSayisi = denetimler.filter(d => d.isletmeKayitNo === i.kayitNo || d.isletme === i.isletmeAdi).length;
+  var _sorumluBu = isAdmin || isletmeSorumluEkipId(i) === aktifEkipId;
+  var _denetimEkleBtnHtml = '';
+  var _hizliDenetimBtnHtml = '';
+  if (_sorumluBu) {
+    _denetimEkleBtnHtml = '<button class="btn btn-yesil btn-kucuk" onclick="modalKapat();yeniDenetimIsletmeyle(\''+i.isletmeAdi.replace(/'/g,"\\'")+'\','+idx+')">+ Denetim Ekle</button>';
+    var _rt0 = tarihParse(i.riskeDayaliDenetimTarihi);
+    if (!_rt0 || gunFarki(bugunTarih(),_rt0) < 0) {
+      _hizliDenetimBtnHtml = '<button class="btn btn-yesil btn-kucuk" onclick="modalKapatForce();hizliDenetimEkle(ISLETMELER.find(function(x){return x.kayitNo===\''+i.kayitNo+'\'})||{isletmeAdi:\''+i.isletmeAdi+'\',kayitNo:\''+i.kayitNo+'\'})">⚡ Hızlı Denetim</button>';
+    }
+  }
   document.getElementById('modal-icerik').innerHTML = `
     <div class="modal-baslik">
       <h2>🏢 ${i.isletmeAdi}</h2>
@@ -5515,8 +5525,8 @@ function isletmeDetayModal(idx) {
     ${i.adres ? `<div onclick="window.open('https://maps.google.com/?q='+encodeURIComponent('${i.adres}'),'_blank')" style="background:var(--gri-acik);border-radius:7px;padding:10px 12px;font-size:13px;margin-top:8px;cursor:pointer;">📍 ${i.adres} <span style="font-size:11px;color:var(--yesil);">🗺️ Haritada Göster</span></div>` : ''}
     <div style="margin-top:16px;padding:12px;background:var(--yesil-acik);border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
       <span style="font-size:14px;font-weight:600;">Bu işletmede ${denetimSayisi} denetim kaydı var</span>
-      <button class="btn btn-yesil btn-kucuk" onclick="modalKapat();yeniDenetimIsletmeyle('${i.isletmeAdi.replace(/'/g,"\'")}',${idx})">+ Denetim Ekle</button>
-      ${(function(){ var _rt=tarihParse(i.riskeDayaliDenetimTarihi); return (!_rt||gunFarki(bugunTarih(),_rt)<0); })() ? '<button class="btn btn-yesil btn-kucuk" onclick="modalKapatForce();hizliDenetimEkle(ISLETMELER.find(function(x){return x.kayitNo===\''+i.kayitNo+'\'})||{isletmeAdi:\''+i.isletmeAdi+'\',kayitNo:\''+i.kayitNo+'\'})">⚡ Hızlı Denetim</button>' : ''}
+      ${_denetimEkleBtnHtml}
+      ${_hizliDenetimBtnHtml}
     </div>
     ${isletmeSorumlulukSatiri(i)}
     ${isletmeNotBolumu(i)}
@@ -7689,13 +7699,14 @@ function koyIsletmeDetay(koyAdi, idx) {
   var dBtn = document.createElement('button');
   dBtn.className='btn btn-yesil btn-kucuk'; dBtn.textContent='+ Denetim Ekle';
   dBtn.onclick = function(){ modalKapatForce(); yeniDenetimIsletmeyle(isletme.isletmeAdi, -1, 'koy'); };
-  dBtnRow.appendChild(dBtn);
+  var _koySorumlu = isAdmin || isletmeSorumluEkipId(isletme) === aktifEkipId;
+  if (_koySorumlu) dBtnRow.appendChild(dBtn);
   var hzBtn = document.createElement('button');
   hzBtn.className='btn btn-yesil btn-kucuk'; hzBtn.textContent='⚡ Hızlı Denetim';
   hzBtn.setAttribute('data-hizli-kayit-no', isletme.kayitNo || '');
   hzBtn.setAttribute('data-hizli-adi', isletme.isletmeAdi || '');
   hzBtn.setAttribute('data-hizli-modal', '1');
-  dBtnRow.appendChild(hzBtn);
+  if (_koySorumlu) dBtnRow.appendChild(hzBtn);
   denetimDiv.appendChild(dSpan); denetimDiv.appendChild(dBtnRow);
   modal.appendChild(denetimDiv);
 
@@ -7873,12 +7884,13 @@ function isletmeDetayModalUretim(uIdx) {
   var dBtn = document.createElement('button');
   dBtn.className='btn btn-yesil btn-kucuk'; dBtn.textContent='+ Denetim Ekle';
   dBtn.onclick = (function(ad, ui){ return function(){ modalKapatForce(); yeniDenetimIsletmeyle(ad, ui, 'uretim'); }; })(i.isletmeAdi, uIdx);
-  dBtnRow.appendChild(dBtn);
+  var _urtSorumlu = isAdmin || isletmeSorumluEkipId(i) === aktifEkipId;
+  if (_urtSorumlu) dBtnRow.appendChild(dBtn);
   // Hızlı denetim butonu - risk tarihi geçmişse veya yoksa
   var hzBtn3 = document.createElement('button');
   hzBtn3.className='btn btn-yesil btn-kucuk'; hzBtn3.textContent='⚡ Hızlı Denetim';
   hzBtn3.onclick = (function(ist){ return function(){ modalKapatForce(); hizliDenetimEkle(ist); }; })(i);
-  dBtnRow.appendChild(hzBtn3);
+  if (_urtSorumlu) dBtnRow.appendChild(hzBtn3);
   denetimDiv.appendChild(dSpan); denetimDiv.appendChild(dBtnRow);
   modal.appendChild(denetimDiv);
 
@@ -10267,6 +10279,8 @@ function _g7Anahtar(i){ return (i && (i.kayitNo || i.isletmeAdi)) || ''; }
 function isletmeNotBolumu(i){
   var an=_g7Anahtar(i); var anEsc=_ekipEsc(an).replace(/'/g,"\\'");
   var notlar=isletmeNotlari[an]||[];
+  var _notSorumlu = isAdmin || isletmeSorumluEkipId(i) === aktifEkipId;
+  if (!_notSorumlu && !notlar.length) return '';
   var h='<div style="margin-top:12px;padding:12px;border:1px solid var(--sinir);border-radius:8px;">';
   h+='<div style="font-weight:600;font-size:14px;margin-bottom:8px;">📝 Hızlı Notlar</div>';
   if(notlar.length){
@@ -10274,14 +10288,16 @@ function isletmeNotBolumu(i){
       var t=new Date(n.t); var ts=t.toLocaleDateString('tr')+' '+t.toLocaleTimeString('tr',{hour:'2-digit',minute:'2-digit'});
       h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;background:var(--gri-acik);border-radius:7px;padding:8px 10px;margin-bottom:6px;">'
         +'<div style="min-width:0;"><div style="font-size:13px;white-space:pre-wrap;">'+_ekipEsc(n.m)+'</div><div style="font-size:10px;color:var(--gri);margin-top:3px;">'+ts+(n.kim?(' • '+_ekipEsc(n.kim)):'')+'</div></div>'
-        +'<button onclick="isletmeNotSil(\''+anEsc+'\','+ix+')" style="background:none;border:none;color:#c0392b;font-size:16px;cursor:pointer;flex-shrink:0;line-height:1;">×</button></div>';
+        +(_notSorumlu ? '<button onclick="isletmeNotSil(\''+anEsc+'\','+ix+')" style="background:none;border:none;color:#c0392b;font-size:16px;cursor:pointer;flex-shrink:0;line-height:1;">×</button>' : '')+'</div>';
     });
   } else {
     h+='<div style="font-size:12px;color:var(--gri);margin-bottom:8px;">Henüz not yok.</div>';
   }
-  h+='<div style="display:flex;gap:6px;margin-top:6px;">'
-    +'<input type="text" id="not-girdi-'+anEsc+'" placeholder="Not ekle (tarih otomatik)..." style="flex:1;padding:8px 10px;border:1.5px solid var(--sinir);border-radius:8px;font-size:13px;" onkeydown="if(event.key===\'Enter\'){isletmeNotEkle(\''+anEsc+'\');}">'
-    +'<button class="btn btn-yesil btn-kucuk" onclick="isletmeNotEkle(\''+anEsc+'\')">Ekle</button></div>';
+  if (_notSorumlu) {
+    h+='<div style="display:flex;gap:6px;margin-top:6px;">'
+      +'<input type="text" id="not-girdi-'+anEsc+'" placeholder="Not ekle (tarih otomatik)..." style="flex:1;padding:8px 10px;border:1.5px solid var(--sinir);border-radius:8px;font-size:13px;" onkeydown="if(event.key===\'Enter\'){isletmeNotEkle(\''+anEsc+'\');}">'
+      +'<button class="btn btn-yesil btn-kucuk" onclick="isletmeNotEkle(\''+anEsc+'\')">Ekle</button></div>';
+  }
   h+='</div>';
   return h;
 }
