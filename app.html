@@ -219,7 +219,7 @@ initFirebase();
 var MERKEZ_MAHALLE_MASTER = ["Akçın","Akmescit","Ali İhsan Paşa","Aliçetinkaya","Ataköy","Barbaros","Battalgazi","Bedrik","Beyazıt","Burmalı","Camikebir","Cumhuriyet","Çakır","Çavuşbaş","Dairecep","Demirçevre","Derviş Paşa","Dörtyol","Dumlupınar","Erenler","Ertuğrulgazi","Esentepe","Eşrefpaşa","Fakıpaşa","Fatih","Gazi","Güvenevler","Hacıabdurrahman","Hacı Mustafa","Hacı Nuh","Hamidiye","Hasan Karaağaç","Hattat Karahisar","Hoca Ahmet Yesevi","İsmail","İstiklal","Kanlıca","Karaman","Karşıyaka","Kasımpaşa","Kayadibi","Kışlacık","Kocatepe","Küçük Çobanlı","Mareşal Fevzi Çakmak","Marulcu","Mecidiye","Mevlana","Nazmi Saatçi","Olucak","Organize Sanayi Bölgesi","Orhangazi","Osmangazi","Örnekevler","Sadıkbey","Sahipata","Selçuklu","Sinanpaşa","Sümer","Tacı Ahmet","Umurbey","Veyselkarani","Yarenler","Yenice","Yeşilyurt","Yunus Emre","Zafer"];
 
 // Köy/kasaba evreni (editörde seçenek listesi)
-var KOY_MASTER = ["Anıtkaya","Bayatçık","Bayramgazi","Belkaracaören","Beyyazı","Bostanlı","Burhaniye","Çavdarlı","Çayırbağ","Çıkrık","Değirmenayvalı","Değirmendere","Demirçevre","Erkmen","Fethibey","Gebeceler","Halımoru","Işıklar","Karaaslan","Kışlacık","Kızıldağ","Kocatepe","Kozluca","Köprülü","Küçükkalecik","Nuribey","Olucak","Salar","Saraydüzü","Sarık","Susuz","Sülümenli","Sülün"];
+var KOY_MASTER = ["Anıtkaya","Bayatçık","Bayramgazi","Belkaracaören","Beyyazı","Bostanlı","Burhaniye","Çavdarlı","Çayırbağ","Çıkrık","Değirmenayvalı","Değirmendere","Erkmen","Fethibey","Gebeceler","Halımoru","Işıklar","Karaaslan","Kızıldağ","Kozluca","Köprülü","Küçükkalecik","Nuribey","Salar","Saraydüzü","Sarık","Susuz","Sülümenli","Sülün"];
 
 // Manuel eklenen başlıklar (localStorage + Firebase)
 var MAHALLE_EKSTRA = [];
@@ -1241,7 +1241,11 @@ var MAHALLE_EK_KALIP = {
   'Organize Sanayi Bölgesi': ['OSB Mah', 'O.S.B. Mah', 'Organize Sanayi Mah'],
   'Camikebir': ['Camii Kebir Mah', 'Cami Kebir Mah'],
   'Erenler': ['Erenler Merkez'],
-  'Çakır': ['Çakırköy', 'Çakır Köy', 'Çakırköy Kasabası', 'Çakırköy Mah', 'Çakır Kasabası']
+  'Çakır': ['Çakırköy', 'Çakır Köy', 'Çakırköy Kasabası', 'Çakırköy Mah', 'Çakır Kasabası'],
+  'Demirçevre': ['Demirçevre Kasabası', 'Demirçevre Köyü'],
+  'Kışlacık': ['Kışlacık Kasabası', 'Kışlacık Köyü'],
+  'Kocatepe': ['Kocatepe Kasabası', 'Kocatepe Köyü'],
+  'Olucak': ['Olucak Kasabası', 'Olucak Köyü']
 };
 
 // Adres satırında mahalle geçiyor mu? Ana kalıp + takma adlar, boşluk/noktalama farkına dayanıklı.
