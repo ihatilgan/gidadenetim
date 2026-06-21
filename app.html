@@ -2682,8 +2682,11 @@ function koyIsletmeleriDoldur() {
 
 function uretimKategoriEslesiyor(i) {
   if (!i || !seciliKategoriler || !seciliKategoriler.length) return false;
-  // Yalnızca BİRİNCİL (ilk) faaliyete bak: sorumlu başlık ikincil olarak yazılmışsa sayma
-  var ilk = _ilkFaaliyet(i.faaliyetAlani);
+  // manuelBaslik ile seçili kategorilerden birine elle atanmış işletme
+  if (typeof manuelBaslik!=='undefined' && typeof isletmeAnahtari==='function') {
+    var mb = manuelBaslik[isletmeAnahtari(i)];
+    if (mb && mb.tip==='uretim' && seciliKategoriler.indexOf(mb.key)>=0) return true;
+  }
   for (var ki = 0; ki < seciliKategoriler.length; ki++) {
     var kat = TUM_URETIM_KATEGORILER.find(function(k){ return k.id === seciliKategoriler[ki]; });
     if (kat && uretimKatEslesir(i.faaliyetAlani, kat)) return true;
@@ -5926,8 +5929,14 @@ function isletmelerBellegeUygula(liste, kaynak) {
 
 // --- Gömülü sorumlu tohum: hesaplama / kaydetme / açılışta uygulama ---
 function _uretimTumKategoriEslesiyor(i){
-  var ilk=_ilkFaaliyet(i.faaliyetAlani);
   var izin=(typeof EKIP_URETIM_KATEGORILERI!=='undefined' && EKIP_URETIM_KATEGORILERI.length)?EKIP_URETIM_KATEGORILERI:null;
+  // manuelBaslik ile üretim kategorisine elle atanmış işletme
+  if (typeof manuelBaslik!=='undefined' && typeof isletmeAnahtari==='function') {
+    var mb = manuelBaslik[isletmeAnahtari(i)];
+    if (mb && mb.tip==='uretim') {
+      return !izin || izin.indexOf(mb.key) >= 0;
+    }
+  }
   for(var c=0;c<TUM_URETIM_KATEGORILER.length;c++){
     if(izin && izin.indexOf(TUM_URETIM_KATEGORILER[c].id)<0) continue;
     if(uretimKatEslesir(i.faaliyetAlani, TUM_URETIM_KATEGORILER[c])) return true;
