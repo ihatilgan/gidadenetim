@@ -4896,6 +4896,15 @@ function ozetGuncelle() {
   var uretimGecen = uretimTumRiskGecenListesiGetir().length;
   var digerGecen = satisKoyRiskGecenListesiGetir().length;
 
+  var _notAd = (typeof mevcutKullaniciAdi !== 'undefined' && mevcutKullaniciAdi) ? mevcutKullaniciAdi : '';
+  var notluSayisi = 0;
+  if (typeof isletmeNotlari !== 'undefined') {
+    Object.keys(isletmeNotlari).forEach(function(an) {
+      var nList = isletmeNotlari[an] || [];
+      if (_notAd ? nList.some(function(n){ return n.kim === _notAd; }) : nList.length > 0) notluSayisi++;
+    });
+  }
+
   var grid = document.getElementById('ozet-grid');
   if (!grid) return;
   grid.innerHTML = '';
@@ -4930,6 +4939,7 @@ function ozetGuncelle() {
         }
         if (vv.ozel === 'uretim') { ozetUretimGit(); return; }
         if (vv.ozel === 'diger') { ozetDigerGit(); return; }
+        if (vv.ozel === 'notlu') { ozetNotluIsletmelerGoster(); return; }
         var kart = document.getElementById('ozet-liste-kart');
         var baslikEl = document.getElementById('ozet-liste-baslik');
         var acik = kart && kart.style.display !== 'none';
@@ -4943,10 +4953,11 @@ function ozetGuncelle() {
 
   // Ana kartlar: risk takibi öncelikli
   var anaKartlar = [
-    {sayi:ikazSayisi, aciklama:'Aktif İkaz',          renk:'turuncu', label:'Aktif İkazlar',      filtre:function(d){return kontrolIkaz(d);}},
-    {sayi:uretimGecen,aciklama:'Üretim Risk Geçen',   renk:'kirmizi', label:'',                   ozel:'uretim'},
-    {sayi:digerGecen, aciklama:'Satış/Köy Risk Geçen',renk:'kirmizi', label:'',                   ozel:'diger'},
-    {sayi:toplam,     aciklama:'Toplam Denetim ▾',    renk:'gri',     label:'Tüm Denetimler',     ozel:'toplam'},
+    {sayi:ikazSayisi,  aciklama:'Aktif İkaz',           renk:'turuncu', label:'Aktif İkazlar',      filtre:function(d){return kontrolIkaz(d);}},
+    {sayi:uretimGecen, aciklama:'Üretim Risk Geçen',    renk:'kirmizi', label:'',                   ozel:'uretim'},
+    {sayi:digerGecen,  aciklama:'Satış/Köy Risk Geçen', renk:'kirmizi', label:'',                   ozel:'diger'},
+    {sayi:notluSayisi, aciklama:'Notlu İşletmelerim',   renk:'mavi',    label:'',                   ozel:'notlu'},
+    {sayi:toplam,      aciklama:'Toplam Denetim ▾',     renk:'gri',     label:'Tüm Denetimler',     ozel:'toplam'},
   ];
   // Toplam denetime tıklanınca açılan kırılım
   var detayKartlar = [
@@ -7112,6 +7123,65 @@ function _ozetRiskKutu(id, baslik, liste, grupTipi){
 }
 function ozetUretimGit(){ _ozetRiskKutu('ozet-risk-uretim','🏭 Üretim — Risk Tarihi Geçen', uretimTumRiskGecenListesiGetir(), 'faaliyet'); }
 function ozetDigerGit(){ _ozetRiskKutu('ozet-risk-diger','🏘️ Satış/Köy — Risk Tarihi Geçen', satisKoyRiskGecenListesiGetir(), 'mahalle'); }
+
+function ozetNotluIsletmelerGoster() {
+  var kart = document.getElementById('ozet-liste-kart');
+  var baslikEl = document.getElementById('ozet-liste-baslik');
+  var el = document.getElementById('ozet-son-liste');
+  if (!kart || !el) return;
+  kart.style.display = 'block';
+  baslikEl.innerHTML = '';
+  var _notAd = (typeof mevcutKullaniciAdi !== 'undefined' && mevcutKullaniciAdi) ? mevcutKullaniciAdi : '';
+  var satirlar = [];
+  if (typeof isletmeNotlari !== 'undefined') {
+    Object.keys(isletmeNotlari).forEach(function(an) {
+      var nList = (isletmeNotlari[an] || []).filter(function(n){ return _notAd ? n.kim === _notAd : true; });
+      if (!nList.length) return;
+      var ist = (ISLETMELER || []).find(function(i){ return (i.kayitNo||i.isletmeAdi) === an; });
+      satirlar.push({ an: an, isletme: ist, notlar: nList });
+    });
+  }
+  satirlar.sort(function(a, b) {
+    var ta = a.notlar[0] ? a.notlar[0].t : '';
+    var tb = b.notlar[0] ? b.notlar[0].t : '';
+    return tb.localeCompare(ta);
+  });
+  var txt = document.createTextNode('📝 Notlu İşletmelerim (' + satirlar.length + ')');
+  baslikEl.appendChild(txt);
+  var temBtn = document.createElement('button');
+  temBtn.style.cssText = 'font-size:12px;padding:3px 10px;border:1px solid var(--sinir);border-radius:6px;cursor:pointer;background:white;margin-left:10px;vertical-align:middle;';
+  temBtn.textContent = '✕ Kapat';
+  temBtn.onclick = function() { kart.style.display = 'none'; };
+  baslikEl.appendChild(temBtn);
+  el.innerHTML = '';
+  if (!satirlar.length) {
+    el.innerHTML = '<div class="bos-durum"><div class="ikon">📝</div><p>Henüz not aldığınız işletme yok.</p></div>';
+    kart.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+  satirlar.forEach(function(s) {
+    var row = document.createElement('div');
+    row.style.cssText = 'border-bottom:1px solid var(--sinir);padding:10px 14px;cursor:pointer;';
+    row.addEventListener('mouseenter', function(){ this.style.background='var(--gri-acik)'; });
+    row.addEventListener('mouseleave', function(){ this.style.background=''; });
+    row.addEventListener('click', function() {
+      if (s.isletme) {
+        if (s.isletme.kayitNo) { isletmeDetayModal(s.isletme.kayitNo); }
+        else { var idx = (ISLETMELER||[]).indexOf(s.isletme); if (idx >= 0) isletmeDetayModal(idx); }
+      }
+    });
+    var ad = (s.isletme && s.isletme.isletmeAdi) ? s.isletme.isletmeAdi : s.an;
+    var sonNot = s.notlar[0];
+    var t = sonNot ? new Date(sonNot.t) : null;
+    var ts = t ? t.toLocaleDateString('tr') + ' ' + t.toLocaleTimeString('tr', {hour:'2-digit', minute:'2-digit'}) : '';
+    row.innerHTML =
+      '<div style="font-weight:600;font-size:13px;">' + _ekipEsc(ad) + ' <span style="font-size:11px;color:var(--gri);font-weight:400;">(' + s.notlar.length + ' not)</span></div>' +
+      '<div style="font-size:12px;color:#555;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + _ekipEsc(sonNot ? sonNot.m : '') + '</div>' +
+      (ts ? '<div style="font-size:10px;color:var(--gri);margin-top:2px;">' + ts + '</div>' : '');
+    el.appendChild(row);
+  });
+  kart.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 function ozetIsletmeListeGoster(baslik, isletmeListe, grupTipi) {
   var kart = document.getElementById('ozet-liste-kart');
