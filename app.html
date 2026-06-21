@@ -6526,8 +6526,6 @@ function denetimlerdenRiskTarihleriniUygula(denetimListesi) {
   });
 
   Object.keys(sonDenetim).forEach(function(kayitNo) {
-    // Manuel GGBS tarihi olan işletmelerin tarihi ezilmez
-    if (orijinalRiskTarihleri[kayitNo]) return;
     var son = new Date(sonDenetim[kayitNo]);
     var birYilSonra = new Date(son.getFullYear()+1, son.getMonth(), son.getDate());
     var yeniTarih = birYilSonra.getDate().toString().padStart(2,'0') + '/' +
