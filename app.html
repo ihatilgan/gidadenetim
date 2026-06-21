@@ -623,11 +623,15 @@ function ekipDagitimRaporu(){
   el.innerHTML='<p style="color:var(--gri);font-size:13px;">Hesaplanıyor…</p>';
   setTimeout(function(){
     var kaynak=(typeof ISLETMELER!=='undefined'&&ISLETMELER.length)?ISLETMELER:[];
-    var allIds=(typeof TUM_URETIM_KATEGORILER!=='undefined'?TUM_URETIM_KATEGORILER:[]).map(function(k){return k.id;});
-    var superEkip={mahalleler:(typeof MERKEZ_MAHALLE_MASTER!=='undefined'?MERKEZ_MAHALLE_MASTER:[]),kasabalar:(typeof KOY_MASTER!=='undefined'?KOY_MASTER:[]),uretimKategorileri:allIds};
     var conflicts=[],orphans=[];
     kaynak.forEach(function(i){
-      if(!ekipSorumluMu(superEkip,i)) return;
+      // Kapsam dışı: açıkça hariç tutulanlar
+      if(typeof kayitHaricMi==='function' && kayitHaricMi(i)) return;
+      // Kapsam kontrolü: başlık belirlenebiliyorsa VEYA manuel ekip ataması varsa işletme kapsamdadır
+      var baslik = (typeof isletmeBaslikBelirle==='function') ? isletmeBaslikBelirle(i) : null;
+      var an = (typeof isletmeAnahtari==='function') ? isletmeAnahtari(i) : (i.kayitNo||i.isletmeAdi||'');
+      var hasManuelEkip = (typeof manuelEkip!=='undefined' && !!manuelEkip[an]);
+      if (!baslik && !hasManuelEkip) return; // başlık yok, kapsam dışı
       var claim=EKIPLER.filter(function(e){return ekipSorumluMu(e,i);});
       if(claim.length===0) orphans.push(i);
       else if(claim.length>=2) conflicts.push({i:i,ekipler:claim.map(function(e){return e.ad||e.id;})});
