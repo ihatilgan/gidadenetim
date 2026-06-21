@@ -472,6 +472,8 @@ function ekipMahalleToggle(m,on){ var ek=ekipBul(_duzenlenenEkipId); if(!ek) ret
 function ekipKategoriToggle(id,on){ var ek=ekipBul(_duzenlenenEkipId); if(!ek) return; ek.uretimKategorileri=ek.uretimKategorileri||[]; var i=ek.uretimKategorileri.indexOf(id); if(on&&i<0) ek.uretimKategorileri.push(id); if(!on&&i>=0) ek.uretimKategorileri.splice(i,1); }
 function ekipKoyEkle(){ var inp=document.getElementById('ekip-koy-input'); if(!inp||!inp.value.trim()) return; var ek=ekipBul(_duzenlenenEkipId); if(!ek) return; var v=inp.value.trim(); ek.kasabalar=ek.kasabalar||[]; if(ek.kasabalar.indexOf(v)<0) ek.kasabalar.push(v); inp.value=''; ekipYonetimiGoster(); setTimeout(function(){ var i2=document.getElementById('ekip-koy-input'); if(i2) i2.focus(); },0); }
 function ekipKoySil(v){ var ek=ekipBul(_duzenlenenEkipId); if(!ek||!ek.kasabalar) return; ek.kasabalar=ek.kasabalar.filter(function(k){return k!==v;}); ekipYonetimiGoster(); }
+function ekipPersonelEkle(){ var inp=document.getElementById('ekip-personel-input'); if(!inp||!inp.value.trim()) return; var ek=ekipBul(_duzenlenenEkipId); if(!ek) return; var v=inp.value.trim(); ek.personel=ek.personel||[]; if(ek.personel.indexOf(v)<0) ek.personel.push(v); inp.value=''; ekipYonetimiGoster(); setTimeout(function(){ var i2=document.getElementById('ekip-personel-input'); if(i2) i2.focus(); },0); }
+function ekipPersonelSil(isim){ var ek=ekipBul(_duzenlenenEkipId); if(!ek||!ek.personel) return; ek.personel=ek.personel.filter(function(p){return p!==isim;}); ekipYonetimiGoster(); }
 function ekipKoyToggle(k,on){ var ek=ekipBul(_duzenlenenEkipId); if(!ek) return; ek.kasabalar=ek.kasabalar||[]; var i=ek.kasabalar.indexOf(k); if(on&&i<0)ek.kasabalar.push(k); if(!on&&i>=0)ek.kasabalar.splice(i,1); var b=document.getElementById('ekip-koy-sayac'); if(b) b.textContent=ek.kasabalar.length+' seçili'; }
 
 function ekipYeniEkle(){
@@ -535,6 +537,21 @@ function ekipYonetimiGoster(){
   h+='<div style="max-height:240px;overflow-y:auto;border:1px solid var(--sinir);border-radius:8px;padding:8px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:2px;">';
   (typeof TUM_URETIM_KATEGORILER!=='undefined'?TUM_URETIM_KATEGORILER:[]).forEach(function(k){ var on=(ek.uretimKategorileri||[]).indexOf(k.id)>=0; h+='<label style="display:flex;align-items:center;gap:4px;width:48%;font-size:13px;padding:3px;box-sizing:border-box;"><input type="checkbox" value="'+_ekipEsc(k.id)+'" '+(on?'checked':'')+' onchange="ekipKategoriToggle(this.value,this.checked)">'+_ekipEsc(k.label)+_ekipSay(say.kat[k.id])+'</label>'; });
   h+='</div>';
+  h+='<div class="bolum">Personel ('+(ek.personel||[]).length+' kişi)</div>';
+  h+='<div style="border:1px solid var(--sinir);border-radius:8px;margin-bottom:8px;overflow:hidden;">';
+  if((ek.personel||[]).length){
+    (ek.personel||[]).forEach(function(p,pi){
+      var pEsc=_ekipEsc(p).replace(/'/g,"\\'");
+      h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;font-size:13px;'+(pi>0?'border-top:1px solid var(--sinir);':'')+'">'+
+        '<span>'+_ekipEsc(p)+'</span>'+
+        '<button onclick="ekipPersonelSil(\''+pEsc+'\')" style="background:none;border:none;color:#c0392b;font-size:18px;cursor:pointer;line-height:1;padding:0 4px;">×</button>'+
+        '</div>';
+    });
+  } else {
+    h+='<div style="font-size:12px;color:var(--gri);padding:10px;">Henüz personel eklenmedi.</div>';
+  }
+  h+='</div>';
+  h+='<div style="display:flex;gap:6px;margin-bottom:14px;"><input type="text" id="ekip-personel-input" placeholder="Ad Soyad" style="flex:1;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ekipPersonelEkle();}"><button class="btn btn-yesil btn-kucuk" onclick="ekipPersonelEkle()">+ Ekle</button></div>';
   h+='<button class="btn btn-yesil" style="width:100%;" onclick="ekipDegisiklikleriKaydet()">💾 Ekibi Kaydet</button>';
   h+='<p style="font-size:12px;color:var(--gri);margin-top:10px;">Not: Satış faaliyet türleri (45 tür) tüm ekiplerde ortaktır, burada seçilmez. Bir ekip aktifken yaptığınız kayıt anında listeye yansır.</p>';
   root.innerHTML=h;
