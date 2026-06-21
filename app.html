@@ -5486,6 +5486,13 @@ function isletmeVergiTcDoldur(i) {
   */
 }
 
+function isletmeHaritaUrl(i) {
+  if (i && i.koordinatlar && i.koordinatlar.lat) {
+    return 'https://maps.google.com/?q=' + i.koordinatlar.lat + ',' + i.koordinatlar.lng;
+  }
+  return 'https://maps.google.com/?q=' + encodeURIComponent((i && i.adres) || '');
+}
+
 function isletmeDetayModal(idx) {
   // idx sayı ise index, string ise kayıt no
   const i = (typeof idx === 'number') ? ISLETMELER[idx] : ISLETMELER.find(function(x){ return x.kayitNo === idx; });
@@ -5493,6 +5500,8 @@ function isletmeDetayModal(idx) {
   // Denetim sayısı
   const denetimSayisi = denetimler.filter(d => d.isletmeKayitNo === i.kayitNo || d.isletme === i.isletmeAdi).length;
   var _sorumluBu = isAdmin || isletmeSorumluEkipId(i) === aktifEkipId;
+  var _haritaUrl = isletmeHaritaUrl(i);
+  var _gpsRozet = (i.koordinatlar && i.koordinatlar.lat) ? ' <span style="font-size:10px;color:#27ae60;font-weight:700;">📡 GPS</span>' : '';
   var _denetimEkleBtnHtml = '';
   var _hizliDenetimBtnHtml = '';
   if (_sorumluBu) {
@@ -5522,7 +5531,7 @@ function isletmeDetayModal(idx) {
       <div class="detay-satir"><span class="etiket-kucuk">Vergi Dairesi / No</span><span class="deger">${[i.vergiDairesi,i.vergiNo].filter(Boolean).join(' / ') || '<span style="color:var(--gri)">—</span>'}</span></div>
       <div class="detay-satir"><span class="etiket-kucuk">T.C. Kimlik No</span><span class="deger">${i.tcKimlikNo || '<span style="color:var(--gri)">—</span>'}</span></div>
     </div>
-    ${i.adres ? `<div onclick="window.open('https://maps.google.com/?q='+encodeURIComponent('${i.adres}'),'_blank')" style="background:var(--gri-acik);border-radius:7px;padding:10px 12px;font-size:13px;margin-top:8px;cursor:pointer;">📍 ${i.adres} <span style="font-size:11px;color:var(--yesil);">🗺️ Haritada Göster</span></div>` : ''}
+    ${i.adres ? `<div onclick="window.open('${_haritaUrl}','_blank')" style="background:var(--gri-acik);border-radius:7px;padding:10px 12px;font-size:13px;margin-top:8px;cursor:pointer;">📍 ${i.adres}${_gpsRozet} <span style="font-size:11px;color:var(--yesil);">🗺️ Haritada Göster</span></div>` : ''}
     <div style="margin-top:16px;padding:12px;background:var(--yesil-acik);border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
       <span style="font-size:14px;font-weight:600;">Bu işletmede ${denetimSayisi} denetim kaydı var</span>
       ${_denetimEkleBtnHtml}
@@ -7683,8 +7692,10 @@ function koyIsletmeDetay(koyAdi, idx) {
   if (isletme.adres) {
     var adresDiv = document.createElement('div');
     adresDiv.style.cssText='background:var(--gri-acik);border-radius:7px;padding:10px 12px;font-size:13px;margin-top:8px;cursor:pointer;';
-    adresDiv.innerHTML = '📍 ' + isletme.adres + ' <span style="font-size:11px;color:var(--yesil);">🗺️ Haritada Göster</span>';
-    adresDiv.onclick = (function(adr){ return function(){ window.open('https://maps.google.com/?q='+encodeURIComponent(adr),'_blank'); }; })(isletme.adres);
+    var _koyGps = isletme.koordinatlar && isletme.koordinatlar.lat;
+    var _koyUrl = _koyGps ? ('https://maps.google.com/?q='+isletme.koordinatlar.lat+','+isletme.koordinatlar.lng) : ('https://maps.google.com/?q='+encodeURIComponent(isletme.adres||''));
+    adresDiv.innerHTML = '📍 ' + isletme.adres + (_koyGps ? ' <span style="font-size:10px;color:#27ae60;font-weight:700;">📡 GPS</span>' : '') + ' <span style="font-size:11px;color:var(--yesil);">🗺️ Haritada Göster</span>';
+    adresDiv.onclick = (function(url){ return function(){ window.open(url,'_blank'); }; })(_koyUrl);
     modal.appendChild(adresDiv);
   }
 
@@ -7868,8 +7879,10 @@ function isletmeDetayModalUretim(uIdx) {
   if (i.adres) {
     var adresDiv = document.createElement('div');
     adresDiv.style.cssText='background:var(--gri-acik);border-radius:7px;padding:10px 12px;font-size:13px;margin-top:8px;cursor:pointer;';
-    adresDiv.innerHTML = '📍 ' + i.adres + ' <span style="font-size:11px;color:var(--yesil);">🗺️ Haritada Göster</span>';
-    adresDiv.onclick = function(){ window.open('https://maps.google.com/?q='+encodeURIComponent(i.adres),'_blank'); };
+    var _urtGps = i.koordinatlar && i.koordinatlar.lat;
+    var _urtUrl = _urtGps ? ('https://maps.google.com/?q='+i.koordinatlar.lat+','+i.koordinatlar.lng) : ('https://maps.google.com/?q='+encodeURIComponent(i.adres||''));
+    adresDiv.innerHTML = '📍 ' + i.adres + (_urtGps ? ' <span style="font-size:10px;color:#27ae60;font-weight:700;">📡 GPS</span>' : '') + ' <span style="font-size:11px;color:var(--yesil);">🗺️ Haritada Göster</span>';
+    adresDiv.onclick = (function(url){ return function(){ window.open(url,'_blank'); }; })(_urtUrl);
     modal.appendChild(adresDiv);
   }
 
@@ -8159,6 +8172,24 @@ function hizliDenetimEkle(isletme, _btn) {
         var yeniRisk = birYilSonra.getDate().toString().padStart(2,'0') + '/' +
           (birYilSonra.getMonth()+1).toString().padStart(2,'0') + '/' + birYilSonra.getFullYear();
         if (isletme.kayitNo) riskTarihGuncelle(isletme.kayitNo, yeniRisk);
+
+        // GPS koordinatını arka planda kaydet (kalıcı, denetimden bağımsız)
+        if (isletme.kayitNo && navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(pos) {
+            var koord = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            var ist = ISLETMELER.find(function(x){ return x.kayitNo === isletme.kayitNo; });
+            if (ist) ist.koordinatlar = koord;
+            try {
+              var docId = isletmeDocId(isletme);
+              if (docId) {
+                firebase.firestore().collection('isletmeler_master').doc(docId)
+                  .update({ koordinatlar: koord })
+                  .catch(function(e){ console.warn('koordinat kaydı başarısız:', e.message); });
+              }
+            } catch(e){ console.warn('koordinat kayıt hatası:', e.message); }
+          }, function(e){ console.warn('konum alınamadı:', e.message); },
+          { enableHighAccuracy: true, timeout: 10000 });
+        }
 
         ozetGuncelle();
         // Sorumluluklar listesini yenile
