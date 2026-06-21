@@ -384,6 +384,8 @@ function ekipKurallariUygula(ekip) {
     SORUMLU_KASABALAR.length = 0;
     (ekip.kasabalar||[]).forEach(function(m){ SORUMLU_KASABALAR.push(m); });
   }
+  // KOY_ISLETMELERI'ni yeni SORUMLU_KASABALAR'a göre yeniden doldur
+  try { if (typeof koyIsletmeleriDoldur === 'function' && typeof ISLETMELER !== 'undefined' && ISLETMELER.length) koyIsletmeleriDoldur(); } catch(e){}
   // Satış faaliyet listesi TÜM EKİPLERDE ORTAK — burada değiştirilmez.
   // Üretim kategorileri: ekibin sorumlu olduğu kategoriler
   EKIP_URETIM_KATEGORILERI = (ekip.uretimKategorileri||[]).slice();
