@@ -9922,11 +9922,12 @@ function basliklarGoster() {
     html += '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 12px;margin-bottom:6px;">';
     html += '<div style="font-weight:600;color:#856404;font-size:13px;margin-bottom:8px;">⚠️ '+_bostaIsl.length+' işletme hiçbir başlığa girmiyor — tıklayıp başlık atayın</div>';
     _bostaIsl.forEach(function(i){
+      var idx = ISLETMELER.indexOf(i);
       var _ae=_ekipEsc((i.kayitNo||i.isletmeAdi)||'').replace(/'/g,"\\'");
-      html += '<div onclick="isletmeBaslikDegistirAc(\''+_ae+'\')" style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid #ffc107;border-radius:8px;margin-bottom:5px;cursor:pointer;background:#fff;">';
+      html += '<div onclick="isletmeDetayModal('+idx+')" style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid #ffc107;border-radius:8px;margin-bottom:5px;cursor:pointer;background:#fff;">';
       html += '<div><div style="font-size:13px;font-weight:500;">'+_ekipEsc(i.isletmeAdi||_ae)+'</div>';
       html += '<div style="font-size:11px;color:var(--gri);margin-top:2px;">'+_ekipEsc(i.kayitNo||'')+(i.faaliyetAlani?' · '+_ekipEsc((i.faaliyetAlani||'').split(',')[0]):'')+'</div></div>';
-      html += '<span style="font-size:11px;color:#856404;white-space:nowrap;">Başlık ata →</span>';
+      html += '<span style="font-size:11px;color:#856404;white-space:nowrap;">Detay →</span>';
       html += '</div>';
     });
     html += '</div>';
@@ -10066,6 +10067,17 @@ function _baslikDegisGuncelle(an){
       sh+='<div onclick="isletmeBaslikUygula(\''+anEsc+'\',\''+b.tip+'\',\''+keyEsc+'\')" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--sinir);border-radius:9px;margin-bottom:6px;cursor:pointer;">'
         +'<div style="min-width:0;"><div style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_ekipEsc(b.ad)+'</div><div style="font-size:10px;color:var(--gri);">'+tipEt+'</div></div>'+rozet+'</div>';
     });
+    var araEsc=_ekipEsc(ara).replace(/'/g,"\\'");
+    sh+='<div style="border-top:1px dashed var(--sinir);margin-top:8px;padding-top:10px;">';
+    sh+='<div style="font-size:12px;color:var(--gri);margin-bottom:6px;">Bulunamadıysa yeni başlık ekle:</div>';
+    sh+='<div style="display:flex;gap:6px;align-items:center;">';
+    sh+='<select id="baslik-yeni-tip-'+anEsc.replace(/[^a-zA-Z0-9]/g,'_')+'" style="flex:1;padding:7px 8px;border:1px solid var(--sinir);border-radius:7px;font-size:12px;">';
+    sh+='<option value="mahalle">🏘️ Mahalle</option>';
+    sh+='<option value="koy">🌾 Köy/Kasaba</option>';
+    sh+='<option value="uretim">🏭 Üretim kategorisi</option>';
+    sh+='</select>';
+    sh+='<button onclick="_baslikDegisYeniEkle(\''+anEsc+'\',\''+araEsc+'\')" style="padding:7px 13px;background:var(--yesil);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">+ Ekle</button>';
+    sh+='</div></div>';
   }
   sonuclar.innerHTML=sh;
   var manuelBaslikVal=(typeof manuelBaslik!=='undefined')?manuelBaslik[an]:null;
@@ -10082,6 +10094,32 @@ function _baslikDegisGuncelle(an){
   ah+='<button class="btn btn-gri" style="width:100%;" onclick="var o=document.getElementById(\'baslik-degis-overlay\');if(o)o.remove();">İptal</button>';
   ah+='</div>';
   altDiv.innerHTML=ah;
+}
+function _baslikDegisYeniEkle(an, deger){
+  if(!isAdmin){ bildirimGoster('Bu işlemi sadece admin yapabilir.','hata'); return; }
+  deger = deger.trim();
+  if(!deger){ bildirimGoster('Başlık adı boş olamaz.','hata'); return; }
+  var anKey = an.replace(/[^a-zA-Z0-9]/g,'_');
+  var tipEl = document.getElementById('baslik-yeni-tip-'+anKey);
+  var tip = tipEl ? tipEl.value : 'mahalle';
+  var key = deger;
+  if(tip==='mahalle'){
+    if(MERKEZ_MAHALLE_MASTER.indexOf(deger)>=0){ bildirimGoster('Bu mahalle zaten mevcut.','hata'); return; }
+    MERKEZ_MAHALLE_MASTER.push(deger);
+    MAHALLE_EKSTRA.push(deger);
+  } else if(tip==='koy'){
+    if(KOY_MASTER.indexOf(deger)>=0){ bildirimGoster('Bu köy/kasaba zaten mevcut.','hata'); return; }
+    KOY_MASTER.push(deger);
+    KOY_EKSTRA.push(deger);
+  } else if(tip==='uretim'){
+    if(TUM_URETIM_KATEGORILER.find(function(x){return x.label===deger;})){ bildirimGoster('Bu kategori zaten mevcut.','hata'); return; }
+    key = 'x_'+Date.now();
+    TUM_URETIM_KATEGORILER.push({id:key, label:deger, anahtar:[], ekstra:true});
+    KAT_EKSTRA.push({id:key, label:deger});
+  }
+  try{ _ekipSayiCache=null; }catch(e){}
+  if(typeof ekstraBasliklarKaydet==='function') ekstraBasliklarKaydet();
+  isletmeBaslikUygula(an, tip, key);
 }
 function isletmeBaslikUygula(an, tip, key){
   var i=_isletmeBulAnahtar(an);
