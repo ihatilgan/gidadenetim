@@ -1884,6 +1884,7 @@ window.addEventListener('fb-hazir', function() {
       </div>
       <button id="parola-kaydet-btn" style="background:#1a6b3c;color:white;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;">Parolayı Güncelle</button>
       <button id="parola-iptal-btn" onclick="(function(){var pe=document.getElementById('parola-ekrani');if(pe)pe.style.display='none';if(typeof mevcutKullanici!=='undefined'&&mevcutKullanici&&typeof firebase!=='undefined')firebase.firestore().collection('kullanicilar').doc(mevcutKullanici.uid).set({ilkGiris:false},{merge:true});})()" style="background:#ecf0f1;color:#7f8c8d;border:none;border-radius:8px;padding:10px;font-size:14px;cursor:pointer;">Atla</button>
+      <button onclick="if(typeof cikisYap==='function')cikisYap();" style="background:none;border:none;color:#c0392b;font-size:13px;cursor:pointer;padding:6px;margin-top:2px;">🚪 Çıkış yap</button>
     </div>
   </div>
 </div>
@@ -10471,13 +10472,17 @@ function isletmeNotEkle(an){
   if(!isletmeNotlari[an]) isletmeNotlari[an]=[];
   var kim=(typeof mevcutKullaniciAdi!=='undefined'&&mevcutKullaniciAdi)?mevcutKullaniciAdi:'';
   isletmeNotlari[an].unshift({t:new Date().toISOString(), m:v, kim:kim});
+  var _ist=(typeof ISLETMELER!=='undefined'?ISLETMELER:[]).find(function(x){return (x.kayitNo||x.isletmeAdi)===an;});
+  if(typeof aktiviteKaydet==='function') aktiviteKaydet('not_ekle', (_ist?_ist.isletmeAdi:an)+' - not eklendi', {kayitNo:an});
   isletmeNotKaydet();
   _g7DetayTazele(an);
 }
 function isletmeNotSil(an, ix){
   if(!isletmeNotlari[an]) return;
+  var _ist=(typeof ISLETMELER!=='undefined'?ISLETMELER:[]).find(function(x){return (x.kayitNo||x.isletmeAdi)===an;});
   isletmeNotlari[an].splice(ix,1);
   if(!isletmeNotlari[an].length) delete isletmeNotlari[an];
+  if(typeof aktiviteKaydet==='function') aktiviteKaydet('not_sil', (_ist?_ist.isletmeAdi:an)+' - not silindi', {kayitNo:an});
   isletmeNotKaydet();
   _g7DetayTazele(an);
 }
@@ -10546,6 +10551,11 @@ function sorunGonder(an, secIx){
   if(typeof firebase==='undefined'||!firebase.apps||!firebase.apps.length){ if(typeof bildirimGoster==='function') bildirimGoster('Bağlantı yok, bildirim gönderilemedi.','hata'); return; }
   firebase.firestore().collection(SORUN_KOLEKSIYON).add(kayit).then(function(){
     if(typeof bildirimGoster==='function') bildirimGoster('Sorun bildirimi gönderildi. Admin değerlendirecek.','basari');
+    if(typeof aktiviteKaydet==='function') aktiviteKaydet('sorun_bildir', (kayit.isletmeAd||an)+' - sorun bildirildi', {kayitNo:kayit.kayitNo, metin:kayit.metin});
+    if(typeof bildirimMesajiGonder==='function' && typeof ADMIN_UID!=='undefined'){
+      var _bMetin='⚠️ Sorun bildirimi: '+(kayit.isletmeAd||kayit.isletmeKey)+'\n'+kayit.ekipAd+' — '+kayit.metin;
+      bildirimMesajiGonder(ADMIN_UID, _bMetin);
+    }
   }).catch(function(e){ if(typeof bildirimGoster==='function') bildirimGoster('Gönderilemedi: '+(e.message||''),'hata'); });
 }
 window.isletmeNotEkle=isletmeNotEkle;
