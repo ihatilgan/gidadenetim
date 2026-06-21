@@ -398,7 +398,11 @@ function ekipKurallariUygula(ekip) {
   try { localStorage.setItem(AKTIF_EKIP_KEY, aktifEkipId); } catch(e){}
   try {
     var _hea=document.getElementById('header-ekip-adi');
-    if(_hea){ _hea.textContent=ekip.ad||ekip.id; _hea.style.display=''; }
+    if(_hea){
+      _hea.textContent=ekip.ad||ekip.id;
+      _hea.style.display='';
+      _hea.dataset.personel=JSON.stringify(ekip.personel||[]);
+    }
   }catch(e){}
 }
 
@@ -1887,7 +1891,8 @@ window.addEventListener('fb-hazir', function() {
     <h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🍽️ Gıda Denetim</h1>
     <div style="font-size:10px;opacity:0.65;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">İ.H.A.</div>
   </div>
-  <div id="header-ekip-adi" style="display:none;position:absolute;left:50%;transform:translateX(-50%);text-align:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.2);pointer-events:none;white-space:nowrap;"></div>
+  <div id="header-ekip-adi" onclick="ekipPersonelBalonAc()" style="display:none;position:absolute;left:50%;transform:translateX(-50%);text-align:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.2);cursor:pointer;white-space:nowrap;font-size:13px;font-weight:700;padding:2px 8px;border-radius:5px;background:rgba(255,255,255,0.15);"></div>
+  <div id="ekip-personel-balon" style="display:none;position:absolute;top:100%;left:50%;transform:translateX(-50%);background:rgba(20,40,20,0.93);color:#fff;border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.7;z-index:10001;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.3);margin-top:4px;pointer-events:none;"></div>
   <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
     <span id="bugun-tarih" style="font-size:11px;color:rgba(255,255,255,0.75);margin-right:4px;"></span>
     <span id="sync-durum" style="font-size:11px;color:rgba(255,255,255,0.7);"></span>
@@ -6866,7 +6871,7 @@ function firebaseDinle() {
             }
           }
         }
-        if (syncEl) syncEl.textContent = '☁️ Bulut';
+        if (syncEl) syncEl.textContent = '☁️';
       }, 250);
     }, function(err) {
       console.error('Firestore hata:', err);
@@ -6952,7 +6957,7 @@ async function firebaseKaydet(denetim) {
     // Başarılı kayıt sonrası offline kuyruğu da gönder
     offlineKuyruguGonder();
     var elSync = document.getElementById('sync-durum');
-    if (elSync) { elSync.textContent = '☁️ Kaydedildi'; setTimeout(function(){ elSync.textContent=''; }, 2000); }
+    if (elSync) { elSync.textContent = '☁️'; setTimeout(function(){ elSync.textContent=''; }, 2000); }
   }
   catch(e) {
     console.error('Firebase kayıt hatası:', e);
@@ -10556,6 +10561,21 @@ window.isletmeNotEkle=isletmeNotEkle;
 window.isletmeNotSil=isletmeNotSil;
 window.sorunBildirAc=sorunBildirAc;
 window.sorunGonder=sorunGonder;
+
+var _balonTimer=null;
+function ekipPersonelBalonAc(){
+  var hea=document.getElementById('header-ekip-adi');
+  var balon=document.getElementById('ekip-personel-balon');
+  if(!hea||!balon) return;
+  var liste=[];
+  try{ liste=JSON.parse(hea.dataset.personel||'[]'); }catch(e){}
+  if(!liste.length){ return; }
+  balon.innerHTML=liste.map(function(p){ return '👤 '+p; }).join('<br>');
+  balon.style.display='block';
+  if(_balonTimer) clearTimeout(_balonTimer);
+  _balonTimer=setTimeout(function(){ balon.style.display='none'; }, 3500);
+}
+window.ekipPersonelBalonAc=ekipPersonelBalonAc;
 
 var _sorunBadgeDinleyici=null;
 function sorunBadgeDinle(){
