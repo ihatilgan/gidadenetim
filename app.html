@@ -2937,8 +2937,22 @@ function satisKoyRiskGecenListesiGetir() {
 // Üretim sorumluluğu — TÜM kategoriler (kategori seçiminden bağımsız). Özet/bildirim sayacı için.
 function uretimTumSorumlulukListesiGetir() {
   var gorulen = {};
+  var eid = aktifEkipId;
   return uretimKaynakListesiGetir().filter(function(i) {
     if (kayitHaricMi(i)) return false;
+    // Elle atanmış üretim başlığı: ekip sorumluluğu ve ilçe kısıtı olmadan dahil et
+    if (typeof manuelBaslik !== 'undefined' && typeof isletmeAnahtari === 'function') {
+      var mb = manuelBaslik[isletmeAnahtari(i)];
+      if (mb && mb.tip === 'uretim') {
+        // Başlık hangi ekibe ait?
+        var baslikEkip = (typeof baslikEkibiBul === 'function') ? baslikEkibiBul({tip:'uretim', key:mb.key}) : null;
+        if (baslikEkip && baslikEkip.id === eid) {
+          var a2 = i.kayitNo || (i.isletmeAdi + '|' + i.adres);
+          if (a2 && gorulen[a2]) return false; if (a2) gorulen[a2] = true;
+          return true;
+        }
+      }
+    }
     if (typeof _uretimTumKategoriEslesiyor !== 'function' || !_uretimTumKategoriEslesiyor(i)) return false;
     if (merkezDisindaMi(i)) return false;
     var a = i.kayitNo || (i.isletmeAdi + '|' + i.adres);
