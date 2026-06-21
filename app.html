@@ -3965,6 +3965,7 @@ function denetimKaydet() {
 
   const yeni = {
     id: Date.now(),
+    ekipId: aktifEkipId || '',
     isletme,
     isletmeKayitNo: isletmeSecildi?.kayitNo || '',
     isletmeIlce: isletmeSecildi?.ilce || '',
@@ -4817,12 +4818,28 @@ function kontrolIkaz(d) {
 
 
 
+// Aktif ekibin denetimlerini döner; admin için tüm liste
+function ekipDenetimleri() {
+  if (isAdmin) return denetimler;
+  var eid = aktifEkipId;
+  return denetimler.filter(function(d) {
+    // Yeni kayıtlar: ekipId alanı var
+    if (d.ekipId) return d.ekipId === eid;
+    // Eski kayıtlar: işletme üzerinden ekip eşleşmesi
+    var ist = ISLETMELER.find(function(i){ return i.kayitNo === d.isletmeKayitNo || i.isletmeAdi === d.isletme; });
+    if (ist) return isletmeSorumluMu(ist);
+    // Son çare: kaydeden kullanıcı
+    return mevcutKullanici && d.kullaniciId === mevcutKullanici.uid;
+  });
+}
+
 function ozetGuncelle() {
   try {
 
-  var toplam = denetimler.length;
+  var gorunen = ekipDenetimleri();
+  var toplam = gorunen.length;
   var olumlu=0, olumsuz=0, cezali=0, numuneli=0, ikazSayisi=0;
-  denetimler.forEach(function(d){
+  gorunen.forEach(function(d){
     if(d.sonuc==='olumlu') olumlu++;
     else if(d.sonuc==='olumsuz') olumsuz++;
     if(d.cezalar&&d.cezalar.length) cezali++;
@@ -6904,7 +6921,8 @@ function girisYap() {
 
 
 function ozetSonListeGoster(baslik, filtreFn) {
-  var filtered = filtreFn ? denetimler.filter(filtreFn) : denetimler.slice();
+  var temel = ekipDenetimleri();
+  var filtered = filtreFn ? temel.filter(filtreFn) : temel.slice();
   var kart = document.getElementById('ozet-liste-kart');
   var baslikEl = document.getElementById('ozet-liste-baslik');
   var el = document.getElementById('ozet-son-liste');
@@ -8059,6 +8077,7 @@ function hizliDenetimEkle(isletme, _btn) {
     var yil = new Date().getFullYear();
     var yeni = {
       id: Date.now(),
+      ekipId: aktifEkipId || '',
       olusturma: new Date().toISOString(),
       isletme: isletme.isletmeAdi,
       isletmeKayitNo: isletme.kayitNo || '',
