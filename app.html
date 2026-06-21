@@ -552,7 +552,7 @@ function ekipSeciciDoldur(){
 }
 function ekipSeciciDegisti(id){
   if(typeof aktifEkibeGec==='function') aktifEkibeGec(id);
-  try{ if(typeof sorumluTabDegistir==='function') sorumluTabDegistir(typeof aktifSorumluTab!=='undefined'?aktifSorumluTab:'uretim'); }catch(e){}
+  try{ if(typeof sorumluluklarimGoster==='function') sorumluluklarimGoster(); }catch(e){}
   if(typeof ekipSeciciDoldur==='function') ekipSeciciDoldur();
 }
 
@@ -3553,7 +3553,7 @@ try {
 } catch(e) { seciliMahalleler = (typeof TUM_MAHALLELER !== 'undefined' ? TUM_MAHALLELER.slice() : []); }
 var seciliKoyler = [];
 try { seciliKoyler = JSON.parse(localStorage.getItem('seciliKoyler') || '[]'); } catch(e) { seciliKoyler = []; }
-var aktifSorumluTab = 'uretim';
+var aktifSorumluTablar = ['uretim'];
 var duzenlemeModu = null;
 var oncekiSayfa = null;
 
@@ -3661,7 +3661,7 @@ function sayfaGoster(id, btn) {
       document.querySelectorAll('[id^="kat-btn-"],[id^="mah-btn-"]').forEach(function(b){
         b.style.background='white'; b.style.color='var(--gri)'; b.style.borderColor='var(--sinir)';
       });
-      sorumluTabDegistir(aktifSorumluTab);
+      sorumluluklarimGoster();
       return;
     }
   }
@@ -5568,14 +5568,28 @@ function haricTutulanlariKaydet() {
 }
 
 
-function sorumluTabDegistir(tab) {
-  aktifSorumluTab = tab;
-  _manuelEklemeGrubu = null;
-  _manuelEklemeArama = '';
+function _sorumluTabStilinGuncelle() {
   ['tab-uretim','tab-satis','tab-koy','tab-haric'].forEach(function(id) {
     var el = document.getElementById(id);
-    if (el) el.className = (id === 'tab-'+tab) ? 'btn btn-yesil' : 'btn btn-gri';
+    var t = id.replace('tab-', '');
+    if (el) el.className = (aktifSorumluTablar.indexOf(t) >= 0) ? 'btn btn-yesil' : 'btn btn-gri';
   });
+}
+function sorumluTabDegistir(tab) {
+  _manuelEklemeGrubu = null;
+  _manuelEklemeArama = '';
+  if (tab === 'haric') {
+    aktifSorumluTablar = ['haric'];
+  } else if (tab) {
+    aktifSorumluTablar = aktifSorumluTablar.filter(function(t){ return t !== 'haric'; });
+    var idx = aktifSorumluTablar.indexOf(tab);
+    if (idx >= 0) {
+      aktifSorumluTablar.splice(idx, 1);
+    } else {
+      aktifSorumluTablar.push(tab);
+    }
+  }
+  _sorumluTabStilinGuncelle();
   sorumluluklarimGoster();
 }
 
@@ -5604,8 +5618,9 @@ function sorumluluklarimGoster() {
   var isAdminF=(typeof isAdmin!=='undefined'&&isAdmin);
   var th=document.getElementById('tab-haric'); if(th) th.style.display = isAdminF ? '' : 'none';
 
-  if (aktifSorumluTab === 'haric'){
-    if(!isAdminF){ aktifSorumluTab='uretim'; }
+  _sorumluTabStilinGuncelle();
+  if (aktifSorumluTablar.indexOf('haric') >= 0){
+    if(!isAdminF){ aktifSorumluTablar=['uretim']; _sorumluTabStilinGuncelle(); }
     else {
       if(aramaDiv) aramaDiv.style.display='none';
       if(sonucDiv) sonucDiv.style.display='none';
@@ -5624,7 +5639,12 @@ function sorumluluklarimGoster() {
   if (!ekip){ liste.innerHTML='<div class="bos-durum"><div class="ikon">👤</div><p>Henüz bir ekibe atanmadınız. Yöneticinize başvurun.</p></div>'; _sorumluTabSayiGuncelle({}); return; }
 
   var arama = ((document.getElementById('sorumluluk-arama')||{}).value||'').trim().toLocaleLowerCase('tr');
-  var tip = aktifSorumluTab==='uretim'?'uretim':(aktifSorumluTab==='koy'?'koy':'mahalle');
+  var aktifTipler = {};
+  aktifSorumluTablar.forEach(function(t){
+    if (t === 'uretim') aktifTipler.uretim = true;
+    else if (t === 'koy') aktifTipler.koy = true;
+    else if (t === 'satis') aktifTipler.mahalle = true;
+  });
   var sayim = {uretim:0, mahalle:0, koy:0};
   var riskSay = 0;
   var gruplar = {};
@@ -5635,8 +5655,8 @@ function sorumluluklarimGoster() {
     if (!b) return;
     sayim[b.tip] = (sayim[b.tip]||0)+1;
     var rg = (typeof riskGecmisMi==='function') && riskGecmisMi(i);
-    if (rg) riskSay++;
-    if (b.tip !== tip) return;
+    if (rg && aktifTipler[b.tip]) riskSay++;
+    if (!aktifTipler[b.tip]) return;
     if (_sorumlulukRiskFiltre && !rg) return;
     if (arama){
       var hit=((i.isletmeAdi||'').toLocaleLowerCase('tr').indexOf(arama)>=0)||((i.kayitNo||'').toLocaleLowerCase('tr').indexOf(arama)>=0)||((i.adres||'').toLocaleLowerCase('tr').indexOf(arama)>=0);
@@ -8129,7 +8149,7 @@ function hizliDenetimEkle(isletme, _btn) {
 
         ozetGuncelle();
         // Sorumluluklar listesini yenile
-        if (typeof sorumluTabDegistir === 'function') sorumluTabDegistir(aktifSorumluTab || 'uretim');
+        if (typeof sorumluluklarimGoster === 'function') sorumluluklarimGoster();
         var kart = document.getElementById('ozet-liste-kart');
         if (kart && kart.style.display !== 'none') {
           var baslikEl = document.getElementById('ozet-liste-baslik');
