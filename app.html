@@ -1821,7 +1821,7 @@ window.addEventListener('fb-hazir', function() {
         <input type="password" id="yeni-parola2" placeholder="Yeni parolanızı tekrar girin" style="width:100%;padding:10px 12px;border:1.5px solid #dce3e8;border-radius:8px;font-size:14px;box-sizing:border-box;">
       </div>
       <button id="parola-kaydet-btn" style="background:#1a6b3c;color:white;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;">Parolayı Güncelle</button>
-      <button id="parola-iptal-btn" style="background:#ecf0f1;color:#7f8c8d;border:none;border-radius:8px;padding:10px;font-size:14px;cursor:pointer;">Daha Sonra</button>
+      <button id="parola-iptal-btn" onclick="(function(){var pe=document.getElementById('parola-ekrani');if(pe)pe.style.display='none';if(typeof mevcutKullanici!=='undefined'&&mevcutKullanici&&typeof firebase!=='undefined')firebase.firestore().collection('kullanicilar').doc(mevcutKullanici.uid).set({ilkGiris:false},{merge:true});})()" style="background:#ecf0f1;color:#7f8c8d;border:none;border-radius:8px;padding:10px;font-size:14px;cursor:pointer;">Atla</button>
     </div>
   </div>
 </div>
