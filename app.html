@@ -4205,7 +4205,28 @@ function listeGuncelle() {
       bos.textContent = 'Henüz denetim yok.';
       icerik.appendChild(bos);
     } else {
-      liste2.forEach(function(d) { denetimSatirEkle(icerik, d); });
+      var _PAGE = 50, _offset = 0;
+      var _dahaBtn = null;
+      function _renderNext() {
+        var end = Math.min(_offset + _PAGE, liste2.length);
+        for (var i = _offset; i < end; i++) denetimSatirEkle(icerik, liste2[i]);
+        _offset = end;
+        if (_dahaBtn) {
+          if (_offset >= liste2.length) _dahaBtn.style.display = 'none';
+          else {
+            _dahaBtn.textContent = '+ ' + (liste2.length - _offset) + ' kayıt daha göster';
+            icerik.appendChild(_dahaBtn);
+          }
+        }
+      }
+      _renderNext();
+      if (_offset < liste2.length) {
+        _dahaBtn = document.createElement('div');
+        _dahaBtn.style.cssText = 'padding:12px;text-align:center;cursor:pointer;color:var(--yesil);font-size:13px;font-weight:600;border-top:1px solid var(--sinir);';
+        _dahaBtn.textContent = '+ ' + (liste2.length - _offset) + ' kayıt daha göster';
+        _dahaBtn.addEventListener('click', _renderNext);
+        icerik.appendChild(_dahaBtn);
+      }
     }
 
     header.addEventListener('click', function() {
@@ -4728,11 +4749,14 @@ function ozetGuncelle() {
   try {
 
   var toplam = denetimler.length;
-  var olumlu = denetimler.filter(function(d){return d.sonuc==='olumlu';}).length;
-  var olumsuz = denetimler.filter(function(d){return d.sonuc==='olumsuz';}).length;
-  var cezali = denetimler.filter(function(d){return d.cezalar&&d.cezalar.length;}).length;
-  var numuneli = denetimler.filter(function(d){return d.numuneler&&d.numuneler.length>0;}).length;
-  var ikazSayisi = denetimler.filter(function(d){return kontrolIkaz(d);}).length;
+  var olumlu=0, olumsuz=0, cezali=0, numuneli=0, ikazSayisi=0;
+  denetimler.forEach(function(d){
+    if(d.sonuc==='olumlu') olumlu++;
+    else if(d.sonuc==='olumsuz') olumsuz++;
+    if(d.cezalar&&d.cezalar.length) cezali++;
+    if(d.numuneler&&d.numuneler.length>0) numuneli++;
+    if(kontrolIkaz(d)) ikazSayisi++;
+  });
 
   var bugun = bugunTarih();
   var uretimGecen = uretimTumRiskGecenListesiGetir().length;
@@ -4833,11 +4857,16 @@ function yptOzetGuncelle() {
   if (typeof Chart === 'undefined') { window.chartYukle().then(yptOzetGuncelle).catch(function(){}); }
 
   var toplam = yaptirimlar.length;
-  var paraCezasi = yaptirimlar.filter(function(y){ return y.tur === 'idari-para'; });
-  var toplamCeza = paraCezasi.reduce(function(s,y){ return s + Number((y.alanlar||{})['ceza-miktari']||0); }, 0);
-  var odenmemis = paraCezasi.filter(function(y){ return (y.alanlar||{})['odeme-durum'] !== 'odendi'; });
-  var odenmemisToplam = odenmemis.reduce(function(s,y){ return s + Number((y.alanlar||{})['ceza-miktari']||0); }, 0);
-  var durdurma = yaptirimlar.filter(function(y){ return y.tur === 'faaliyet-durdurma'; }).length;
+  var paraCezasi=[], odenmemis=[], durdurma=0, toplamCeza=0, odenmemisToplam=0;
+  yaptirimlar.forEach(function(y){
+    if(y.tur==='idari-para'){
+      paraCezasi.push(y);
+      var m=Number((y.alanlar||{})['ceza-miktari']||0);
+      toplamCeza+=m;
+      if((y.alanlar||{})['odeme-durum']!=='odendi'){ odenmemis.push(y); odenmemisToplam+=m; }
+    }
+    if(y.tur==='faaliyet-durdurma') durdurma++;
+  });
 
   // Özet kartlar
   var grid = document.getElementById('ypt-ozet-grid');
@@ -6525,35 +6554,38 @@ function firebaseDinle() {
   var syncEl = document.getElementById('sync-durum');
   if (syncEl) syncEl.textContent = '🔄 Bağlanıyor...';
   try {
+    var _snapshotUITimer = null;
     firestoreDinleyici = firebase.firestore().collection('denetimler').onSnapshot(function(snapshot) {
       var fb = [];
       snapshot.forEach(function(d) { fb.push(d.data()); });
       fb.sort(function(a,b) { return b.id - a.id; });
       // Firestore listesi geldikten sonra cihazda bekleyen offline kayıt/silme işlemlerini de ekrana yansıt.
       denetimler = offlineDenetimleriUygula(fb);
-      localStorage.setItem('denetimler', JSON.stringify(denetimler));
       offlineDurumGuncelle();
       denetimlerdenRiskTarihleriniUygula(fb);
-      ozetGuncelle();
-      ikaz_sayisiGuncelle();
-      var aktif = document.querySelector('.sayfa.aktif');
-      if (aktif && aktif.id === 'sayfa-liste') listeGuncelle();
-      // Özet listesi açıksa onu da güncelle
-      var ozetKart = document.getElementById('ozet-liste-kart');
-      if (ozetKart && ozetKart.style.display !== 'none') {
-        var baslikEl = document.getElementById('ozet-liste-baslik');
-        var baslikText = baslikEl ? baslikEl.textContent : '';
-        if (baslikText.includes('Üretim')) ozetUretimGit();
-        else if (baslikText.includes('Satış') || baslikText.includes('Köy')) ozetDigerGit();
-        else {
-          // Denetim listesi - filtreFn'i yeniden çalıştır
-          var filtreEl = ozetKart._filtreAktif;
-          if (typeof ozetSonListeGoster === 'function') {
-            ozetSonListeGoster(baslikText.split('(')[0].trim() || 'Son Denetimler', ozetKart._filtreFn || null);
+      // Pahalı UI güncellemelerini ve localStorage yazımını debounce et
+      if (_snapshotUITimer) clearTimeout(_snapshotUITimer);
+      _snapshotUITimer = setTimeout(function() {
+        try { localStorage.setItem('denetimler', JSON.stringify(denetimler)); } catch(e) {}
+        ozetGuncelle();
+        ikaz_sayisiGuncelle();
+        var aktif = document.querySelector('.sayfa.aktif');
+        if (aktif && aktif.id === 'sayfa-liste') listeGuncelle();
+        // Özet listesi açıksa onu da güncelle
+        var ozetKart = document.getElementById('ozet-liste-kart');
+        if (ozetKart && ozetKart.style.display !== 'none') {
+          var baslikEl = document.getElementById('ozet-liste-baslik');
+          var baslikText = baslikEl ? baslikEl.textContent : '';
+          if (baslikText.includes('Üretim')) ozetUretimGit();
+          else if (baslikText.includes('Satış') || baslikText.includes('Köy')) ozetDigerGit();
+          else {
+            if (typeof ozetSonListeGoster === 'function') {
+              ozetSonListeGoster(baslikText.split('(')[0].trim() || 'Son Denetimler', ozetKart._filtreFn || null);
+            }
           }
         }
-      }
-      if (syncEl) syncEl.textContent = '☁️ Bulut';
+        if (syncEl) syncEl.textContent = '☁️ Bulut';
+      }, 250);
     }, function(err) {
       console.error('Firestore hata:', err);
       if (syncEl) syncEl.textContent = '⚠️ Çevrimdışı';
