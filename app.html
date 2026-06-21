@@ -396,7 +396,7 @@ function ekipKurallariUygula(ekip) {
   }
   aktifEkipId = ekip.id;
   try { localStorage.setItem(AKTIF_EKIP_KEY, aktifEkipId); } catch(e){}
-  try { var _hea=document.getElementById('header-ekip-adi'); if(_hea){ _hea.textContent='👥 '+(ekip.ad||ekip.id); _hea.style.display=''; } }catch(e){}
+  try { var _hea=document.getElementById('header-ekip-adi'); if(_hea){ _hea.textContent=(ekip.ad||ekip.id); _hea.style.display=''; } }catch(e){}
 }
 
 // Aktif ekibi değiştir + ekranı tazele (admin ekip geçişi / giriş)
@@ -1852,12 +1852,12 @@ window.addEventListener('fb-hazir', function() {
 </div>
 
 
-<header style="display:none;">
+<header style="display:none;position:relative;">
   <div onclick="sayfaGoster('ozet',document.querySelector('[data-sayfa=ozet]'))" style="cursor:pointer;min-width:0;flex:1;overflow:hidden;" title="Ana sayfaya dön">
     <h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🍽️ Gıda Denetim</h1>
     <div style="font-size:10px;opacity:0.65;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">İsmail Hakkı Atılgan</div>
-    <div id="header-ekip-adi" style="display:none;font-size:10px;font-weight:600;color:rgba(255,255,255,0.95);background:rgba(255,255,255,0.18);border-radius:4px;padding:1px 6px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;"></div>
   </div>
+  <div id="header-ekip-adi" style="display:none;position:absolute;left:50%;transform:translateX(-50%);font-size:17px;font-weight:700;color:#fff;letter-spacing:0.3px;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,0.2);pointer-events:none;"></div>
   <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
     <span id="bugun-tarih" style="font-size:11px;color:rgba(255,255,255,0.75);margin-right:4px;"></span>
     <span id="sync-durum" style="font-size:11px;color:rgba(255,255,255,0.7);"></span>
