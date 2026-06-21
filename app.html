@@ -2040,6 +2040,7 @@ window.addEventListener('fb-hazir', function() {
         <circle cx="13" cy="12" r="1.5" fill="rgba(255,255,255,0.3)"/>
         <circle cx="21" cy="12" r="1.5" fill="rgba(255,255,255,0.3)"/>
       </svg>
+      <span id="nav-sorun-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e74c3c;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;line-height:16px;text-align:center;font-weight:700;"></span>
     </span>
     <span class="nav-label">Daha Fazla</span>
   </button>
@@ -2055,7 +2056,7 @@ window.addEventListener('fb-hazir', function() {
   <button id="kullanici-yonetim-btn" onclick="menuKapat();sayfaGoster('kullanicilar', null)" class="menu-item" style="display:none;">👥 Kullanıcılar</button>
   <button id="ekip-yonetim-btn" onclick="menuKapat();sayfaGoster('ekipler', null)" class="menu-item" style="display:none;">🧩 Ekip Yönetimi</button>
   <button id="basliklar-btn" onclick="menuKapat();sayfaGoster('basliklar', null)" class="menu-item" style="display:none;">🗂️ Tüm Başlıklar</button>
-  <button id="sorunlar-btn" onclick="menuKapat();sayfaGoster('sorunlar', null)" class="menu-item" style="display:none;">⚠️ Sorun Bildirimleri</button>
+  <button id="sorunlar-btn" onclick="menuKapat();sayfaGoster('sorunlar', null)" class="menu-item" style="display:none;">⚠️ Sorun Bildirimleri <span id="sorun-bildirim-badge" style="display:none;background:#e74c3c;color:#fff;border-radius:10px;padding:1px 6px;font-size:11px;margin-left:4px;"></span></button>
 </div>
 <div id="menu-arkaplan" onclick="menuKapat()" style="display:none;position:fixed;inset:0;z-index:999;"></div>
 
@@ -6698,6 +6699,7 @@ function kullaniciBilgiYukle(user) {
     var eswO = document.getElementById('ekip-secici-wrap-ozet');
     if (eswO) { eswO.style.display = isAdmin ? 'flex' : 'none'; }
     if (isAdmin && typeof ekipSeciciDoldur === 'function') ekipSeciciDoldur();
+    if (isAdmin && typeof sorunBadgeDinle === 'function') sorunBadgeDinle();
     try { if (typeof sayfaGoster === 'function') sayfaGoster('ozet', document.querySelector('nav button')); } catch(e){}
     
     if (data.ilkGiris && !isAdmin) {
@@ -10562,6 +10564,20 @@ window.isletmeNotEkle=isletmeNotEkle;
 window.isletmeNotSil=isletmeNotSil;
 window.sorunBildirAc=sorunBildirAc;
 window.sorunGonder=sorunGonder;
+
+var _sorunBadgeDinleyici=null;
+function sorunBadgeDinle(){
+  if(!isAdmin || typeof firebase==='undefined' || !firebase.apps||!firebase.apps.length) return;
+  if(_sorunBadgeDinleyici) return;
+  var kol=(typeof DEV_MODU!=='undefined'&&DEV_MODU)?'sorun_bildirimleri_dev':'sorun_bildirimleri';
+  _sorunBadgeDinleyici=firebase.firestore().collection(kol).where('durum','==','acik').onSnapshot(function(snap){
+    var sayi=snap.size||0;
+    var b1=document.getElementById('sorun-bildirim-badge');
+    var b2=document.getElementById('nav-sorun-badge');
+    if(b1){ b1.textContent=sayi; b1.style.display=sayi>0?'':'none'; }
+    if(b2){ b2.textContent=sayi; b2.style.display=sayi>0?'':'none'; }
+  },function(){});
+}
 </script>
 
 <script>
