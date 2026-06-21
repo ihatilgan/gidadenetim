@@ -1924,7 +1924,7 @@ window.addEventListener('fb-hazir', function() {
     </span>
     <span class="nav-label">Denetimler</span>
   </button>
-<!-- YAPTIRIMLAR_NAV_DEVRE_DISI
+<template id="yaptirimlar-nav-disabled">
   <button onclick="sayfaGoster('yaptirimlar', this)" data-sayfa="yaptirimlar">
     <span class="nav-ikon">
       <svg width="26" height="26" viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg">
@@ -1940,7 +1940,7 @@ window.addEventListener('fb-hazir', function() {
     </span>
     <span class="nav-label">Yaptırım</span>
   </button>
-YAPTIRIMLAR_NAV_DEVRE_DISI -->
+</template>
   <button onclick="sohbetNavTikla(this)" id="sohbet-nav-btn" style="position:relative;">
     <span class="nav-ikon" style="position:relative;display:inline-block;">
       <svg width="26" height="26" viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg">
@@ -2033,7 +2033,7 @@ YAPTIRIMLAR_NAV_DEVRE_DISI -->
       <div id="ozet-son-liste"></div>
     </div>
 
-<!-- DEVRE_DISI
+<template id="yaptirim-ozet-disabled">
     <!-- YAPTIRIMLAR ÖZETİ -->
     <div class="kart" id="ozet-yaptirim-kart" style="display:none;padding:0;overflow:hidden;margin-top:14px;">
       <div class="kart-baslik" id="ypt-ozet-baslik" onclick="yptOzetToggle()" style="cursor:pointer;padding:16px 20px;margin-bottom:0;user-select:none;display:flex;justify-content:space-between;align-items:center;">
@@ -2055,7 +2055,7 @@ YAPTIRIMLAR_NAV_DEVRE_DISI -->
         <div id="ypt-son-liste" style="margin-top:12px;"></div>
       </div>
     </div>
-DEVRE_DISI -->
+</template>
   </div>
 
   <!-- YENİ DENETİM -->
@@ -2491,7 +2491,7 @@ DEVRE_DISI -->
 
   <!-- İKAZLAR -->
 
-<!-- DEVRE_DISI
+<template id="sayfa-yaptirimlar-disabled">
   <!-- ===== YAPTIRIMLAR SAYFASI ===== -->
   <div id="sayfa-yaptirimlar" class="sayfa">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
@@ -2517,9 +2517,9 @@ DEVRE_DISI -->
     </div>
     <div id="yaptirim-listesi" style="display:flex;flex-direction:column;gap:8px;"></div>
   </div>
-DEVRE_DISI -->
+</template>
 
-<!-- DEVRE_DISI
+<template id="sayfa-yaptirim-yeni-disabled">
   <!-- ===== YAPTIRIM YENİ/DÜZENLE SAYFASI ===== -->
   <div id="sayfa-yaptirim-yeni" class="sayfa">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
@@ -2612,7 +2612,7 @@ DEVRE_DISI -->
       <button class="btn btn-gri" onclick="sayfaGoster('yaptirimlar',null)" style="flex:1;">İptal</button>
     </div>
   </div>
-DEVRE_DISI -->
+</template>
 
   <div id="sayfa-ikazlar" class="sayfa">
     <div class="kart">
@@ -9416,7 +9416,7 @@ function sohbetBildirimDinle() {
 </script>
 
 
-<!-- QR_DEVRE_DISI
+<template id="qr-modal-disabled">
 <!-- QR Modal -->
 <div id="qr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9000;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
   <div style="background:white;border-radius:14px;padding:20px;max-width:380px;width:92%;text-align:center;">
@@ -9463,7 +9463,7 @@ function sohbetBildirimDinle() {
     <button onclick="qrKapat()" style="margin-top:10px;background:#ecf0f1;border:none;border-radius:8px;padding:10px 24px;font-size:14px;cursor:pointer;width:100%;">İptal</button>
   </div>
 </div>
-QR_DEVRE_DISI -->
+</template>
 
 <!-- Denetçi Sohbet Modalı -->
 <div id="sohbet-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9002;align-items:flex-end;justify-content:center;">
