@@ -578,7 +578,7 @@ function isletmeBaslikBelirle(i){
   var satis=(typeof satisFaaliyetiMi==='function')&&satisFaaliyetiMi(i);
   if(satis){
     var koylar=(typeof KOY_MASTER!=='undefined')?KOY_MASTER:[];
-    for(var k=0;k<koylar.length;k++){ if(koyAdreseUyuyorMu(i.adres,koylar[k])) return {tip:'koy',key:koylar[k]}; }
+    for(var k=0;k<koylar.length;k++){ if(koyAdreseUyuyorMu((i.adres||'')+' '+(i.ilce||''),koylar[k])) return {tip:'koy',key:koylar[k]}; }
     if(!dis){ var mahler=(typeof MERKEZ_MAHALLE_MASTER!=='undefined')?MERKEZ_MAHALLE_MASTER:[]; for(var m=0;m<mahler.length;m++){ if(mahalleAdreseUyuyorMu(i.adres,mahler[m])) return {tip:'mahalle',key:mahler[m]}; } }
   }
   return null;
@@ -1246,9 +1246,16 @@ var MAHALLE_EK_KALIP = {
 // Köy/kasaba eşleştirme: ad doğrudan "Merkez"den önce veya "Köyü/Kasaba" ekiyle geçer
 // (sokak adlarını ve "X Mah." mahalle kayıtlarını yanlış yakalamamak için)
 function koyAdreseUyuyorMu(adres, koyAdi) {
-  var a = _normTR(adres), k = _normTR(koyAdi);
+  // Kasaba adından bilinen son ekleri çıkar: "Çakırköy Kasabası" → "Çakırköy"
+  var base = (koyAdi||'').replace(/[\s,]+(?:kasabas[ıi]|k[öo]y[üu]?|merkez)\s*$/i,'').trim() || koyAdi;
+  var a = _normTR(adres), k = _normTR(base);
   if (!k) return false;
-  return a.indexOf(k+'merkez') >= 0 || a.indexOf(k+'koyu') >= 0 || a.indexOf(k+'koy') >= 0 || a.indexOf(k+'kasabasi') >= 0 || a.indexOf(k+'kasaba') >= 0;
+  // Sonek kalıpları
+  if (a.indexOf(k+'merkez')>=0||a.indexOf(k+'koyu')>=0||a.indexOf(k+'koy')>=0||
+      a.indexOf(k+'kasabasi')>=0||a.indexOf(k+'kasaba')>=0||a.indexOf(k+'mah')>=0) return true;
+  // Yalın eşleşme: adres+ilce birleşik metinde kasaba adı yeterince uzunsa (≥5 norm. karakter)
+  // False-positive riski düşük: aynı ilçe içinde çakışan yer adı olasılığı azdır
+  return k.length >= 5 && a.indexOf(k) >= 0;
 }
 function mahalleAdreseUyuyorMu(adres, mahalleAdi) {
   var a = _normTR(adres);
@@ -2708,7 +2715,7 @@ function koyIsletmeleriDoldur() {
     var bulunan = kaynak.filter(function(i) {
       if (kayitHaricMi(i)) return false;
       if (!satisFaaliyetiMi(i)) return false; // yalnızca satış/depo/toplu tüketim faaliyetleri
-      return koyAdreseUyuyorMu(i.adres, kasaba);
+      return koyAdreseUyuyorMu((i.adres||'')+' '+(i.ilce||''), kasaba);
     });
     if (bulunan.length) KOY_ISLETMELERI[kasaba] = bulunan;
   });
@@ -2912,7 +2919,7 @@ function satisKoySorumlulukListesiGetir() {
     if (!satisFaaliyetiMi(i)) return;
     // Kasaba eşleşmesi: SORUMLU_KASABALAR'ı direkt tara (önbellek yok)
     for (var k = 0; k < kasabalar.length; k++) {
-      if (koyAdreseUyuyorMu(i.adres, kasabalar[k])) {
+      if (koyAdreseUyuyorMu((i.adres||'')+' '+(i.ilce||''), kasabalar[k])) {
         var an2 = i.kayitNo || (i.isletmeAdi + '|' + i.adres);
         if (an2 && gorulen[an2]) return;
         if (an2) gorulen[an2] = true;
@@ -3423,7 +3430,7 @@ function sorumlulukKategorisiBelirle(i){
   try {
     if (typeof _uretimTumKategoriEslesiyor === 'function' && _uretimTumKategoriEslesiyor(i) && !merkezDisindaMi(i)) return 'uretim';
     var ks = (typeof SORUMLU_KASABALAR !== 'undefined') ? SORUMLU_KASABALAR : [];
-    for (var k=0;k<ks.length;k++){ if(koyAdreseUyuyorMu(i.adres, ks[k])) return 'koy'; }
+    for (var k=0;k<ks.length;k++){ if(koyAdreseUyuyorMu((i.adres||'')+' '+(i.ilce||''), ks[k])) return 'koy'; }
   } catch(e){}
   return 'satis';
 }
@@ -5273,7 +5280,7 @@ function isletmeHerhangiSorumlulukta(isletme) {
   try {
     var ks = (typeof SORUMLU_KASABALAR !== 'undefined') ? SORUMLU_KASABALAR : [];
     if (typeof satisFaaliyetiMi === 'function' && satisFaaliyetiMi(isletme)) {
-      for (var k=0;k<ks.length;k++){ if(koyAdreseUyuyorMu(isletme.adres, ks[k])) return true; }
+      for (var k=0;k<ks.length;k++){ if(koyAdreseUyuyorMu((isletme.adres||'')+' '+(isletme.ilce||''), ks[k])) return true; }
     }
   } catch(e){}
   return false;
@@ -6033,7 +6040,7 @@ function sorumluTohumHesapla(kaynak){
     kaynak.forEach(function(i){
       if(!i||kayitHaricMi(i))return;
       if(!satisFaaliyetiMi(i))return;
-      if(koyAdreseUyuyorMu(i.adres, kasaba)) ekle(i,'koy');
+      if(koyAdreseUyuyorMu((i.adres||'')+' '+(i.ilce||''), kasaba)) ekle(i,'koy');
     });
   });
   // Manuel sorumluluğa alınanları (kural dışı) kategorisine göre ekle
