@@ -6404,6 +6404,7 @@ function excelYukle(file) {
         listeBilgiGuncelle();
         ozetGuncelle();
         ikaz_sayisiGuncelle();
+        try { _ekipSayiCache = null; if (typeof basliklarGoster === 'function' && document.getElementById('basliklar-root')) basliklarGoster(); } catch(e){}
       });
 
       // Yeni gelen işletmeleri (HTML'de olmayan) localStorage'a kaydet - sayfa yenilenince kaybolmasın
@@ -9876,6 +9877,62 @@ function basliklarGoster() {
       }
     }
   });
+
+  // ── Doğrulama Raporu ──────────────────────────────────────────────────────
+  var sayacEkip = sayac.ekipToplam || {};
+  var sumEkip = 0;
+  (typeof EKIPLER !== 'undefined' ? EKIPLER : []).forEach(function(e){ sumEkip += (sayacEkip[e.id]||0); });
+  var bostaBaslikli = _genelTop - sumEkip;
+
+  // Toplam kapsam içi işletme (kayitHaricMi dışı, merkezDışı dahil)
+  var kapsamIci = 0;
+  (typeof ISLETMELER !== 'undefined' ? ISLETMELER : []).forEach(function(i){
+    if(typeof kayitHaricMi==='function' && kayitHaricMi(i)) return;
+    kapsamIci++;
+  });
+  var kapsamDisi = kapsamIci - _genelTop - _bostaIsl.length;
+
+  html += '<div style="margin-top:24px;border-top:2px solid var(--sinir);padding-top:16px;">';
+  html += '<div style="font-weight:700;font-size:14px;margin-bottom:10px;">📊 İşletme Sayısı Doğrulaması</div>';
+
+  // Ekip dağılım tablosu
+  html += '<table style="width:100%;font-size:12px;border-collapse:collapse;margin-bottom:10px;">';
+  html += '<tr style="background:var(--gri-acik);"><th style="text-align:left;padding:6px 8px;border-radius:6px 0 0 0;">Ekip</th><th style="text-align:right;padding:6px 8px;border-radius:0 6px 0 0;">İşletme</th></tr>';
+  (typeof EKIPLER !== 'undefined' ? EKIPLER : []).forEach(function(e){
+    var c = sayacEkip[e.id] || 0;
+    html += '<tr><td style="padding:5px 8px;border-bottom:1px solid #f0f0f0;">'+_ekipEsc(e.ad||e.id)+'</td><td style="text-align:right;padding:5px 8px;font-weight:600;border-bottom:1px solid #f0f0f0;">'+c+'</td></tr>';
+  });
+  if(bostaBaslikli > 0){
+    html += '<tr style="background:#fef6e4;"><td style="padding:5px 8px;color:#856404;">🟡 Boşta başlıklı</td><td style="text-align:right;padding:5px 8px;font-weight:600;color:#856404;">'+bostaBaslikli+'</td></tr>';
+  }
+  html += '<tr style="border-top:2px solid var(--sinir);font-weight:700;background:#f8f9fa;"><td style="padding:7px 8px;">Tüm başlıklar toplamı</td><td style="text-align:right;padding:7px 8px;">'+_genelTop+'</td></tr>';
+  html += '<tr style="font-weight:700;"><td style="padding:7px 8px;color:var(--gri);font-size:11px;">↳ Ekip toplamı</td><td style="text-align:right;padding:7px 8px;font-size:11px;color:var(--gri);">'+sumEkip+'</td></tr>';
+  html += '</table>';
+
+  // Sonuç kutusu
+  var okRenk='#d4edda', okYaz='#155724', warnRenk='#fdecea', warnYaz='#c0392b';
+  if(bostaBaslikli === 0){
+    html += '<div style="background:'+okRenk+';color:'+okYaz+';padding:10px 12px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:8px;">✅ Tüm başlıklı işletmeler ekiplere dağıtılmış ('+_genelTop+'/'+_genelTop+')</div>';
+  } else {
+    html += '<div style="background:'+warnRenk+';color:'+warnYaz+';padding:10px 12px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:8px;">⚠️ '+bostaBaslikli+' işletmenin başlığı var ama hiçbir ekibe atanmamış — Boşta listesinden atayın.</div>';
+  }
+
+  // Başlıksız
+  var bostaMesaj = _bostaIsl.length > 0
+    ? '<div style="background:#fff3cd;color:#856404;padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;">⚠️ '+_bostaIsl.length+' işletme hiçbir başlığa girmiyor.</div>'
+    : '<div style="background:'+okRenk+';color:'+okYaz+';padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;">✅ Tüm işletmeler bir başlığa eşleşiyor.</div>';
+  html += bostaMesaj;
+
+  // Genel sayım özeti
+  html += '<div style="font-size:11px;color:var(--gri);padding:6px 2px;">';
+  html += 'Kapsam içi toplam: <b>'+kapsamIci+'</b> &nbsp;|&nbsp; ';
+  html += 'Başlıklı: <b>'+_genelTop+'</b> &nbsp;|&nbsp; ';
+  html += 'Başlıksız: <b>'+_bostaIsl.length+'</b>';
+  if(kapsamDisi > 0) html += ' &nbsp;|&nbsp; Merkez dışı/diğer: <b>'+kapsamDisi+'</b>';
+  html += '</div>';
+  html += '</div>';
+  // ─────────────────────────────────────────────────────────────────────────
+
   root.innerHTML=html;
 }
 window.basliklarGoster = basliklarGoster;
