@@ -1427,6 +1427,11 @@ function qrCanliBaslat() {
     document.getElementById('qr-sonuc').textContent = '⚠️ Kamera desteklenmiyor';
     return;
   }
+  // Aktif stream varsa önce durdur (hızlı sekme değişiminde kaynak sızmasını engelle)
+  if (qrStream) {
+    qrStream.getTracks().forEach(function(t){ t.stop(); });
+    qrStream = null;
+  }
   document.getElementById('qr-sonuc').textContent = '📷 Kamera başlatılıyor...';
   var constraints = { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } };
   navigator.mediaDevices.getUserMedia(constraints)
@@ -3113,11 +3118,18 @@ function ikazlariGoster() {
 
 function ikaz_sayisiGuncelle() {
   var bugun = bugunTarih();
-  var cezali = denetimler.filter(function(d){ return d.cezalar && d.cezalar.length > 0; }).length;
-  var olumsuz = denetimler.filter(function(d){ return d.sonuc === 'olumsuz'; }).length;
-  var odenmeySuresiGecmis = 0;
-  denetimler.forEach(function(d){ (d.cezalar||[]).forEach(function(c){ if (!c.odendi && c.odemeSonTarihi && gunFarki(bugun, c.odemeSonTarihi) < 0) odenmeySuresiGecmis++; }); });
-  var toplam = cezali + olumsuz + odenmeySuresiGecmis;
+  // Her denetimi en fazla bir kez say: birden fazla kriter sağlansa bile
+  var toplam = 0;
+  denetimler.forEach(function(d) {
+    var sorunlu = d.sonuc === 'olumsuz' || (d.cezalar && d.cezalar.length > 0);
+    if (!sorunlu) {
+      // Vadesi geçmiş ödeme var mı?
+      sorunlu = (d.cezalar || []).some(function(c) {
+        return !c.odendi && c.odemeSonTarihi && gunFarki(bugun, c.odemeSonTarihi) < 0;
+      });
+    }
+    if (sorunlu) toplam++;
+  });
   var btn = document.getElementById('ikaz-btn');
   if (btn) {
     if (toplam > 0) {
@@ -3368,6 +3380,7 @@ else { window.addEventListener('fb-hazir', sorumlulukOverrideYukle); }
 // Sistemde kapsam dışı tutulan işletmeler (hardcoded)
 var VARSAYILAN_HARIC = []; // kapsam dışı liste kaldırıldı — tüm işletmeler kategoriye girer
 var firestoreDinleyici = null; // Firestore unsubscribe fonksiyonu
+var _presenceIntervalId = null; // setInterval handle — tekrar giriş yapılınca temizlenir
 // Orijinal risk tarihleri - kayitNo => tarih
 var orijinalRiskTarihleri = JSON.parse(localStorage.getItem('orijinalRiskTarihleri') || '{}');
 
@@ -3541,7 +3554,10 @@ async function kaydet() {
 
 // ---- TARIH ----
 function bugunTarih() {
-  return new Date().toISOString().split('T')[0];
+  var d = new Date();
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
 }
 function tarihFormat(t) {
   if (!t) return '-';
@@ -4150,6 +4166,9 @@ function formuSifirla() {
 }
 
 // ---- LİSTE ----
+// Kullanıcının her bölümde kaç kayıt yüklediğini hatırlar; snapshot gelince sayfalama sıfırlanmaz
+var _listePageOffsets = {};
+
 function listeGuncelle() {
   var arama = (document.getElementById('arama')||{}).value || '';
   var filtre = (document.getElementById('filtre-sonuc')||{}).value || '';
@@ -4205,21 +4224,28 @@ function listeGuncelle() {
       bos.textContent = 'Henüz denetim yok.';
       icerik.appendChild(bos);
     } else {
-      var _PAGE = 50, _offset = 0;
+      var _PAGE = 50;
+      var _offset = 0;
       var _dahaBtn = null;
-      function _renderNext() {
+      // Önceki yükleme miktarını geri yükle; yoksa bir sayfa göster
+      var _hedef = Math.max(_PAGE, _listePageOffsets[baslik] || 0);
+      var _ilkEnd = Math.min(_hedef, liste2.length);
+      for (var _i = 0; _i < _ilkEnd; _i++) denetimSatirEkle(icerik, liste2[_i]);
+      _offset = _ilkEnd;
+      _listePageOffsets[baslik] = _offset;
+      var _renderNext = function() {
         var end = Math.min(_offset + _PAGE, liste2.length);
         for (var i = _offset; i < end; i++) denetimSatirEkle(icerik, liste2[i]);
         _offset = end;
-        if (_dahaBtn) {
-          if (_offset >= liste2.length) _dahaBtn.style.display = 'none';
-          else {
+        _listePageOffsets[baslik] = _offset;
+        if (_offset >= liste2.length) { if (_dahaBtn) _dahaBtn.style.display = 'none'; }
+        else {
+          if (_dahaBtn) {
             _dahaBtn.textContent = '+ ' + (liste2.length - _offset) + ' kayıt daha göster';
             icerik.appendChild(_dahaBtn);
           }
         }
-      }
-      _renderNext();
+      };
       if (_offset < liste2.length) {
         _dahaBtn = document.createElement('div');
         _dahaBtn.style.cssText = 'padding:12px;text-align:center;cursor:pointer;color:var(--yesil);font-size:13px;font-weight:600;border-top:1px solid var(--sinir);';
@@ -6446,7 +6472,8 @@ function kullaniciBilgiYukle(user) {
     });
     // Sohbet: presence güncelle ve bildirimleri dinle
     presenceGuncelle();
-    setInterval(presenceGuncelle, 3 * 60 * 1000);
+    if (_presenceIntervalId) clearInterval(_presenceIntervalId);
+    _presenceIntervalId = setInterval(presenceGuncelle, 3 * 60 * 1000);
     sohbetBildirimDinle();
   }).catch(function(err) {
     mevcutKullaniciAdi = user.email;
@@ -6467,7 +6494,8 @@ function kullaniciBilgiYukle(user) {
       if (typeof riskBildirimYenile === 'function') riskBildirimYenile();
     });
     presenceGuncelle();
-    setInterval(presenceGuncelle, 3 * 60 * 1000);
+    if (_presenceIntervalId) clearInterval(_presenceIntervalId);
+    _presenceIntervalId = setInterval(presenceGuncelle, 3 * 60 * 1000);
     sohbetBildirimDinle();
   });
 }
@@ -6498,14 +6526,14 @@ function denetimlerdenRiskTarihleriniUygula(denetimListesi) {
   });
 
   Object.keys(sonDenetim).forEach(function(kayitNo) {
+    // Manuel GGBS tarihi olan işletmelerin tarihi ezilmez
+    if (orijinalRiskTarihleri[kayitNo]) return;
     var son = new Date(sonDenetim[kayitNo]);
     var birYilSonra = new Date(son.getFullYear()+1, son.getMonth(), son.getDate());
     var yeniTarih = birYilSonra.getDate().toString().padStart(2,'0') + '/' +
       (birYilSonra.getMonth()+1).toString().padStart(2,'0') + '/' + birYilSonra.getFullYear();
     riskTarihGuncelle(kayitNo, yeniTarih);
   });
-  // NOT: ggbsRiskTarihleriniYukle burada çağrılmıyor —
-  // sadece giriş sırasında bir kez çalışır (kullaniciBilgiYukle içinde)
 }
 
 function ggbsRiskTarihleriniYukle() {
@@ -6590,6 +6618,7 @@ function firebaseDinle() {
       console.error('Firestore hata:', err);
       if (syncEl) syncEl.textContent = '⚠️ Çevrimdışı';
       ozetGuncelle();
+      ikaz_sayisiGuncelle();
     });
   } catch(e) {
     if (syncEl) syncEl.textContent = '⚠️ Hata';
@@ -7766,7 +7795,7 @@ function apDenetciListesi() {
         : 'Hiç giriş yapmadı';
 
       var kdenetimler = denetimler.filter(function(d) {
-        return d.kullaniciId === k.uid || (d.denetciler && d.denetciler.includes(k.ad));
+        return d.kullaniciId === k.uid;
       });
 
       var blok = document.createElement('div');
@@ -8506,7 +8535,8 @@ function yaptirimDuzenle(id) {
 
 function yaptirimSil(id) {
   var y = yaptirimlar.find(function(x){ return String(x.id) === String(id); });
-  if (y && !yptDuzenleyebilir(y)) { bildirimGoster('Bu yaptırımı silme yetkiniz yok.', 'hata'); return; }
+  if (!y) { bildirimGoster('Yaptırım kaydı bulunamadı.', 'hata'); return; }
+  if (!yptDuzenleyebilir(y)) { bildirimGoster('Bu yaptırımı silme yetkiniz yok.', 'hata'); return; }
   onayKutusu('Bu yaptırım kaydını silmek istediğinizden emin misiniz?', function() {
     yaptirimlar = yaptirimlar.filter(function(y){ return String(y.id) !== String(id); });
     localStorage.setItem('yaptirimlar', JSON.stringify(yaptirimlar));
@@ -8526,7 +8556,13 @@ function yaptirimlarFirebaseYukle() {
       .get().then(function(snap) {
         var fbYaptirimlar = [];
         snap.forEach(function(doc) { fbYaptirimlar.push(doc.data()); });
-        if (fbYaptirimlar.length > yaptirimlar.length) {
+        // Sayı karşılaştırması yerine ID kümesini karşılaştır; silmeler de yansısın
+        var fbIds = new Set(fbYaptirimlar.map(function(y){ return String(y.id); }));
+        var localIds = new Set(yaptirimlar.map(function(y){ return String(y.id); }));
+        var farkVar = fbYaptirimlar.length !== yaptirimlar.length ||
+          fbYaptirimlar.some(function(y){ return !localIds.has(String(y.id)); }) ||
+          yaptirimlar.some(function(y){ return !fbIds.has(String(y.id)); });
+        if (farkVar) {
           yaptirimlar = fbYaptirimlar;
           localStorage.setItem('yaptirimlar', JSON.stringify(yaptirimlar));
           yaptirimlarGuncelle();
