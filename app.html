@@ -9918,10 +9918,21 @@ function basliklarGoster() {
   }
 
   // Başlıksız
-  var bostaMesaj = _bostaIsl.length > 0
-    ? '<div style="background:#fff3cd;color:#856404;padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;">⚠️ '+_bostaIsl.length+' işletme hiçbir başlığa girmiyor.</div>'
-    : '<div style="background:'+okRenk+';color:'+okYaz+';padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;">✅ Tüm işletmeler bir başlığa eşleşiyor.</div>';
-  html += bostaMesaj;
+  if(_bostaIsl.length > 0){
+    html += '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 12px;margin-bottom:6px;">';
+    html += '<div style="font-weight:600;color:#856404;font-size:13px;margin-bottom:8px;">⚠️ '+_bostaIsl.length+' işletme hiçbir başlığa girmiyor — tıklayıp başlık atayın</div>';
+    _bostaIsl.forEach(function(i){
+      var _ae=_ekipEsc((i.kayitNo||i.isletmeAdi)||'').replace(/'/g,"\\'");
+      html += '<div onclick="isletmeBaslikDegistirAc(\''+_ae+'\')" style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid #ffc107;border-radius:8px;margin-bottom:5px;cursor:pointer;background:#fff;">';
+      html += '<div><div style="font-size:13px;font-weight:500;">'+_ekipEsc(i.isletmeAdi||_ae)+'</div>';
+      html += '<div style="font-size:11px;color:var(--gri);margin-top:2px;">'+_ekipEsc(i.kayitNo||'')+(i.faaliyetAlani?' · '+_ekipEsc((i.faaliyetAlani||'').split(',')[0]):'')+'</div></div>';
+      html += '<span style="font-size:11px;color:#856404;white-space:nowrap;">Başlık ata →</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<div style="background:'+okRenk+';color:'+okYaz+';padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;">✅ Tüm işletmeler bir başlığa eşleşiyor.</div>';
+  }
 
   // Genel sayım özeti
   html += '<div style="font-size:11px;color:var(--gri);padding:6px 2px;">';
