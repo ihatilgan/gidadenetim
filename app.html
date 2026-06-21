@@ -1802,7 +1802,7 @@ window.addEventListener('fb-hazir', function() {
 </div>
 
 <!-- PAROLA DEĞİŞTİR EKRANI -->
-<div id="parola-ekrani" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9998;align-items:center;justify-content:center;padding:20px;">
+<div id="parola-ekrani" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9998;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)(function(){var pe=document.getElementById('parola-ekrani');if(pe)pe.style.display='none';if(typeof mevcutKullanici!=='undefined'&&mevcutKullanici&&typeof firebase!=='undefined')firebase.firestore().collection('kullanicilar').doc(mevcutKullanici.uid).set({ilkGiris:false},{merge:true});})()">
   <div style="background:white;border-radius:16px;padding:32px;width:100%;max-width:400px;">
     <h2 style="color:#1a6b3c;margin-bottom:8px;">🔑 Parola Değiştir</h2>
     <p style="color:#7f8c8d;font-size:13px;margin-bottom:20px;">Güvenliğiniz için parolanızı değiştirin.</p>
@@ -5514,13 +5514,6 @@ function yeniDenetimIsletmeyle(isletmeAdi, idx) {
 })();
 
 // ---- FİREBASE SENKRONIZASYON ----
-
-// Firebase hazır olunca başlat
-if (window._fbHazir) {
-  firebaseBaslat();
-} else {
-  window.addEventListener('fb-hazir', firebaseBaslat);
-}
 
 
 // ---- SORUMLULUKLARIM SAYFASI ----
