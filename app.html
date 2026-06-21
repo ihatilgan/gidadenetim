@@ -330,6 +330,8 @@ function ekiplerFirestoreYukle() {
         EKIPLER = uzak;
         ekipKategoriMigrasyon();
         try { localStorage.setItem(EKIPLER_KEY, JSON.stringify(EKIPLER)); } catch(e){}
+        // Profil fetch localStorage'a daha güncel bir ekipId yazmış olabilir — onu oku
+        try { var _lsEkip = localStorage.getItem(AKTIF_EKIP_KEY); if (_lsEkip) aktifEkipId = _lsEkip; } catch(e){}
         // Aktif ekip kuralını tazele
         var ek = ekipBul(aktifEkipId) || EKIPLER[0];
         if (ek) { aktifEkipId = ek.id; ekipKurallariUygula(ek); }
