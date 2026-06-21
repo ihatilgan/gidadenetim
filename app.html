@@ -221,6 +221,14 @@ var MERKEZ_MAHALLE_MASTER = ["Akçın","Akmescit","Ali İhsan Paşa","Aliçetink
 // Köy/kasaba evreni (editörde seçenek listesi)
 var KOY_MASTER = ["Anıtkaya","Bayatçık","Bayramgazi","Belkaracaören","Beyyazı","Bostanlı","Burhaniye","Çakırköy","Çavdarlı","Çayırbağ","Çıkrık","Değirmenayvalı","Değirmendere","Demirçevre","Erkmen","Fethibey","Gebeceler","Halımoru","Işıklar","Karaaslan","Kışlacık","Kızıldağ","Kocatepe","Kozluca","Köprülü","Küçükkalecik","Nuribey","Olucak","Salar","Saraydüzü","Sarık","Susuz","Sülümenli","Sülün"];
 
+// Manuel eklenen başlıklar (localStorage + Firebase)
+var MAHALLE_EKSTRA = [];
+var KOY_EKSTRA = [];
+var KAT_EKSTRA = [];
+try { MAHALLE_EKSTRA = JSON.parse(localStorage.getItem('ekstra_mahalleler')||'[]'); } catch(e){}
+try { KOY_EKSTRA = JSON.parse(localStorage.getItem('ekstra_koyler')||'[]'); } catch(e){}
+try { KAT_EKSTRA = JSON.parse(localStorage.getItem('ekstra_kategoriler')||'[]'); } catch(e){}
+
 var EKIPLER = [];
 var aktifEkipId = null;
 var EKIP_URETIM_KATEGORILERI = [];  // aktif ekibin sorumlu olduğu üretim kategori id'leri
@@ -1159,6 +1167,12 @@ var TUM_URETIM_KATEGORILER = [
   {id:'o7', label:'İşlenmiş Mesane, Mide ve Bağırsaklar (Onay)', anahtar:['İŞLENMİŞ MESANE, MİDE VE BAĞIRSAKLAR'], onay:true},
   {id:'o8', label:'Kıyma, Hazırlanmış Et Karışımları ve MAE (Onay)', anahtar:['KIYMA, HAZIRLANMIŞ ET KARIŞIMLARI VE MAE'], onay:true},
 ];
+// Manuel eklenen başlıkları master dizilere uygula
+(function(){
+  MAHALLE_EKSTRA.forEach(function(m){ if(MERKEZ_MAHALLE_MASTER.indexOf(m)<0) MERKEZ_MAHALLE_MASTER.push(m); });
+  KOY_EKSTRA.forEach(function(k){ if(KOY_MASTER.indexOf(k)<0) KOY_MASTER.push(k); });
+  KAT_EKSTRA.forEach(function(k){ if(!TUM_URETIM_KATEGORILER.find(function(x){return x.id===k.id;})) TUM_URETIM_KATEGORILER.push({id:k.id,label:k.label,anahtar:[],ekstra:true}); });
+})();
 // Bir işletmenin faaliyeti, bir üretim kategorisine uyuyor mu?
 // Normal kategoriler: ilk faaliyetin (virgüle kadar) baş-eşitliği.
 // Onay kategorileri: faaliyet "(KATEGORİ)" ile başlıyor mu.
@@ -9449,6 +9463,97 @@ function sohbetBildirimDinle() {
 // ===== TÜM BAŞLIKLAR (başlık → ekip atama) =====
 var _basliklarBostaFiltre = false;
 var _basliklarBosTip = false;
+var _baslikEklemeAcik = {}; // {uretim:false, koy:false, mahalle:false}
+var _baslikEklemeDeger = {};
+
+function ekstraBasliklarKaydet() {
+  try { localStorage.setItem('ekstra_mahalleler', JSON.stringify(MAHALLE_EKSTRA)); } catch(e){}
+  try { localStorage.setItem('ekstra_koyler', JSON.stringify(KOY_EKSTRA)); } catch(e){}
+  try { localStorage.setItem('ekstra_kategoriler', JSON.stringify(KAT_EKSTRA)); } catch(e){}
+  if (typeof firebase!=='undefined' && typeof mevcutKullanici!=='undefined' && mevcutKullanici) {
+    firebase.firestore().collection('app_meta').doc('ekstra_basliklar')
+      .set({mahalleler:MAHALLE_EKSTRA, koyler:KOY_EKSTRA, kategoriler:KAT_EKSTRA, guncelleme:new Date().toISOString()})
+      .catch(function(e){ console.warn('ekstra başlık kayıt hatası:', e&&e.message); });
+  }
+}
+function ekstraBasliklarYukle() {
+  if (typeof firebase==='undefined' || !mevcutKullanici) return;
+  firebase.firestore().collection('app_meta').doc('ekstra_basliklar').get()
+    .then(function(doc){
+      if (!doc.exists) return;
+      var d = doc.data()||{};
+      var degisti = false;
+      if (Array.isArray(d.mahalleler) && JSON.stringify(d.mahalleler)!==JSON.stringify(MAHALLE_EKSTRA)) {
+        MAHALLE_EKSTRA = d.mahalleler;
+        d.mahalleler.forEach(function(m){ if(MERKEZ_MAHALLE_MASTER.indexOf(m)<0) MERKEZ_MAHALLE_MASTER.push(m); });
+        try{localStorage.setItem('ekstra_mahalleler',JSON.stringify(MAHALLE_EKSTRA));}catch(e){}
+        degisti = true;
+      }
+      if (Array.isArray(d.koyler) && JSON.stringify(d.koyler)!==JSON.stringify(KOY_EKSTRA)) {
+        KOY_EKSTRA = d.koyler;
+        d.koyler.forEach(function(k){ if(KOY_MASTER.indexOf(k)<0) KOY_MASTER.push(k); });
+        try{localStorage.setItem('ekstra_koyler',JSON.stringify(KOY_EKSTRA));}catch(e){}
+        degisti = true;
+      }
+      if (Array.isArray(d.kategoriler) && JSON.stringify(d.kategoriler)!==JSON.stringify(KAT_EKSTRA)) {
+        KAT_EKSTRA = d.kategoriler;
+        d.kategoriler.forEach(function(k){
+          if(!TUM_URETIM_KATEGORILER.find(function(x){return x.id===k.id;}))
+            TUM_URETIM_KATEGORILER.push({id:k.id,label:k.label,anahtar:[],ekstra:true});
+        });
+        try{localStorage.setItem('ekstra_kategoriler',JSON.stringify(KAT_EKSTRA));}catch(e){}
+        degisti = true;
+      }
+      if (degisti && typeof basliklarGoster==='function' && document.getElementById('basliklar-root')) basliklarGoster();
+    })
+    .catch(function(e){ console.warn('ekstra başlık yükleme hatası:', e&&e.message); });
+}
+if (window._fbHazir) { ekstraBasliklarYukle(); } else { window.addEventListener('fb-hazir', ekstraBasliklarYukle); }
+
+function baslikEkle(tip) {
+  if (!isAdmin) { bildirimGoster('Bu işlemi sadece admin yapabilir.', 'hata'); return; }
+  var deger = (_baslikEklemeDeger[tip]||'').trim();
+  if (!deger) { bildirimGoster('Lütfen bir ad girin.', 'hata'); return; }
+  if (tip==='mahalle') {
+    if (MERKEZ_MAHALLE_MASTER.indexOf(deger)>=0) { bildirimGoster('Bu mahalle zaten mevcut.', 'hata'); return; }
+    MERKEZ_MAHALLE_MASTER.push(deger);
+    MAHALLE_EKSTRA.push(deger);
+  } else if (tip==='koy') {
+    if (KOY_MASTER.indexOf(deger)>=0) { bildirimGoster('Bu köy/kasaba zaten mevcut.', 'hata'); return; }
+    KOY_MASTER.push(deger);
+    KOY_EKSTRA.push(deger);
+  } else if (tip==='uretim') {
+    var yeniId = 'x_' + Date.now();
+    if (TUM_URETIM_KATEGORILER.find(function(x){return x.label===deger;})) { bildirimGoster('Bu kategori zaten mevcut.', 'hata'); return; }
+    TUM_URETIM_KATEGORILER.push({id:yeniId, label:deger, anahtar:[], ekstra:true});
+    KAT_EKSTRA.push({id:yeniId, label:deger});
+  }
+  _baslikEklemeDeger[tip] = '';
+  _baslikEklemeAcik[tip] = false;
+  try { _ekipSayiCache = null; } catch(e){}
+  ekstraBasliklarKaydet();
+  basliklarGoster();
+  bildirimGoster('➕ Başlık eklendi.');
+}
+function baslikEkstraSil(tip, deger) {
+  if (!isAdmin) { bildirimGoster('Bu işlemi sadece admin yapabilir.', 'hata'); return; }
+  if (tip==='mahalle') {
+    MAHALLE_EKSTRA = MAHALLE_EKSTRA.filter(function(m){return m!==deger;});
+    var idx = MERKEZ_MAHALLE_MASTER.indexOf(deger); if(idx>=0) MERKEZ_MAHALLE_MASTER.splice(idx,1);
+  } else if (tip==='koy') {
+    KOY_EKSTRA = KOY_EKSTRA.filter(function(k){return k!==deger;});
+    var idx = KOY_MASTER.indexOf(deger); if(idx>=0) KOY_MASTER.splice(idx,1);
+  } else if (tip==='uretim') {
+    KAT_EKSTRA = KAT_EKSTRA.filter(function(k){return k.id!==deger;});
+    var idx2 = TUM_URETIM_KATEGORILER.findIndex(function(x){return x.id===deger;}); if(idx2>=0) TUM_URETIM_KATEGORILER.splice(idx2,1);
+  }
+  try { _ekipSayiCache = null; } catch(e){}
+  ekstraBasliklarKaydet();
+  basliklarGoster();
+  bildirimGoster('🗑️ Başlık silindi.');
+}
+window.baslikEkle = baslikEkle;
+window.baslikEkstraSil = baslikEkstraSil;
 var _basliklarAcik = {uretim:false, koy:false, mahalle:false};
 var _basliklarArama = '';
 
@@ -9592,11 +9697,12 @@ function basliklarGoster() {
     if (_basliklarBostaFiltre) satirlar = satirlar.filter(function(b){ return !baslikEkibiBul(b); });
     if (_basliklarBosTip) satirlar = satirlar.filter(function(b){ return baslikSayi(b,sayac)>0; });
     var acik = _basliklarAcik[g.tip] || !!ara;
-    html+='<div onclick="_basliklarAcik[\''+g.tip+'\']=!_basliklarAcik[\''+g.tip+'\'];basliklarGoster();" style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700;font-size:14px;margin:16px 0 8px;cursor:pointer;background:var(--gri-acik);border-radius:8px;padding:10px 12px;">';
+    html+='<div onclick="_basliklarAcik[\''+g.tip+'\']=!_basliklarAcik[\''+g.tip+'\'];if(!_basliklarAcik[\''+g.tip+'\']){_baslikEklemeAcik[\''+g.tip+'\']=false;}basliklarGoster();" style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700;font-size:14px;margin:16px 0 8px;cursor:pointer;background:var(--gri-acik);border-radius:8px;padding:10px 12px;">';
     html+='<span>'+(acik?'▼ ':'▶ ')+g.ad+'</span>';
     html+='<span style="color:var(--gri);font-weight:400;font-size:11px;text-align:right;">('+g.konu+' '+g.konuEt+' ve '+g.isl+' işletme)</span>';
     html+='</div>';
     if(!acik) return;
+    var isAdminF = (typeof isAdmin!=='undefined'&&isAdmin);
     satirlar.forEach(function(b){
       var ek = baslikEkibiBul(b);
       var sayi = baslikSayi(b, sayac);
@@ -9604,11 +9710,29 @@ function basliklarGoster() {
         ? '<span style="background:#e8f0fe;color:#1a56c4;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;white-space:nowrap;">'+_ekipEsc(ek.ad||ek.id)+'</span>'
         : '<span style="background:#fdecea;color:#c0392b;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;">Boşta</span>';
       var keyAttr = _ekipEsc(b.key).replace(/'/g,"\\'");
-      html+='<div onclick="baslikAtaAc(\''+b.tip+'\',\''+keyAttr+'\')" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;border:1px solid var(--sinir);border-radius:10px;margin-bottom:7px;cursor:pointer;background:#fff;">';
-      html+='<div style="min-width:0;"><div style="font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_ekipEsc(b.ad)+'</div><div style="font-size:11px;color:var(--gri);margin-top:2px;">'+sayi+' işletme</div></div>';
+      var ekstraMi = (b.tip==='uretim') ? !!(KAT_EKSTRA.find(function(k){return k.id===b.key;})) : (b.tip==='mahalle' ? MAHALLE_EKSTRA.indexOf(b.key)>=0 : KOY_EKSTRA.indexOf(b.key)>=0);
+      html+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;">';
+      html+='<div onclick="baslikAtaAc(\''+b.tip+'\',\''+keyAttr+'\')" style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;border:1px solid var(--sinir);border-radius:10px;cursor:pointer;background:#fff;">';
+      html+='<div style="min-width:0;"><div style="font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_ekipEsc(b.ad)+(ekstraMi?' <span style="font-size:10px;color:var(--gri);background:#f0f0f0;border-radius:4px;padding:1px 5px;">manuel</span>':'')+'</div><div style="font-size:11px;color:var(--gri);margin-top:2px;">'+sayi+' işletme</div></div>';
       html+='<div style="flex-shrink:0;">'+rozet+'</div>';
       html+='</div>';
+      if (isAdminF && ekstraMi) {
+        html+='<button onclick="event.stopPropagation();baslikEkstraSil(\''+b.tip+'\',\''+keyAttr+'\')" title="Sil" style="padding:8px 10px;border:1px solid #f5c6cb;border-radius:8px;background:#fdecea;color:#c0392b;cursor:pointer;font-size:13px;flex-shrink:0;">🗑️</button>';
+      }
+      html+='</div>';
     });
+    if (isAdminF) {
+      if (_baslikEklemeAcik[g.tip]) {
+        var ph = g.tip==='uretim' ? 'Kategori adı...' : (g.tip==='mahalle' ? 'Mahalle adı...' : 'Köy/kasaba adı...');
+        html+='<div style="margin-top:6px;display:flex;gap:6px;">';
+        html+='<input id="baslik-ekle-input-'+g.tip+'" type="text" placeholder="'+ph+'" value="'+_ekipEsc(_baslikEklemeDeger[g.tip]||'')+'" oninput="_baslikEklemeDeger[\''+g.tip+'\']=this.value" onkeydown="if(event.key===\'Enter\')baslikEkle(\''+g.tip+'\')" style="flex:1;padding:7px 10px;border:1px solid var(--sinir);border-radius:7px;font-size:13px;" />';
+        html+='<button onclick="baslikEkle(\''+g.tip+'\')" style="padding:7px 12px;background:var(--yesil);color:#fff;border:none;border-radius:7px;font-size:13px;cursor:pointer;font-weight:600;">Ekle</button>';
+        html+='<button onclick="_baslikEklemeAcik[\''+g.tip+'\']=false;basliklarGoster();" style="padding:7px 10px;background:none;border:1px solid var(--sinir);border-radius:7px;font-size:13px;cursor:pointer;color:var(--gri);">✕</button>';
+        html+='</div>';
+      } else {
+        html+='<button onclick="_baslikEklemeAcik[\''+g.tip+'\']=true;_baslikEklemeDeger[\''+g.tip+'\']=\'\';basliklarGoster();setTimeout(function(){var el=document.getElementById(\'baslik-ekle-input-'+g.tip+'\');if(el)el.focus();},50);" style="width:100%;padding:7px;border:1px dashed var(--sinir);border-radius:7px;background:none;font-size:13px;color:var(--gri);cursor:pointer;margin-top:6px;">+ Yeni Ekle</button>';
+      }
+    }
   });
   root.innerHTML=html;
 }
