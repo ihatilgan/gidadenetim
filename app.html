@@ -332,7 +332,8 @@ function ekiplerFirestoreYukle() {
         try { localStorage.setItem(EKIPLER_KEY, JSON.stringify(EKIPLER)); } catch(e){}
         // Aktif ekip kuralını tazele
         var ek = ekipBul(aktifEkipId) || EKIPLER[0];
-        if (ek) ekipKurallariUygula(ek);
+        if (ek) { aktifEkipId = ek.id; ekipKurallariUygula(ek); }
+        if (typeof ekipSeciciDoldur === 'function') { try { ekipSeciciDoldur(); } catch(e){} }
         if (typeof ozetGuncelle === 'function') { try { ozetGuncelle(); } catch(e){} }
       }
     })
@@ -1825,7 +1826,7 @@ window.addEventListener('fb-hazir', function() {
 
 
 <header style="display:none;">
-  <div onclick="location.reload()" style="cursor:pointer;min-width:0;flex:1;overflow:hidden;" title="Yenile (başa dön)">
+  <div onclick="sayfaGoster('ozet',document.querySelector('[data-sayfa=ozet]'))" style="cursor:pointer;min-width:0;flex:1;overflow:hidden;" title="Ana sayfaya dön">
     <h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🍽️ Gıda Denetim</h1>
     <div style="font-size:10px;opacity:0.65;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">İsmail Hakkı Atılgan</div>
   </div>
