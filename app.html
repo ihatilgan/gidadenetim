@@ -435,6 +435,7 @@ if (DEV_MODU) document.addEventListener('DOMContentLoaded', function(){
   b.style.cssText='position:fixed;top:8px;right:8px;background:#b45309;color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;z-index:99999;box-shadow:0 1px 4px rgba(0,0,0,.3);letter-spacing:.5px;';
   document.body.appendChild(b);
 });
+ekipSistemiBaslat(); // localStorage'dan ekipleri hemen yükle (Firebase'den önce)
 if (window._fbHazir) { ekiplerFirestoreYukle(); } else { window.addEventListener('fb-hazir', ekiplerFirestoreYukle); }
 
 window.EKIPLER = EKIPLER;
@@ -6579,9 +6580,11 @@ function kullaniciBilgiYukle(user) {
     ggbsRiskTarihleriniYukle().then(function() {
       ozetGuncelle();
       ikaz_sayisiGuncelle();
+      if (typeof ekipSeciciDoldur === 'function') try { ekipSeciciDoldur(); } catch(e){}
       if (typeof riskBildirimYenile === 'function') riskBildirimYenile();
     }).catch(function() {
       ozetGuncelle();
+      if (typeof ekipSeciciDoldur === 'function') try { ekipSeciciDoldur(); } catch(e){}
       if (typeof riskBildirimYenile === 'function') riskBildirimYenile();
     });
     // Sohbet: presence güncelle ve bildirimleri dinle
