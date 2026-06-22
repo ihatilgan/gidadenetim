@@ -1,5 +1,5 @@
 // Gıda Denetim - Service Worker
-const CACHE_ADI = 'gida-denetim-v46';
+const CACHE_ADI = 'gida-denetim-v47';
 
 const STATIK_KAYNAKLAR = [
   'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js',
@@ -46,6 +46,28 @@ self.addEventListener('fetch', function(e) {
       url.includes('firebasestorage')) {
     return;
   }
+
+  // HTML dokümanı (navigasyon) için AĞ-ÖNCELİKLİ: çevrimiçiyken her zaman en güncel
+  // kodu indir, böylece güncellemeler telefonda anında görünür. Yalnızca çevrimdışıyken
+  // önbellekten servis et. (Eski cache-first davranışı eski app.html'i kalıcı gösteriyordu.)
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).then(function(response) {
+        if (response && response.status === 200 && response.type !== 'opaque') {
+          var klon = response.clone();
+          caches.open(CACHE_ADI).then(function(cache) { cache.put(e.request, klon); });
+        }
+        return response;
+      }).catch(function() {
+        return caches.match(e.request).then(function(cached) {
+          return cached || caches.match('index.html') || caches.match('gida-denetim.html');
+        });
+      })
+    );
+    return;
+  }
+
+  // Diğer kaynaklar (kütüphaneler, ikonlar vb.) için ÖNBELLEK-ÖNCELİKLİ
   e.respondWith(
     caches.match(e.request).then(function(cached) {
       if (cached) return cached;
@@ -57,10 +79,6 @@ self.addEventListener('fetch', function(e) {
           });
         }
         return response;
-      }).catch(function() {
-        if (e.request.mode === 'navigate') {
-          return caches.match('index.html') || caches.match('gida-denetim.html');
-        }
       });
     })
   );
