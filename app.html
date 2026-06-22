@@ -6651,19 +6651,13 @@ function kullaniciBilgiYukle(user) {
     }
     
     // İlk açılışta ekip verisinin tam yüklenmesi için bir kere yenile
-    if (!sessionStorage.getItem('_girisYenileme')) {
-      sessionStorage.setItem('_girisYenileme', '1');
-      var _ykEl = document.createElement('div');
-      _ykEl.style.cssText = 'position:fixed;inset:0;background:rgba(26,86,196,0.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;gap:14px;';
-      _ykEl.innerHTML = '<div style="font-size:42px;">⏳</div><div style="font-size:17px;font-weight:700;text-align:center;">Ekibinizin bilgileri yükleniyor…</div><div style="font-size:13px;opacity:0.8;">Sayfa bir kez yenilenecek</div>';
-      document.body.appendChild(_ykEl);
-      setTimeout(function(){ location.reload(); }, 1800);
-      return;
-    }
     firebaseDinle();
     offlineDurumGuncelle();
     if (navigator.onLine) offlineKuyruguGonder();
     isletmelerMasterVersiyonDinle();
+    // fb-hazir anında auth yoktu → okumalar başarısız olmuş olabilir, auth sonrası tekrar çalıştır
+    if (typeof ekiplerFirestoreYukle === 'function') ekiplerFirestoreYukle();
+    if (typeof atamaOverridesFirestoreYukle === 'function') atamaOverridesFirestoreYukle();
     // ggbs manuel tarihler ve ana işletme listesi yüklendikten sonra özeti güncelle
     ggbsRiskTarihleriniYukle().then(function() {
       ozetGuncelle();
