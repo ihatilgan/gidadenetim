@@ -1,5 +1,5 @@
 // Gıda Denetim - Service Worker
-const CACHE_ADI = 'gida-denetim-v52';
+const CACHE_ADI = 'gida-denetim-v53';
 
 const STATIK_KAYNAKLAR = [
   'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js',
@@ -47,20 +47,23 @@ self.addEventListener('fetch', function(e) {
     return;
   }
 
-  // HTML dokümanı (navigasyon) için AĞ-ÖNCELİKLİ: çevrimiçiyken her zaman en güncel
-  // kodu indir, böylece güncellemeler telefonda anında görünür. Yalnızca çevrimdışıyken
-  // önbellekten servis et. (Eski cache-first davranışı eski app.html'i kalıcı gösteriyordu.)
+  // HTML dokümanı (navigasyon) için STALE-WHILE-REVALIDATE: önbellekteki sürümü ANINDA
+  // göster (siyah ekran / bekleme yok, auth hemen geri yüklenir), aynı anda ağdan güncel
+  // sürümü çekip önbelleği tazele (sonraki açılış güncel olur). İlk açılışta önbellek
+  // yoksa ağı bekler. (Saf ağ-öncelikli, yavaş bağlantıda açılışta siyah ekran yapıyordu.)
   if (e.request.mode === 'navigate') {
     e.respondWith(
-      fetch(e.request).then(function(response) {
-        if (response && response.status === 200 && response.type !== 'opaque') {
-          var klon = response.clone();
-          caches.open(CACHE_ADI).then(function(cache) { cache.put(e.request, klon); });
-        }
-        return response;
-      }).catch(function() {
-        return caches.match(e.request).then(function(cached) {
-          return cached || caches.match('index.html') || caches.match('gida-denetim.html');
+      caches.open(CACHE_ADI).then(function(cache) {
+        return cache.match(e.request).then(function(cached) {
+          var agdan = fetch(e.request).then(function(response) {
+            if (response && response.status === 200 && response.type !== 'opaque') {
+              cache.put(e.request, response.clone());
+            }
+            return response;
+          }).catch(function() {
+            return cached || cache.match('index.html') || cache.match('gida-denetim.html');
+          });
+          return cached || agdan;
         });
       })
     );
