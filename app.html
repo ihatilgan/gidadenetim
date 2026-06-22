@@ -656,18 +656,32 @@ function ekipSecenekSayilari(){
   var kats=(typeof TUM_URETIM_KATEGORILER!=='undefined')?TUM_URETIM_KATEGORILER:[];
   mahList.forEach(function(m){mah[m]=0;}); koyList.forEach(function(k){koy[k]=0;}); kats.forEach(function(k){kat[k.id]=0;});
   var ekipToplam={};
+  // Per-işletme önbellek: başlık ve sorumlu ekip işletmenin kendisine bağlıdır,
+  // AKTİF EKİPTEN BAĞIMSIZDIR. Bir kez burada hesaplanıp saklanır; ekip geçişlerinde
+  // yeniden hesaplanmaz (yalnızca veri değişince _ekipSayiCache sıfırlanır).
+  var baslikMap={}, sorumluMap={};
   kaynak.forEach(function(i){
+    var _an=isletmeAnahtari(i);
     var b=isletmeBaslikBelirle(i);
-    if(!b) return;
+    if(_an) baslikMap[_an]=b||null;
+    if(!b){ if(_an){ sorumluMap[_an]=(typeof manuelEkip!=='undefined' && manuelEkip[_an]) ? manuelEkip[_an] : null; } return; }
     if(b.tip==='mahalle'){ if(!(b.key in mah)) mah[b.key]=0; mah[b.key]++; }
     else if(b.tip==='koy'){ if(!(b.key in koy)) koy[b.key]=0; koy[b.key]++; }
     else if(b.tip==='uretim'){ if(!(b.key in kat)) kat[b.key]=0; kat[b.key]++; }
-    var _an=isletmeAnahtari(i);
     var _eid=(typeof manuelEkip!=='undefined' && manuelEkip[_an]) ? manuelEkip[_an] : (function(){ var ek=(typeof baslikEkibiBul==='function')?baslikEkibiBul(b):null; return ek?ek.id:null; })();
+    if(_an) sorumluMap[_an]=_eid||null;
     if(_eid) ekipToplam[_eid]=(ekipToplam[_eid]||0)+1;
   });
-  _ekipSayiCache={mah:mah,koy:koy,kat:kat,ekipToplam:ekipToplam}; _ekipSayiLen=kaynak.length;
+  _ekipSayiCache={mah:mah,koy:koy,kat:kat,ekipToplam:ekipToplam,baslikMap:baslikMap,sorumluMap:sorumluMap}; _ekipSayiLen=kaynak.length;
   return _ekipSayiCache;
+}
+// Önbellekli başlık: ekipSecenekSayilari pass'inde hesaplanmış değeri döndürür (ekip geçişinde yeniden hesaplama yok)
+function isletmeBaslikCacheli(i){
+  if(!i) return null;
+  var an=isletmeAnahtari(i);
+  var c=ekipSecenekSayilari();
+  if(c && c.baslikMap && an && (an in c.baslikMap)) return c.baslikMap[an];
+  return isletmeBaslikBelirle(i);
 }
 
 // ----- Bir ekip, bir işletmeden sorumlu mu? (global'leri değiştirmeden) -----
@@ -676,6 +690,9 @@ function isletmeSorumluEkipId(i){
   if(typeof kayitHaricMi==='function' && kayitHaricMi(i)) return null;
   var an=isletmeAnahtari(i);
   if(an && typeof manuelEkip!=='undefined' && manuelEkip[an]) return manuelEkip[an];
+  // Önbellekten oku (ekipSecenekSayilari pass'i) — ekip geçişinde yeniden hesaplama yok
+  var c=ekipSecenekSayilari();
+  if(c && c.sorumluMap && an && (an in c.sorumluMap)) return c.sorumluMap[an];
   var b=isletmeBaslikBelirle(i);
   if(!b) return null;
   var ek=(typeof baslikEkibiBul==='function')?baslikEkibiBul(b):null;
@@ -2970,7 +2987,7 @@ function satisKoySorumlulukListesiGetir() {
   (ISLETMELER || []).forEach(function(i){
     if (!i || (typeof kayitHaricMi === 'function' && kayitHaricMi(i))) return;
     if (isletmeSorumluEkipId(i) !== eid) return;
-    var b = isletmeBaslikBelirle(i);
+    var b = isletmeBaslikCacheli(i);
     if (!b || b.tip === 'uretim') return;
     var an = i.kayitNo || (i.isletmeAdi + '|' + i.adres);
     if (an && gorulen[an]) return;
@@ -3011,7 +3028,7 @@ function uretimTumSorumlulukListesiGetir() {
   return (ISLETMELER || []).filter(function(i) {
     if (!i || (typeof kayitHaricMi === 'function' && kayitHaricMi(i))) return false;
     if (isletmeSorumluEkipId(i) !== eid) return false;
-    var b = isletmeBaslikBelirle(i);
+    var b = isletmeBaslikCacheli(i);
     if (!b || b.tip !== 'uretim') return false;
     var an = i.kayitNo || (i.isletmeAdi + '|' + i.adres);
     if (an && gorulen[an]) return false;
