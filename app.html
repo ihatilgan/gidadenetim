@@ -278,7 +278,17 @@ function atamaOverridesFirestoreYukle(){
       if(d.manuelBaslik && typeof d.manuelBaslik==='object'){ manuelBaslik=d.manuelBaslik; try{localStorage.setItem(MANUEL_BASLIK_KEY,JSON.stringify(manuelBaslik));}catch(e){} }
       if(Array.isArray(d.yoksay)){ yoksayListesi=d.yoksay; try{localStorage.setItem(YOKSAY_KEY,JSON.stringify(yoksayListesi));}catch(e){} }
       if(d.manuelEkip && typeof d.manuelEkip==='object'){ manuelEkip=d.manuelEkip; try{localStorage.setItem(MANUEL_EKIP_KEY,JSON.stringify(manuelEkip));}catch(e){} }
-      try{ _ekipSayiCache=null; if(typeof ozetGuncelle==='function') ozetGuncelle(); }catch(e){}
+      try{ _ekipSayiCache=null; }catch(e){}
+      // Admin için: geçerli ekibin işletmesi yoksa ilk dolu ekibe geç
+      if(isAdmin && EKIPLER.length > 1 && typeof ekipIsletmeSayisi==='function' && typeof aktifEkibeGec==='function'){
+        var _aktEk=ekipBul(aktifEkipId)||EKIPLER[0];
+        if(_aktEk && ekipIsletmeSayisi(_aktEk)===0){
+          var _ilkDolu=null; for(var _ii=0;_ii<EKIPLER.length;_ii++){ if(ekipIsletmeSayisi(EKIPLER[_ii])>0){_ilkDolu=EKIPLER[_ii];break;} }
+          if(_ilkDolu) aktifEkibeGec(_ilkDolu.id, false);
+        }
+      }
+      if(typeof ekipSeciciDoldur==='function') try{ekipSeciciDoldur();}catch(e){}
+      if(typeof ozetGuncelle==='function') try{ozetGuncelle();}catch(e){}
     })
     .catch(function(e){ console.warn('atama overrides okuması başarısız:', e.message); });
 }
@@ -337,6 +347,11 @@ function ekiplerFirestoreYukle() {
         if (ek) { aktifEkipId = ek.id; ekipKurallariUygula(ek); }
         // Ekip listesi değişti — sayım önbelleğini iptal et ki yeni dağılım hesaplansın
         try { _ekipSayiCache = null; _ekipSayiLen = -1; } catch(e){}
+        // Bekleyen ekip geçişi varsa şimdi uygula (profil fetch EKIPLER'den önce geldiyse)
+        if (window._pendingEkipGecisi && !isAdmin) {
+          var _pendEk = ekipBul(window._pendingEkipGecisi);
+          if (_pendEk) { aktifEkipId = _pendEk.id; ekipKurallariUygula(_pendEk); window._pendingEkipGecisi = null; }
+        }
         if (typeof ekipSeciciDoldur === 'function') { try { ekipSeciciDoldur(); } catch(e){} }
         if (typeof ozetGuncelle === 'function') { try { ozetGuncelle(); } catch(e){} }
         var _skEl = document.getElementById('sayfa-kullanicilar');
@@ -6770,7 +6785,11 @@ function kullaniciBilgiYukle(user) {
     // Ekip değiştiyse güncelle
     if (!isAdmin && data.ekipId && data.ekipId !== aktifEkipId) {
       try { localStorage.setItem(AKTIF_EKIP_KEY, data.ekipId); } catch(e){}
-      if (typeof aktifEkibeGec === 'function') { try { aktifEkibeGec(data.ekipId, true); } catch(e){} }
+      if (ekipBul(data.ekipId)) {
+        if (typeof aktifEkibeGec === 'function') { try { aktifEkibeGec(data.ekipId, true); } catch(e){} }
+      } else {
+        window._pendingEkipGecisi = data.ekipId; // EKIPLER henüz yüklenmedi, sonra uygula
+      }
     }
     // İlk giriş: şifre değiştirme ekranı
     if (data.ilkGiris && !isAdmin) {
