@@ -6743,6 +6743,9 @@ function _uygulamaGoster(user, ad, ekipId) {
   offlineDurumGuncelle();
   if (navigator.onLine) offlineKuyruguGonder();
   isletmelerMasterVersiyonDinle();
+  // fb-hazir anında auth yoktu → okumalar başarısız olmuş olabilir, auth sonrası tekrar çalıştır
+  if (typeof ekiplerFirestoreYukle === 'function') ekiplerFirestoreYukle();
+  if (typeof atamaOverridesFirestoreYukle === 'function') atamaOverridesFirestoreYukle();
   ggbsRiskTarihleriniYukle().then(function() {
     ozetGuncelle();
     ikaz_sayisiGuncelle();
