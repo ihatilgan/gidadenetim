@@ -7539,9 +7539,9 @@ function kullaniciDuzenle(uid, u) {
 }
 
 function kullaniciSil(uid, ad) {
-  if (!confirm(ad + ' kullanıcısını silmek istiyor musunuz?')) return;
+  if (!confirm(ad + ' kullanıcısını silmek istiyor musunuz?\n\nNot: Profil bilgileri silinir ancak giriş yapma yetkisi (Firebase Authentication) ayrıca Firebase Console → Authentication bölümünden manuel silinmelidir.')) return;
   firebase.firestore().collection('kullanicilar').doc(uid).delete()
-    .then(function() { kullaniciListesiYukle(); bildirimGoster('✅ Kullanıcı silindi!'); })
+    .then(function() { kullaniciListesiYukle(); bildirimGoster('✅ Kullanıcı profili silindi. Giriş yetkisi için Firebase Console → Authentication bölümüne gidin.', 'uyari'); })
     .catch(function(err) { bildirimGoster('Hata: ' + err.message, 'hata'); });
 }
 
