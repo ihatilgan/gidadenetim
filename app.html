@@ -6614,11 +6614,20 @@ function excelYukle(file) {
       // Ana işletme listesi artık Firestore isletmeler_master koleksiyonuna yazılır.
       // Boş/yanlış Excel zaten yukarıda durdurulduğu için mevcut ana liste ezilmez.
       isletmelerMasterFirestoreYukle(birlesikIsletmeler, durumEl).then(function(){
-        listeBilgiGuncelle();
-        ozetGuncelle();
-        ikaz_sayisiGuncelle();
-        try { _ekipSayiCache = null; if (typeof basliklarGoster === 'function' && document.getElementById('basliklar-root')) basliklarGoster(); } catch(e){}
-      });
+    try {
+        _ekipSayiCache = null;
+        _ekipSayiLen = -1;
+    } catch(e){}
+    listeBilgiGuncelle();
+    if (typeof sorumluluklarimGoster === 'function')
+        sorumluluklarimGoster();
+    ozetGuncelle();
+    ikaz_sayisiGuncelle();
+    try {
+        if (typeof basliklarGoster === 'function' && document.getElementById('basliklar-root'))
+            basliklarGoster();
+    } catch(e){}
+});
 
       // Yeni gelen işletmeleri (HTML'de olmayan) localStorage'a kaydet - sayfa yenilenince kaybolmasın
       try {
