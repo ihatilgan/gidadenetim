@@ -1314,7 +1314,22 @@ var SORUMLU_FAALIYET_ANAHTAR = ['gıda ile temas','madde ve malzeme üretimi','m
 var SORUMLU_KASABALAR = ['Gebeceler','Nuribey','Değirmenayvalı','Değirmendere'];
 // Türkçe normalizasyon: küçük harf + Türkçe karakter sadeleştir (ç→c, ş→s, ı→i, ğ→g, ö→o, ü→u)
 // + boşluk ve noktalama kaldır. Adres/yer eşleşmelerini yazım, boşluk ve eksik diakritiğe dayanıklı yapar.
+// PERFORMANS: _normTR aynı adresler/başlık adları için milyonlarca kez çağrılıyor
+// (her işletme adresi ~100 köy/mahalle karşılaştırmasında yeniden normalize ediliyordu).
+// Memoize ederek ilk açılıştaki ağır hesabı (denetçilerde 30-40 sn) ciddi düşürürüz.
+var _normTRCache = Object.create(null);
+var _normTRCacheSayi = 0;
 function _normTR(s) {
+  var raw = (s == null) ? '' : ('' + s);
+  var hit = _normTRCache[raw];
+  if (hit !== undefined) return hit;
+  var sonuc = _normTRham(raw);
+  // Bellek koruması: aşırı büyürse sıfırla (adres/başlık kümeleri sınırlı, nadiren tetiklenir)
+  if (_normTRCacheSayi >= 200000) { _normTRCache = Object.create(null); _normTRCacheSayi = 0; }
+  _normTRCache[raw] = sonuc; _normTRCacheSayi++;
+  return sonuc;
+}
+function _normTRham(s) {
   s = (s || '').toString().toLocaleLowerCase('tr');
   s = s.replace(/\u0307/g, ''); // 'İ' küçültülünce kalan birleşik nokta
   s = s.replace(/ı/g, 'i').replace(/ç/g, 'c').replace(/ğ/g, 'g').replace(/ö/g, 'o').replace(/ş/g, 's').replace(/ü/g, 'u');
