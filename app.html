@@ -659,7 +659,7 @@ function ekipSecenekSayilari(){
   // Per-işletme önbellek: başlık ve sorumlu ekip işletmenin kendisine bağlıdır,
   // AKTİF EKİPTEN BAĞIMSIZDIR. Bir kez burada hesaplanıp saklanır; ekip geçişlerinde
   // yeniden hesaplanmaz (yalnızca veri değişince _ekipSayiCache sıfırlanır).
-  var baslikMap={}, sorumluMap={};
+  var baslikMap={}, sorumluMap={}, ekipUyeleri={};
   kaynak.forEach(function(i){
     var _an=isletmeAnahtari(i);
     var b=isletmeBaslikBelirle(i);
@@ -670,10 +670,15 @@ function ekipSecenekSayilari(){
     else if(b.tip==='uretim'){ if(!(b.key in kat)) kat[b.key]=0; kat[b.key]++; }
     var _eid=(typeof manuelEkip!=='undefined' && manuelEkip[_an]) ? manuelEkip[_an] : (function(){ var ek=(typeof baslikEkibiBul==='function')?baslikEkibiBul(b):null; return ek?ek.id:null; })();
     if(_an) sorumluMap[_an]=_eid||null;
-    if(_eid) ekipToplam[_eid]=(ekipToplam[_eid]||0)+1;
+    if(_eid){ ekipToplam[_eid]=(ekipToplam[_eid]||0)+1; (ekipUyeleri[_eid]||(ekipUyeleri[_eid]=[])).push({i:i,b:b}); }
   });
-  _ekipSayiCache={mah:mah,koy:koy,kat:kat,ekipToplam:ekipToplam,baslikMap:baslikMap,sorumluMap:sorumluMap}; _ekipSayiLen=kaynak.length;
+  _ekipSayiCache={mah:mah,koy:koy,kat:kat,ekipToplam:ekipToplam,baslikMap:baslikMap,sorumluMap:sorumluMap,ekipUyeleri:ekipUyeleri}; _ekipSayiLen=kaynak.length;
   return _ekipSayiCache;
+}
+// Aktif ekibin (başlığı belirlenebilen) işletmeleri — önbellekli indeksden, tüm listeyi taramadan
+function aktifEkipUyeleri(){
+  var c=ekipSecenekSayilari();
+  return (c && c.ekipUyeleri && c.ekipUyeleri[aktifEkipId]) || [];
 }
 // Önbellekli başlık: ekipSecenekSayilari pass'inde hesaplanmış değeri döndürür (ekip geçişinde yeniden hesaplama yok)
 function isletmeBaslikCacheli(i){
@@ -2981,13 +2986,10 @@ function uretimSorumlulukListesiGetir() {
 }
 
 function satisKoySorumlulukListesiGetir() {
-  var eid = aktifEkipId;
   var gorulen = {};
   var liste = [];
-  (ISLETMELER || []).forEach(function(i){
-    if (!i || (typeof kayitHaricMi === 'function' && kayitHaricMi(i))) return;
-    if (isletmeSorumluEkipId(i) !== eid) return;
-    var b = isletmeBaslikCacheli(i);
+  aktifEkipUyeleri().forEach(function(rec){
+    var i = rec.i, b = rec.b;
     if (!b || b.tip === 'uretim') return;
     var an = i.kayitNo || (i.isletmeAdi + '|' + i.adres);
     if (an && gorulen[an]) return;
@@ -3023,18 +3025,17 @@ function satisKoyRiskGecenListesiGetir() {
 
 // Üretim sorumluluğu — TÜM kategoriler (kategori seçiminden bağımsız). Özet/bildirim sayacı için.
 function uretimTumSorumlulukListesiGetir() {
-  var eid = aktifEkipId;
   var gorulen = {};
-  return (ISLETMELER || []).filter(function(i) {
-    if (!i || (typeof kayitHaricMi === 'function' && kayitHaricMi(i))) return false;
-    if (isletmeSorumluEkipId(i) !== eid) return false;
-    var b = isletmeBaslikCacheli(i);
-    if (!b || b.tip !== 'uretim') return false;
+  var liste = [];
+  aktifEkipUyeleri().forEach(function(rec){
+    var i = rec.i, b = rec.b;
+    if (!b || b.tip !== 'uretim') return;
     var an = i.kayitNo || (i.isletmeAdi + '|' + i.adres);
-    if (an && gorulen[an]) return false;
+    if (an && gorulen[an]) return;
     if (an) gorulen[an] = true;
-    return true;
+    liste.push(i);
   });
+  return liste;
 }
 function uretimTumRiskGecenListesiGetir() {
   var bugun = bugunTarih();
@@ -5786,10 +5787,10 @@ function sorumluluklarimGoster() {
   var sayim = {uretim:0, mahalle:0, koy:0};
   var riskSay = 0;
   var gruplar = {};
-  (ISLETMELER||[]).forEach(function(i){
-    if (!i || (typeof kayitHaricMi==='function' && kayitHaricMi(i))) return;
-    if (isletmeSorumluEkipId(i) !== ekip.id) return;
-    var b = isletmeBaslikBelirle(i);
+  // Tüm listeyi tarayıp her işletme için başlık/sorumlu hesaplamak yerine, aktif ekibin
+  // önbellekli üye indeksini kullan (başlık zaten hesaplı). Ekip geçişinde yeniden hesap yok.
+  aktifEkipUyeleri().forEach(function(rec){
+    var i = rec.i, b = rec.b;
     if (!b) return;
     sayim[b.tip] = (sayim[b.tip]||0)+1;
     var rg = (typeof riskGecmisMi==='function') && riskGecmisMi(i);
