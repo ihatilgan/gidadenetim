@@ -1958,10 +1958,10 @@ window.addEventListener('fb-hazir', function() {
     <h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🍽️ Gıda Denetim</h1>
     <div style="font-size:10px;opacity:0.65;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">İ.H.A. · <span id="bugun-tarih"></span></div>
   </div>
-  <div id="header-ekip-adi" onclick="ekipPersonelBalonAc()" style="display:none;position:absolute;left:50%;transform:translateX(-50%);text-align:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.2);cursor:pointer;white-space:nowrap;font-size:13px;font-weight:700;padding:2px 8px;border-radius:5px;background:rgba(255,255,255,0.15);"></div>
+  <div id="header-ekip-adi" onclick="ekipPersonelBalonAc()" style="display:none;flex:0 1 auto;min-width:0;max-width:50%;text-align:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.2);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;font-weight:700;padding:2px 10px;border-radius:5px;background:rgba(255,255,255,0.15);"></div>
   <div id="ekip-personel-balon" style="display:none;position:absolute;top:100%;left:50%;transform:translateX(-50%);background:rgba(20,40,20,0.93);color:#fff;border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.7;z-index:10001;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.3);margin-top:4px;pointer-events:none;"></div>
-  <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-    <span id="sync-durum" style="font-size:11px;color:rgba(255,255,255,0.7);"></span>
+  <div style="display:flex;align-items:center;gap:8px;flex:1 1 0;min-width:0;justify-content:flex-end;">
+    <span id="sync-durum" style="font-size:11px;color:rgba(255,255,255,0.7);flex-shrink:0;"></span>
     <div id="kullanici-bilgi" style="display:none;align-items:center;gap:6px;position:relative;">
       <button id="mesaj-btn" onclick="sohbetPanelAc()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:4px 8px;border-radius:5px;font-size:14px;cursor:pointer;position:relative;">💬<span id="mesaj-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e74c3c;color:#fff;border-radius:50%;width:15px;height:15px;font-size:10px;line-height:15px;text-align:center;"></span></button>
       <button id="yenile-btn" onclick="location.reload()" title="Yenile" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:4px 8px;border-radius:5px;font-size:14px;cursor:pointer;">🔄</button>
