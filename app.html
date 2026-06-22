@@ -10,8 +10,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Gıda Denetim">
-<meta name="theme-color" content="#27ae60">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%2327ae60'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' fill='white'%3E%F0%9F%8C%BF%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#0d7a4e">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%230d7a4e'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' fill='white'%3E%F0%9F%8C%BF%3C/text%3E%3C/svg%3E">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
@@ -762,38 +762,45 @@ window.ekipSeciciDegisti=ekipSeciciDegisti;
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gıda Denetim Takip Sistemi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --yesil: #1a6b3c;
-    --yesil-acik: #e8f5ee;
-    --yesil-orta: #2e8b57;
-    --kirmizi: #c0392b;
-    --kirmizi-acik: #fdecea;
-    --turuncu: #e67e22;
-    --turuncu-acik: #fef3e2;
-    --gri-koyu: #2c3e50;
-    --gri: #7f8c8d;
-    --gri-acik: #ecf0f1;
+    --yesil: #0d7a4e;
+    --yesil-acik: #e6f4ec;
+    --yesil-orta: #119860;
+    --kirmizi: #d64541;
+    --kirmizi-acik: #fdecec;
+    --turuncu: #e08e0b;
+    --turuncu-acik: #fdf2df;
+    --gri-koyu: #1c1c1e;
+    --gri: #8a8a8e;
+    --gri-acik: #f2f2f7;
     --beyaz: #ffffff;
-    --sinir: #dce3e8;
-    --golge: 0 2px 12px rgba(0,0,0,0.08);
-    --yaricap: 10px;
+    --sinir: #d9d9de;
+    --golge: 0 1px 2px rgba(0,0,0,0.04);
+    --yaricap: 16px;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
   body {
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    background: #f0f4f2;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Plus Jakarta Sans', system-ui, sans-serif;
+    background: #f2f2f7;
     color: var(--gri-koyu);
     font-size: 15px;
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   /* HEADER */
   header {
-    background: var(--yesil);
-    color: white;
+    background: rgba(255,255,255,0.82);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    color: var(--gri-koyu);
     padding: 0 14px;
     display: flex;
     align-items: center;
@@ -802,9 +809,9 @@ window.ekipSeciciDegisti=ekipSeciciDegisti;
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    border-bottom: 0.5px solid rgba(60,60,67,0.16);
   }
-  header h1 { font-size: 17px; font-weight: 600; letter-spacing: 0.3px; }
+  header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.2px; color: var(--gri-koyu); }
   header span { font-size: 12px; opacity: 0.7; }
 
   /* NAV */
@@ -826,7 +833,7 @@ window.ekipSeciciDegisti=ekipSeciciDegisti;
     border-bottom: 3px solid transparent;
     white-space: nowrap;
     transition: all 0.15s;
-    font-weight: 500;
+    font-weight: 600;
   }
   nav button:hover { color: var(--yesil); }
   nav button.aktif { color: var(--yesil); border-bottom-color: var(--yesil); }
@@ -848,7 +855,7 @@ window.ekipSeciciDegisti=ekipSeciciDegisti;
   }
   .kart-baslik {
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--yesil);
     margin-bottom: 20px;
     padding-bottom: 12px;
@@ -873,13 +880,14 @@ window.ekipSeciciDegisti=ekipSeciciDegisti;
   #alt-nav {
     position: fixed !important;
     bottom: 0; left: 0; right: 0;
-    background: white;
-    border-top: 1px solid var(--sinir);
+    background: rgba(248,248,250,0.82);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    border-top: 0.5px solid rgba(60,60,67,0.18);
     display: flex !important;
     justify-content: space-around;
     padding: 6px 0 env(safe-area-inset-bottom, 6px);
     z-index: 998;
-    box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
   }
   #alt-nav button {
     flex: 1;
@@ -959,18 +967,21 @@ window.ekipSeciciDegisti=ekipSeciciDegisti;
   label .ipucu { font-weight: 400; color: var(--gri); font-size: 12px; margin-left: 4px; }
 
   input, select, textarea {
-    border: 1.5px solid var(--sinir);
-    border-radius: 7px;
-    padding: 9px 12px;
-    font-size: 14px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 11px 13px;
+    font-size: 16px;
     font-family: inherit;
-    transition: border-color 0.15s;
-    background: white;
+    transition: all 0.15s;
+    background: var(--gri-acik);
     color: var(--gri-koyu);
+    -webkit-appearance: none;
   }
   input:focus, select:focus, textarea:focus {
     outline: none;
+    background: #fff;
     border-color: var(--yesil-orta);
+    box-shadow: 0 0 0 3px rgba(17,152,96,0.15);
   }
   textarea { resize: vertical; min-height: 80px; }
 
@@ -990,22 +1001,24 @@ window.ekipSeciciDegisti=ekipSeciciDegisti;
 
   /* BUTONLAR */
   .btn {
-    padding: 10px 20px;
+    padding: 11px 20px;
     border: none;
-    border-radius: 7px;
+    border-radius: 12px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     font-family: inherit;
-    transition: all 0.15s;
+    transition: all 0.12s;
+    -webkit-appearance: none;
   }
+  .btn:active { transform: scale(0.97); opacity: 0.85; }
   .btn-yesil { background: var(--yesil); color: white; }
   .btn-yesil:hover { background: var(--yesil-orta); }
-  .btn-gri { background: var(--gri-acik); color: var(--gri-koyu); }
-  .btn-gri:hover { background: #dde4e9; }
+  .btn-gri { background: #e5e5ea; color: var(--gri-koyu); }
+  .btn-gri:hover { background: #dcdce1; }
   .btn-kirmizi { background: var(--kirmizi); color: white; }
   .btn-kirmizi:hover { background: #a93226; }
-  .btn-kucuk { padding: 6px 12px; font-size: 12px; }
+  .btn-kucuk { padding: 7px 13px; font-size: 13px; border-radius: 9px; }
 
   .buton-satir { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
 
@@ -1105,9 +1118,13 @@ window.ekipSeciciDegisti=ekipSeciciDegisti;
   .etiket {
     font-size: 11px;
     font-weight: 700;
-    padding: 3px 9px;
+    padding: 4px 11px;
     border-radius: 20px;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    letter-spacing: 0.2px;
   }
   .etiket-yesil { background: var(--yesil-acik); color: var(--yesil); }
   .etiket-kirmizi { background: var(--kirmizi-acik); color: var(--kirmizi); }
@@ -1130,7 +1147,7 @@ window.ekipSeciciDegisti=ekipSeciciDegisti;
   .modal-arkaplan.acik { display: flex; align-items: flex-start; justify-content: center; }
   .modal {
     background: white;
-    border-radius: 12px;
+    border-radius: 18px;
     width: 100%;
     max-width: 700px;
     max-height: 90vh;
@@ -1958,13 +1975,13 @@ window.addEventListener('fb-hazir', function() {
     <h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🍽️ Gıda Denetim</h1>
     <div style="font-size:10px;opacity:0.65;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">İ.H.A. · <span id="bugun-tarih"></span> <span id="sync-durum" style="font-size:11px;"></span></div>
   </div>
-  <div id="header-ekip-adi" onclick="ekipPersonelBalonAc()" style="display:none;flex:0 1 auto;min-width:0;max-width:50%;text-align:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.2);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;font-weight:700;padding:2px 10px;border-radius:5px;background:rgba(255,255,255,0.15);"></div>
+  <div id="header-ekip-adi" onclick="ekipPersonelBalonAc()" style="display:none;flex:0 1 auto;min-width:0;max-width:50%;text-align:center;color:#1c1c1e;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;font-weight:700;padding:2px 10px;border-radius:8px;background:rgba(120,120,128,0.14);"></div>
   <div id="ekip-personel-balon" style="display:none;position:absolute;top:100%;left:50%;transform:translateX(-50%);background:rgba(20,40,20,0.93);color:#fff;border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.7;z-index:10001;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.3);margin-top:4px;pointer-events:none;"></div>
   <div style="display:flex;align-items:center;gap:8px;flex:1 1 0;min-width:0;justify-content:flex-end;">
     <div id="kullanici-bilgi" style="display:none;align-items:center;gap:6px;position:relative;">
-      <button id="mesaj-btn" onclick="sohbetPanelAc()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:4px 8px;border-radius:5px;font-size:14px;cursor:pointer;position:relative;">💬<span id="mesaj-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e74c3c;color:#fff;border-radius:50%;width:15px;height:15px;font-size:10px;line-height:15px;text-align:center;"></span></button>
-      <button id="yenile-btn" onclick="location.reload()" title="Yenile" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:4px 8px;border-radius:5px;font-size:14px;cursor:pointer;">🔄</button>
-      <button id="kullanici-ad-btn" onclick="kullaniciMenuToggle(event)" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:4px 9px;border-radius:5px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;max-width:130px;"><span id="kullanici-ad" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span><span style="opacity:0.8;">▾</span></button>
+      <button id="mesaj-btn" onclick="sohbetPanelAc()" style="background:rgba(120,120,128,0.14);border:none;color:#1c1c1e;padding:4px 8px;border-radius:8px;font-size:14px;cursor:pointer;position:relative;">💬<span id="mesaj-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e74c3c;color:#fff;border-radius:50%;width:15px;height:15px;font-size:10px;line-height:15px;text-align:center;"></span></button>
+      <button id="yenile-btn" onclick="location.reload()" title="Yenile" style="background:rgba(120,120,128,0.14);border:none;color:#1c1c1e;padding:4px 8px;border-radius:8px;font-size:14px;cursor:pointer;">🔄</button>
+      <button id="kullanici-ad-btn" onclick="kullaniciMenuToggle(event)" style="background:rgba(120,120,128,0.14);border:none;color:#1c1c1e;padding:4px 9px;border-radius:8px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;max-width:130px;"><span id="kullanici-ad" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span><span style="opacity:0.8;">▾</span></button>
       <div id="kullanici-menu" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:#fff;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.22);min-width:190px;z-index:10000;overflow:hidden;">
         <button onclick="kullaniciMenuKapat();kullaniciAyarlariAc()" style="display:block;width:100%;text-align:left;padding:12px 15px;border:none;background:none;font-size:14px;color:#333;cursor:pointer;">⚙️ Kullanıcı ayarları</button>
         <button onclick="kullaniciMenuKapat();var pe=document.getElementById('parola-ekrani');if(pe)pe.style.display='flex';" style="display:block;width:100%;text-align:left;padding:12px 15px;border:none;border-top:1px solid #eee;background:none;font-size:14px;color:#333;cursor:pointer;">🔑 Şifre Yönetimi</button>
@@ -4352,18 +4369,18 @@ function listeGuncelle() {
 
   function bolumEkle(baslik, ikon, liste2, baslangictaAcik) {
     var blok = document.createElement('div');
-    blok.style.cssText = 'margin-bottom:8px;border:1.5px solid var(--sinir);border-radius:10px;overflow:hidden;';
+    blok.style.cssText = 'margin-bottom:14px;border:1px solid var(--sinir);border-radius:14px;overflow:hidden;background:white;box-shadow:var(--golge);';
 
     var header = document.createElement('div');
-    header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--gri-acik);cursor:pointer;user-select:none;';
+    header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:white;cursor:pointer;user-select:none;border-bottom:1px solid var(--sinir);';
     var ok = document.createElement('span');
     ok.textContent = baslangictaAcik ? '▲' : '▼';
-    ok.style.cssText = 'font-size:12px;color:var(--gri);';
+    ok.style.cssText = 'font-size:11px;color:var(--gri);';
     var info = document.createElement('div');
-    info.style.cssText = 'display:flex;align-items:center;gap:8px;';
-    info.innerHTML = '<span style="font-size:18px;">'+ikon+'</span>' +
-      '<div><div style="font-weight:700;font-size:14px;">'+baslik+'</div>' +
-      '<div style="font-size:12px;color:var(--gri);">'+liste2.length+' denetim</div></div>';
+    info.style.cssText = 'display:flex;align-items:center;gap:10px;';
+    info.innerHTML = '<span style="font-size:20px;">'+ikon+'</span>' +
+      '<div style="display:flex;align-items:center;gap:9px;"><span style="font-weight:700;font-size:14.5px;color:var(--gri-koyu);">'+baslik+'</span>' +
+      '<span style="font-size:11px;font-weight:700;color:var(--yesil);background:var(--yesil-acik);padding:2px 9px;border-radius:20px;">'+liste2.length+'</span></div>';
     header.appendChild(info);
     header.appendChild(ok);
 
@@ -4426,20 +4443,23 @@ function denetimSatirEkle(container, d) {
   var etiket = d.sonuc === 'olumlu' ? '<span class="etiket etiket-yesil">✅ Olumlu</span>' :
                d.sonuc === 'olumsuz' ? '<span class="etiket etiket-kirmizi">❌ Olumsuz</span>' :
                '<span class="etiket etiket-turuncu">⏳ Beklemede</span>';
+  var durumRenk = d.sonuc === 'olumlu' ? 'var(--yesil)' : d.sonuc === 'olumsuz' ? 'var(--kirmizi)' : 'var(--turuncu)';
   var row = document.createElement('div');
-  row.style.cssText = 'padding:12px 14px;border-bottom:1px solid var(--sinir);display:flex;justify-content:space-between;align-items:flex-start;gap:10px;cursor:pointer;';
-  row.addEventListener('mouseenter', function(){ this.style.background='var(--gri-acik)'; });
+  row.style.cssText = 'padding:14px 16px;border-bottom:1px solid var(--sinir);display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;border-left:3px solid '+durumRenk+';transition:background .15s;';
+  row.addEventListener('mouseenter', function(){ this.style.background='var(--yesil-acik)'; });
   row.addEventListener('mouseleave', function(){ this.style.background=''; });
   row.addEventListener('click', function(){ detayGoster(d.id); });
 
   var sol = document.createElement('div');
-  sol.style.flex = '1';
-  sol.innerHTML = '<div style="font-weight:600;font-size:14px;">' + (d.isletme||'-') + '</div>' +
-    '<div style="font-size:12px;color:var(--gri);margin-top:2px;">' +
-    (d.denetimNo ? '📋 ' + d.denetimNo + ' • ' : '') +
-    '📅 ' + tarihFormat(d.tarih) +
-    (d.denetciler && d.denetciler.length ? ' • 👤 ' + d.denetciler.join(', ') : '') +
-    '</div>';
+  sol.style.cssText = 'flex:1;display:flex;align-items:center;gap:11px;min-width:0;';
+  sol.innerHTML = '<span style="width:10px;height:10px;border-radius:50%;background:'+durumRenk+';flex-shrink:0;"></span>' +
+    '<div style="min-width:0;">' +
+    '<div style="font-weight:700;font-size:14.5px;color:var(--gri-koyu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (d.isletme||'-') + '</div>' +
+    '<div style="font-size:12px;color:var(--gri);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px 10px;">' +
+    (d.denetimNo ? '<span>📋 ' + d.denetimNo + '</span>' : '') +
+    '<span>📅 ' + tarihFormat(d.tarih) + '</span>' +
+    (d.denetciler && d.denetciler.length ? '<span>👤 ' + d.denetciler.join(', ') + '</span>' : '') +
+    '</div></div>';
 
   var sag = document.createElement('div');
   sag.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;';
