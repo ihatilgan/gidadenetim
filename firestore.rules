@@ -1,0 +1,131 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Yardımcı fonksiyonlar ──────────────────────────────────────────────
+    function girisYapti() {
+      return request.auth != null;
+    }
+
+    function adminMi() {
+      return request.auth.uid == 'sIKGnuwKj7cAMGnPvJg3BF1JWXf1';
+    }
+
+    function aktifKullanici() {
+      // Kullanıcı oturumu açık VE Firestore'da durum:aktif VEYA eski kayıt (durum alanı yok)
+      return girisYapti() && (
+        adminMi() ||
+        (
+          exists(/databases/$(database)/documents/kullanicilar/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/kullanicilar/$(request.auth.uid)).data.get('durum', 'aktif') == 'aktif'
+        )
+      );
+    }
+
+    // ── Kullanıcılar ──────────────────────────────────────────────────────
+    match /kullanicilar/{uid} {
+      // Kayıt sırasında yeni belge oluşturabilir (durum: beklemede olmalı)
+      allow create: if girisYapti()
+                    && request.auth.uid == uid
+                    && request.resource.data.durum == 'beklemede';
+
+      // Kendi profilini okuyabilir; admin hepsini okuyabilir
+      allow read: if girisYapti() && (request.auth.uid == uid || adminMi());
+
+      // Güncelleme: admin her şeyi; kullanıcı sadece kendi ad/telefon/cihaz bilgisini
+      allow update: if adminMi() ||
+                    (girisYapti() && request.auth.uid == uid &&
+                     request.resource.data.durum == resource.data.durum &&  // durumu değiştiremez
+                     request.resource.data.rol   == resource.data.rol);     // rolü değiştiremez
+
+      allow delete: if adminMi();
+    }
+
+    // ── Denetimler ────────────────────────────────────────────────────────
+    match /denetimler/{docId} {
+      allow read:   if aktifKullanici();
+      allow create: if aktifKullanici();
+      allow update: if aktifKullanici();
+      allow delete: if adminMi();
+    }
+
+    // ── İşletmeler master ─────────────────────────────────────────────────
+    match /isletmeler_master/{docId} {
+      allow read:   if aktifKullanici();
+      allow write:  if aktifKullanici();   // konum ekleme vb. için
+    }
+
+    // ── Planlanan denetimler ──────────────────────────────────────────────
+    match /planlanan_denetimler/{uid}/{docId} {
+      allow read:   if girisYapti() && (request.auth.uid == uid || adminMi());
+      allow write:  if girisYapti() && (request.auth.uid == uid || adminMi());
+    }
+
+    // ── Aktiviteler (log) ─────────────────────────────────────────────────
+    match /aktiviteler/{docId} {
+      allow read:   if adminMi();
+      allow create: if aktifKullanici();
+      allow update, delete: if adminMi();
+    }
+
+    // ── Konum kayıtları ───────────────────────────────────────────────────
+    match /konum_kayitlari/{docId} {
+      allow read:   if aktifKullanici();
+      allow create: if aktifKullanici();
+      allow delete: if adminMi();
+    }
+
+    // ── App meta (isletme_data vb.) ───────────────────────────────────────
+    match /app_meta/{docId} {
+      allow read:   if aktifKullanici();
+      allow write:  if adminMi();
+    }
+
+    // ── GGBS kayıtlar ────────────────────────────────────────────────────
+    match /ggbs_kayitlar/{docId} {
+      allow read:   if aktifKullanici();
+      allow write:  if adminMi();
+    }
+
+    // ── Extra işletmeler ─────────────────────────────────────────────────
+    match /extra_isletmeler/{docId} {
+      allow read:   if aktifKullanici();
+      allow write:  if adminMi();
+    }
+
+    // ── Sayaçlar ─────────────────────────────────────────────────────────
+    match /sayaclar/{docId} {
+      allow read:   if aktifKullanici();
+      allow write:  if aktifKullanici();
+    }
+
+    // ── Yaptırımlar ───────────────────────────────────────────────────────
+    match /yaptirimlar/{docId} {
+      allow read:   if aktifKullanici();
+      allow write:  if aktifKullanici();
+    }
+
+    // ── Mesajlar / İletiler (sohbet) ──────────────────────────────────────
+    match /mesajlar/{docId} {
+      allow read:   if aktifKullanici();
+      allow create: if aktifKullanici();
+      allow update, delete: if adminMi();
+    }
+    match /iletiler/{docId} {
+      allow read:   if aktifKullanici();
+      allow create: if aktifKullanici();
+      allow update, delete: if adminMi();
+    }
+
+    // ── Presence (çevrimiçi durumu) ───────────────────────────────────────
+    match /presence/{uid} {
+      allow read:   if aktifKullanici();
+      allow write:  if girisYapti() && request.auth.uid == uid;
+    }
+
+    // ── Varsayılan: her şeyi reddet ───────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
