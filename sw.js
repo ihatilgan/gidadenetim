@@ -1,5 +1,5 @@
 // Gıda Denetim - Service Worker
-const CACHE_ADI = 'gida-denetim-v58';
+const CACHE_ADI = 'gida-denetim-v59';
 
 const STATIK_KAYNAKLAR = [
   'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js',
@@ -102,6 +102,21 @@ self.addEventListener('fetch', function(e) {
       });
     })
   );
+});
+
+self.addEventListener('message', function(e) {
+  if (e.data && e.data.tip === 'surum-sor') {
+    var surum = CACHE_ADI.replace('gida-denetim-', '');
+    if (e.source && e.source.postMessage) {
+      e.source.postMessage({ tip: 'surum-bilgi', surum: surum });
+    } else {
+      self.clients.matchAll({ type: 'window' }).then(function(clients) {
+        clients.forEach(function(client) {
+          client.postMessage({ tip: 'surum-bilgi', surum: surum });
+        });
+      });
+    }
+  }
 });
 
 self.addEventListener('sync', function(e) {
