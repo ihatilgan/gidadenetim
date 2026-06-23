@@ -57,7 +57,17 @@ self.addEventListener('fetch', function(e) {
         return cache.match(e.request).then(function(cached) {
           var agdan = fetch(e.request).then(function(response) {
             if (response && response.status === 200 && response.type !== 'opaque') {
-              cache.put(e.request, response.clone());
+              // Önbellekte eski sürüm varsa güncelle ve istemcilere haber ver
+              if (cached) {
+                cache.put(e.request, response.clone());
+                self.clients.matchAll({ type: 'window' }).then(function(clients) {
+                  clients.forEach(function(client) {
+                    client.postMessage({ tip: 'yeni-surum-hazir' });
+                  });
+                });
+              } else {
+                cache.put(e.request, response.clone());
+              }
             }
             return response;
           }).catch(function() {
