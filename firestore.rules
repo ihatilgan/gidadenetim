@@ -56,6 +56,10 @@ service cloud.firestore {
     }
 
     // ── Planlanan denetimler ──────────────────────────────────────────────
+    match /planlanan_denetimler/{uid} {
+      allow read:   if girisYapti() && (request.auth.uid == uid || adminMi());
+      allow write:  if girisYapti() && (request.auth.uid == uid || adminMi());
+    }
     match /planlanan_denetimler/{uid}/{docId} {
       allow read:   if girisYapti() && (request.auth.uid == uid || adminMi());
       allow write:  if girisYapti() && (request.auth.uid == uid || adminMi());
@@ -111,9 +115,26 @@ service cloud.firestore {
       allow create: if aktifKullanici();
       allow update, delete: if adminMi();
     }
+    match /mesajlar/{docId}/iletiler/{iletiId} {
+      allow read:   if aktifKullanici();
+      allow create: if aktifKullanici();
+      allow update, delete: if adminMi();
+    }
     match /iletiler/{docId} {
       allow read:   if aktifKullanici();
       allow create: if aktifKullanici();
+      allow update, delete: if adminMi();
+    }
+
+    // ── Kullanıcı sorun bildirimleri ──────────────────────────────────────
+    match /sorun_bildirimleri/{docId} {
+      allow read:   if adminMi() || (aktifKullanici() && resource.data.bildirenUid == request.auth.uid);
+      allow create: if aktifKullanici() && (adminMi() || request.resource.data.bildirenUid == request.auth.uid);
+      allow update, delete: if adminMi();
+    }
+    match /sorun_bildirimleri_dev/{docId} {
+      allow read:   if adminMi() || (aktifKullanici() && resource.data.bildirenUid == request.auth.uid);
+      allow create: if aktifKullanici() && (adminMi() || request.resource.data.bildirenUid == request.auth.uid);
       allow update, delete: if adminMi();
     }
 
