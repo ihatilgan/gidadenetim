@@ -1,0 +1,14 @@
+name = "gidadenetim-push"
+main = "worker.js"
+compatibility_date = "2024-09-01"
+
+# Public / hassas olmayan değişkenler
+[vars]
+FIREBASE_API_KEY = "AIzaSyAbN0778vLKrgP3iwarBIyeV0gr8O8uBDc"
+PROJECT_ID = "gidadenetim-d829c"
+ADMIN_UID = "sIKGnuwKj7cAMGnPvJg3BF1JWXf1"
+ALLOW_ORIGIN = "https://ihatilgan.github.io"
+
+# SERVICE_ACCOUNT bir SECRET'tır, buraya YAZILMAZ. Şu komutla eklenir:
+#   wrangler secret put SERVICE_ACCOUNT
+# (Firebase service account JSON içeriğini tek seferde yapıştırın.)
