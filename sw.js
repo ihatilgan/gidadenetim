@@ -1,5 +1,5 @@
 // Gıda Denetim - Service Worker
-const CACHE_ADI = 'gida-denetim-v57';
+const CACHE_ADI = 'gida-denetim-v58';
 
 const STATIK_KAYNAKLAR = [
   'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js',
@@ -57,14 +57,21 @@ self.addEventListener('fetch', function(e) {
         return cache.match(e.request).then(function(cached) {
           var agdan = fetch(e.request).then(function(response) {
             if (response && response.status === 200 && response.type !== 'opaque') {
-              // Önbellekte eski sürüm varsa güncelle ve istemcilere haber ver
               if (cached) {
-                cache.put(e.request, response.clone());
-                self.clients.matchAll({ type: 'window' }).then(function(clients) {
-                  clients.forEach(function(client) {
-                    client.postMessage({ tip: 'yeni-surum-hazir' });
-                  });
-                });
+                // İçerik GERÇEKTEN değiştiyse önbelleği güncelle ve haber ver.
+                // (Aksi halde yeniledikçe sürekli "yeni sürüm" uyarısı çıkıyordu.)
+                var karsKlon = response.clone();   // karşılaştırma için
+                var cacheKlon = response.clone();  // önbelleğe yazmak için
+                Promise.all([cached.clone().text(), karsKlon.text()]).then(function(metinler) {
+                  if (metinler[0] !== metinler[1]) {
+                    cache.put(e.request, cacheKlon);
+                    self.clients.matchAll({ type: 'window' }).then(function(clients) {
+                      clients.forEach(function(client) {
+                        client.postMessage({ tip: 'yeni-surum-hazir' });
+                      });
+                    });
+                  }
+                }).catch(function() {});
               } else {
                 cache.put(e.request, response.clone());
               }
