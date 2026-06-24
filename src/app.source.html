@@ -4742,6 +4742,35 @@ function planliKonumMetni(i) {
   return [adres, ad, ilce, 'Afyonkarahisar'].filter(Boolean).join(' ');
 }
 
+function planliAdresZayifMi(i) {
+  if (!i || (i.koordinatlar && i.koordinatlar.lat && i.koordinatlar.lng)) return false;
+  var adres = String(i.adres || '').trim();
+  if (!adres) return true;
+  var n = _normTR(adres);
+  if (n.length < 18) return true;
+  if (/\bno\s*[:.]?\s*\d+/i.test(adres) && /(kume|kume evleri|mevkii|yani|karsisi|civari)/.test(n)) return true;
+  if (/(kume evleri|mevkii|yani|karsisi|civari)/.test(n)) return true;
+  return false;
+}
+
+function planliYaklasikKonumMetni(i) {
+  var ilce = String((i && i.ilce) || '').trim();
+  var adres = String((i && i.adres) || '').trim();
+  var n = _normTR(adres);
+  var mahalle = '';
+  var m = adres.match(/([A-Za-zÇĞİÖŞÜçğıöşü\s]+)\s+Mah(?:\.|allesi)?/i);
+  if (m && m[1]) mahalle = m[1].trim() + ' Mahallesi';
+  if (mahalle && /(merkez|afyonkarahisar merkez)?/i.test(ilce || '')) return mahalle + ', Afyonkarahisar';
+  if (mahalle && ilce) return mahalle + ', ' + ilce + ', Afyonkarahisar';
+  if (/(kume evleri|mevkii)/.test(n) && ilce) return ilce + ', Afyonkarahisar';
+  return [ilce || 'Afyonkarahisar Merkez', 'Afyonkarahisar'].join(', ');
+}
+
+function planliDurakMetni(i) {
+  if (planliAdresZayifMi(i)) return planliYaklasikKonumMetni(i);
+  return planliKonumMetni(i);
+}
+
 function planliMesafeKm(a, b) {
   if (!a || !b) return Infinity;
   var R = 6371;
@@ -4797,7 +4826,17 @@ function planliRotaAc() {
   }
   var sirali = planliRotaSirala(liste);
   var kurum = 'Afyonkarahisar İl Tarım ve Orman Müdürlüğü';
-  var duraklar = [kurum].concat(sirali.map(planliKonumMetni), [kurum]);
+  var yaklasiklar = sirali.filter(planliAdresZayifMi);
+  if (yaklasiklar.length) {
+    var adlar = yaklasiklar.slice(0, 6).map(function(i) { return i.isletmeAdi || i.adres || i.kayitNo || '-'; }).join('\n- ');
+    var ek = yaklasiklar.length > 6 ? '\n- ... +' + (yaklasiklar.length - 6) + ' işletme' : '';
+    var mesaj = 'Bazı işletmelerin adresi Google Haritalar tarafından net bulunamayabilir.\n\n' +
+      'Şu işletmeler için adrese en yakın genel konum duraklara eklenecek:\n- ' + adlar + ek + '\n\n' +
+      'Rota açılsın mı?';
+    if (!confirm(mesaj)) return;
+    bildirimGoster(yaklasiklar.length + ' işletme yaklaşık durakla rotaya eklendi.', 'uyari');
+  }
+  var duraklar = [kurum].concat(sirali.map(planliDurakMetni), [kurum]);
   var url = 'https://www.google.com/maps/dir/' + duraklar.map(encodeURIComponent).join('/');
   if (url.length > 7800) {
     bildirimGoster('Plan sayısı çok yüksek; harita linki cihaz sınırına takılabilir.', 'uyari');
