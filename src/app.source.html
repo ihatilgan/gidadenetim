@@ -1833,10 +1833,12 @@ DEVRE_DISI_BITIS */
         <select id="isletme-alt-baslik" onchange="isletmeListesiGuncelle()" style="min-width:220px;"><option value="">Başlık seç</option></select>
         <select id="isletme-yer-sec" onchange="isletmeListesiGuncelle()" style="min-width:220px;"><option value="">Faaliyet başlığı seç</option></select>
         <button class="btn btn-gri" onclick="isletmeSorguTemizle()">Temizle</button>
-        <button class="btn btn-yesil" onclick="isletmeSorguPdfIndir()">PDF İndir</button>
         <button id="sorumluluk-btn" class="btn btn-gri" onclick="sorumlulukFiltresiToggle()" style="white-space:nowrap;">👤 Sorumluluklarım</button>
       </div>
-      <div id="isletme-liste-sonuc" style="font-size:13px;color:var(--gri);margin-bottom:8px;"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+        <div id="isletme-liste-sonuc" style="font-size:13px;color:var(--gri);"></div>
+        <button class="btn btn-yesil btn-kucuk" onclick="isletmeSorguPdfIndir()" style="white-space:nowrap;">PDF İndir</button>
+      </div>
       <div id="isletme-liste" style="max-height:600px;overflow-y:auto;"></div>
     </div>
   </div>
