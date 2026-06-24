@@ -7,8 +7,19 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function kokAdminMi() {
+      return girisYapti() && request.auth.uid == 'sIKGnuwKj7cAMGnPvJg3BF1JWXf1';
+    }
+
+    function profilAdminMi() {
+      return girisYapti() &&
+        exists(/databases/$(database)/documents/kullanicilar/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/kullanicilar/$(request.auth.uid)).data.get('rol', 'denetci') == 'admin' &&
+        get(/databases/$(database)/documents/kullanicilar/$(request.auth.uid)).data.get('durum', 'aktif') == 'aktif';
+    }
+
     function adminMi() {
-      return request.auth.uid == 'sIKGnuwKj7cAMGnPvJg3BF1JWXf1';
+      return kokAdminMi() || profilAdminMi();
     }
 
     function aktifKullanici() {
@@ -25,9 +36,10 @@ service cloud.firestore {
     // ── Kullanıcılar ──────────────────────────────────────────────────────
     match /kullanicilar/{uid} {
       // Kayıt sırasında yeni belge oluşturabilir (durum: beklemede olmalı)
-      allow create: if girisYapti()
+      allow create: if adminMi() ||
+                    (girisYapti()
                     && request.auth.uid == uid
-                    && request.resource.data.durum == 'beklemede';
+                    && request.resource.data.durum == 'beklemede');
 
       // Kendi profilini okuyabilir; admin hepsini okuyabilir
       allow read: if girisYapti() && (request.auth.uid == uid || adminMi());
