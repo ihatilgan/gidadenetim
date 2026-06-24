@@ -4736,26 +4736,49 @@ function planliKonumMetni(i) {
   if (i && i.koordinatlar && i.koordinatlar.lat && i.koordinatlar.lng) {
     return i.koordinatlar.lat + ',' + i.koordinatlar.lng;
   }
-  var adres = (i && i.adres) || '';
-  var ad = (i && i.isletmeAdi) || '';
-  var ilce = (i && i.ilce) || '';
-  return [adres, ad, ilce, 'Afyonkarahisar'].filter(Boolean).join(' ');
+  return planliDurakMetni(i);
+}
+
+function planliTemizIsletmeAdi(ad) {
+  ad = String(ad || '').trim();
+  ad = ad.replace(/\s+/g, ' ');
+  ad = ad.replace(/\s*[-–]\s*(Mustafa|Mehmet|Ahmet|Ali|Veli|Fatma|Ayşe|Hasan|Hüseyin|İbrahim|Ismail|İsmail)\b.*$/i, '');
+  ad = ad.replace(/\b(A\.?\s*Ş\.?|Anonim Şirketi|Ltd\.?\s*Şti\.?|Limited Şirketi|Tic\.?|Ticaret|San\.?|Sanayi|Nak\.?|Nakliyat|Gıda|Tarım|Ürünleri|Pazarlama|İnşaat|Hayvancılık|Market|Bakkal|Şube|Depo)\b\.?/gi, ' ');
+  ad = ad.replace(/[^\wÇĞİÖŞÜçğıöşü\s]/g, ' ');
+  ad = ad.replace(/\s+/g, ' ').trim();
+  var kelimeler = ad.split(' ').filter(function(k) { return k && _normTR(k).length > 1; });
+  if (kelimeler.length > 2) kelimeler = kelimeler.slice(0, 2);
+  return kelimeler.join(' ').trim();
+}
+
+function planliTemizAdres(adres) {
+  adres = String(adres || '').trim();
+  adres = adres.replace(/\b([A-Za-zÇĞİÖŞÜçğıöşü]+)\s+Mah\.\s+\1\s+Mah\./gi, '$1 Mah.');
+  adres = adres.replace(/\s+/g, ' ');
+  return adres;
+}
+
+function planliIsletmeAdiAranabilirMi(i) {
+  var ad = planliTemizIsletmeAdi(i && i.isletmeAdi);
+  if (!ad || ad.length < 5) return false;
+  var n = _normTR(ad);
+  if (/^(adsiz|isletme|satis yeri|uretim yeri|depo|sube)$/.test(n)) return false;
+  return true;
 }
 
 function planliAdresZayifMi(i) {
   if (!i || (i.koordinatlar && i.koordinatlar.lat && i.koordinatlar.lng)) return false;
-  var adres = String(i.adres || '').trim();
+  var adres = planliTemizAdres(i.adres || '');
   if (!adres) return true;
   var n = _normTR(adres);
   if (n.length < 18) return true;
-  if (/\bno\s*[:.]?\s*\d+/i.test(adres) && /(kume|kume evleri|mevkii|yani|karsisi|civari)/.test(n)) return true;
   if (/(kume evleri|mevkii|yani|karsisi|civari)/.test(n)) return true;
   return false;
 }
 
-function planliYaklasikKonumMetni(i) {
+function planliGenelAdresMetni(i) {
   var ilce = String((i && i.ilce) || '').trim();
-  var adres = String((i && i.adres) || '').trim();
+  var adres = planliTemizAdres((i && i.adres) || '');
   var n = _normTR(adres);
   var mahalle = '';
   var m = adres.match(/([A-Za-zÇĞİÖŞÜçğıöşü\s]+)\s+Mah(?:\.|allesi)?/i);
@@ -4767,8 +4790,19 @@ function planliYaklasikKonumMetni(i) {
 }
 
 function planliDurakMetni(i) {
-  if (planliAdresZayifMi(i)) return planliYaklasikKonumMetni(i);
-  return planliKonumMetni(i);
+  if (i && i.koordinatlar && i.koordinatlar.lat && i.koordinatlar.lng) {
+    return i.koordinatlar.lat + ',' + i.koordinatlar.lng;
+  }
+  var ilce = String((i && i.ilce) || '').trim();
+  var ad = planliTemizIsletmeAdi(i && i.isletmeAdi);
+  var adres = planliTemizAdres(i && i.adres);
+  if (planliIsletmeAdiAranabilirMi(i)) {
+    return [ad, ilce, 'Afyonkarahisar'].filter(Boolean).join(', ');
+  }
+  if (adres && !planliAdresZayifMi(i)) {
+    return [adres, ilce, 'Afyonkarahisar'].filter(Boolean).join(', ');
+  }
+  return planliGenelAdresMetni(i);
 }
 
 function planliMesafeKm(a, b) {
@@ -4818,7 +4852,7 @@ function planliRotaAc() {
     return;
   }
   var liste = planliDenetimler.map(planliIsletmeDetaylariniTamamla).filter(function(i) {
-    return planliKonumMetni(i);
+    return planliDurakMetni(i);
   });
   if (!liste.length) {
     bildirimGoster('Rota için adres veya konum bilgisi bulunamadı.', 'uyari');
@@ -4826,12 +4860,12 @@ function planliRotaAc() {
   }
   var sirali = planliRotaSirala(liste);
   var kurum = 'Afyonkarahisar İl Tarım ve Orman Müdürlüğü';
-  var yaklasiklar = sirali.filter(planliAdresZayifMi);
+  var yaklasiklar = sirali.filter(function(i) { return !planliIsletmeAdiAranabilirMi(i) && planliAdresZayifMi(i); });
   if (yaklasiklar.length) {
     var adlar = yaklasiklar.slice(0, 6).map(function(i) { return i.isletmeAdi || i.adres || i.kayitNo || '-'; }).join('\n- ');
     var ek = yaklasiklar.length > 6 ? '\n- ... +' + (yaklasiklar.length - 6) + ' işletme' : '';
     var mesaj = 'Bazı işletmelerin adresi Google Haritalar tarafından net bulunamayabilir.\n\n' +
-      'Şu işletmeler için adrese en yakın genel konum duraklara eklenecek:\n- ' + adlar + ek + '\n\n' +
+      'Şu işletmeler için işletme adı/adres yerine adrese en yakın genel konum duraklara eklenecek:\n- ' + adlar + ek + '\n\n' +
       'Rota açılsın mı?';
     if (!confirm(mesaj)) return;
     bildirimGoster(yaklasiklar.length + ' işletme yaklaşık durakla rotaya eklendi.', 'uyari');
