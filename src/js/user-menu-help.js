@@ -10,12 +10,15 @@ function kullaniciAyarlariAc(){
   var ekip=(typeof aktifEkip==='function')?aktifEkip():null;
   var ad=(typeof mevcutKullaniciAdi!=='undefined'?mevcutKullaniciAdi:'');
   var email=(typeof mevcutKullanici!=='undefined'&&mevcutKullanici?mevcutKullanici.email:'');
+  var appSurum='v95';
+  try { appSurum = localStorage.getItem('app_surum') || appSurum; } catch(e) {}
   var box=document.createElement('div');
   box.style.cssText='background:#fff;border-radius:14px;padding:20px;max-width:340px;width:100%;';
   box.innerHTML='<div style="font-weight:700;font-size:16px;margin-bottom:16px;">⚙️ Kullanıcı Ayarları</div>'
     +'<div style="font-size:12px;color:var(--gri);">Ad</div><div style="font-size:14px;margin-bottom:12px;">'+_ekipEsc(ad)+'</div>'
     +'<div style="font-size:12px;color:var(--gri);">E-posta</div><div style="font-size:14px;margin-bottom:12px;">'+_ekipEsc(email)+'</div>'
     +(ekip?('<div style="font-size:12px;color:var(--gri);">Ekip</div><div style="font-size:14px;margin-bottom:12px;">'+_ekipEsc(ekip.ad||ekip.id)+'</div>'):'')
+    +'<div style="font-size:12px;color:var(--gri);">Uygulama sürümü</div><div style="font-size:14px;margin-bottom:12px;font-weight:600;">'+_ekipEsc(appSurum)+'</div>'
     +'<button class="btn btn-gri" style="width:100%;" onclick="var o=document.getElementById(\'kullanici-ayar-overlay\');if(o)o.remove();">Kapat</button>';
   ov.appendChild(box); document.body.appendChild(ov);
 }
