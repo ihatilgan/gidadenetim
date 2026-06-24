@@ -768,7 +768,7 @@ var TUM_URETIM_KATEGORILER = [
   {id:'u26', label:'Kahve ve kahve ürünleri üretimi', anahtar:['kahve ve kahve ürünleri üretimi']},
   {id:'u27', label:'Makarna ve irmik üretimi', anahtar:['makarna ve irmik üretimi']},
   {id:'u28', label:'Maya üretimi (ekmek, peynir ve her türlü maya)', anahtar:['maya üretimi (ekmek, peynir ve her türlü maya)']},
-  {id:'u29', label:'Meyve sebze paketleme, boylama, sarartma ve mumlama', anahtar:['meyve sebze paketleme, boylama, sarartma ve mumlama']},
+  {id:'u29', label:'Meyve sebze paketleme, boylama, sarartma ve mumlama', anahtar:['meyve sebze paketleme, boylama, sarartma ve mumlama','meyve ve sebze paketleme, boylama, sarartma ve mumlama','meyve ve/veya sebze paketleme, boylama, sarartma ve mumlama']},
   {id:'u30', label:'Meyve ve/veya sebze işleme', anahtar:['meyve ve/veya sebze işleme']},
   {id:'u31', label:'Nişasta üretimi', anahtar:['nişasta üretimi']},
   {id:'u32', label:'Özel beslenme amaçlı gıda maddesi üretimi', anahtar:['özel beslenme amaçlı gıda maddesi üretimi']},
@@ -5309,9 +5309,21 @@ function isletmeAltFiltreleriGuncelle(secimiKoru) {
 function isletmeUretimHerhangiBaslikMi(i) {
   var kats = (typeof TUM_URETIM_KATEGORILER !== 'undefined' ? TUM_URETIM_KATEGORILER : []);
   for (var c = 0; c < kats.length; c++) {
-    if (typeof uretimKatEslesir === 'function' && uretimKatEslesir(i.faaliyetAlani, kats[c])) return true;
+    if (isletmeUretimBaslikSorguUyuyorMu(i, kats[c])) return true;
   }
   return false;
+}
+
+function isletmeUretimBaslikSorguUyuyorMu(i, kat) {
+  if (!i || !kat) return false;
+  var faaliyet = _normTR(i.faaliyetAlani || '');
+  if (!faaliyet) return false;
+  var anahtarlar = kat.anahtar || [];
+  for (var a = 0; a < anahtarlar.length; a++) {
+    var key = _normTR(anahtarlar[a] || '');
+    if (key && faaliyet.indexOf(key) >= 0) return true;
+  }
+  return typeof uretimKatEslesir === 'function' && uretimKatEslesir(i.faaliyetAlani, kat);
 }
 
 function isletmeSatisFaaliyetUyuyorMu(i, faaliyet) {
@@ -5363,7 +5375,7 @@ function isletmeListesiGuncelle() {
     sonuclar = sonuclar.filter(function(i) {
       if (altBaslik) {
         var kat = (typeof TUM_URETIM_KATEGORILER !== 'undefined' ? TUM_URETIM_KATEGORILER : []).find(function(k){ return k.id === altBaslik; });
-        return typeof uretimKatEslesir === 'function' && uretimKatEslesir(i.faaliyetAlani, kat);
+        return isletmeUretimBaslikSorguUyuyorMu(i, kat);
       }
       return isletmeUretimHerhangiBaslikMi(i);
     });
