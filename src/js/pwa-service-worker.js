@@ -12,8 +12,20 @@ if ('serviceWorker' in navigator) {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', function(e) {
       if (e.data && e.data.tip === 'surum-bilgi') {
-        var _sb = document.getElementById('surum-bilgi');
-        if (_sb && e.data.surum) _sb.textContent = 'Sürüm ' + e.data.surum;
+        if (e.data.surum) {
+          try { localStorage.setItem('app_surum', e.data.surum); } catch(_e) {}
+          if (typeof presenceGuncelle === 'function') {
+            try { presenceGuncelle(); } catch(_e2) {}
+          }
+        }
+        if (typeof window.excelGuncellemeBilgisiYaz === 'function') {
+          window.excelGuncellemeBilgisiYaz();
+        } else {
+          var _sb = document.getElementById('surum-bilgi');
+          var _g = '';
+          try { _g = localStorage.getItem('isletmeler_guncelleme') || ''; } catch(e) {}
+          if (_sb) _sb.textContent = 'Son Excel güncellemesi: ' + (_g || 'Bilinmiyor');
+        }
         return;
       }
       if (e.data && e.data.tip === 'yeni-surum-hazir') {

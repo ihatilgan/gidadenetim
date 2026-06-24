@@ -1513,7 +1513,7 @@ DEVRE_DISI_BITIS */
         <button onclick="kullaniciMenuKapat();var pe=document.getElementById('parola-ekrani');if(pe)pe.style.display='flex';" style="display:block;width:100%;text-align:left;padding:12px 15px;border:none;border-top:1px solid #eee;background:none;font-size:14px;color:#333;cursor:pointer;">🔑 Şifre Yönetimi</button>
         <button onclick="kullaniciMenuKapat();yardimAc()" style="display:block;width:100%;text-align:left;padding:12px 15px;border:none;border-top:1px solid #eee;background:none;font-size:14px;color:#333;cursor:pointer;">❓ Yardım / Hakkında</button>
         <button onclick="kullaniciMenuKapat();cikisYap()" style="display:block;width:100%;text-align:left;padding:12px 15px;border:none;border-top:1px solid #eee;background:none;font-size:14px;color:#c0392b;cursor:pointer;">🚪 Çıkış yap</button>
-        <div id="surum-bilgi" style="padding:8px 15px;font-size:11px;color:#999;text-align:center;border-top:1px solid #eee;">Sürüm v69</div>
+        <div id="surum-bilgi" style="padding:8px 15px;font-size:11px;color:#999;text-align:center;border-top:1px solid #eee;">Son Excel güncellemesi: Bilinmiyor</div>
       </div>
     </div>
   </div>
@@ -1830,9 +1830,10 @@ DEVRE_DISI_BITIS */
           <option value="uretim">Üretim yeri</option>
           <option value="satis">Satış / toplu tüketim</option>
         </select>
-        <select id="isletme-alt-baslik" onchange="isletmeListesiGuncelle()" style="min-width:220px;"><option value="">Alt filtre yok</option></select>
-        <select id="isletme-yer-sec" onchange="isletmeListesiGuncelle()" style="min-width:180px;"><option value="">Tüm mahalle/köyler</option></select>
+        <select id="isletme-alt-baslik" onchange="isletmeListesiGuncelle()" style="min-width:220px;"><option value="">Başlık seç</option></select>
+        <select id="isletme-yer-sec" onchange="isletmeListesiGuncelle()" style="min-width:220px;"><option value="">Faaliyet başlığı seç</option></select>
         <button class="btn btn-gri" onclick="isletmeSorguTemizle()">Temizle</button>
+        <button class="btn btn-yesil" onclick="isletmeSorguPdfIndir()">PDF İndir</button>
         <button id="sorumluluk-btn" class="btn btn-gri" onclick="sorumlulukFiltresiToggle()" style="white-space:nowrap;">👤 Sorumluluklarım</button>
       </div>
       <div id="isletme-liste-sonuc" style="font-size:13px;color:var(--gri);margin-bottom:8px;"></div>
@@ -4621,6 +4622,8 @@ function planliEkle(isletme) {
     isletmeAdi: isletme.isletmeAdi || '',
     ilce: isletme.ilce || '',
     faaliyetAlani: isletme.faaliyetAlani || '',
+    adres: isletme.adres || '',
+    koordinatlar: isletme.koordinatlar || null,
     eklemeZamani: new Date().toISOString()
   });
   planliDenetimlerKaydet();
@@ -4676,11 +4679,19 @@ function _planliListeGuncelle() {
   hdr.style.cssText = 'font-weight:700;font-size:15px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;';
   var ttl = document.createElement('span');
   ttl.textContent = '📅 Planladığım Denetimler (' + planliDenetimler.length + ')';
+  var actions = document.createElement('div');
+  actions.style.cssText = 'display:flex;align-items:center;gap:8px;flex-shrink:0;';
+  var rotaBtn = document.createElement('button');
+  rotaBtn.className = 'btn btn-yesil btn-kucuk';
+  rotaBtn.textContent = 'Rota Aç';
+  rotaBtn.onclick = function() { planliRotaAc(); };
   var closeB = document.createElement('button');
   closeB.style.cssText = 'background:none;border:none;font-size:18px;cursor:pointer;color:var(--gri);';
   closeB.textContent = '✕';
   closeB.onclick = function() { kart.style.display = 'none'; };
-  hdr.appendChild(ttl); hdr.appendChild(closeB);
+  actions.appendChild(rotaBtn);
+  actions.appendChild(closeB);
+  hdr.appendChild(ttl); hdr.appendChild(actions);
   wrap.appendChild(hdr);
   if (!planliDenetimler.length) {
     var bos = document.createElement('div');
@@ -4711,9 +4722,91 @@ function _planliListeGuncelle() {
   }
   kart.appendChild(wrap);
 }
+
+function planliIsletmeDetaylariniTamamla(p) {
+  var i = (typeof ISLETMELER !== 'undefined' ? ISLETMELER : []).find(function(x) {
+    return x.kayitNo === p.kayitNo;
+  });
+  return Object.assign({}, p || {}, i || {});
+}
+
+function planliKonumMetni(i) {
+  if (i && i.koordinatlar && i.koordinatlar.lat && i.koordinatlar.lng) {
+    return i.koordinatlar.lat + ',' + i.koordinatlar.lng;
+  }
+  var adres = (i && i.adres) || '';
+  var ad = (i && i.isletmeAdi) || '';
+  var ilce = (i && i.ilce) || '';
+  return [adres, ad, ilce, 'Afyonkarahisar'].filter(Boolean).join(' ');
+}
+
+function planliMesafeKm(a, b) {
+  if (!a || !b) return Infinity;
+  var R = 6371;
+  var dLat = (b.lat - a.lat) * Math.PI / 180;
+  var dLng = (b.lng - a.lng) * Math.PI / 180;
+  var lat1 = a.lat * Math.PI / 180;
+  var lat2 = b.lat * Math.PI / 180;
+  var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
+function planliRotaSirala(liste) {
+  var baslangic = { lat: 38.7569, lng: 30.5387 }; // Afyonkarahisar İl Tarım ve Orman Müdürlüğü çevresi
+  var koordinatli = [];
+  var adressiz = [];
+  liste.forEach(function(i) {
+    if (i.koordinatlar && i.koordinatlar.lat && i.koordinatlar.lng) koordinatli.push(i);
+    else adressiz.push(i);
+  });
+  var sirali = [];
+  var kalan = koordinatli.slice();
+  var mevcut = baslangic;
+  while (kalan.length) {
+    var enIdx = 0;
+    var enMesafe = Infinity;
+    kalan.forEach(function(i, idx) {
+      var m = planliMesafeKm(mevcut, i.koordinatlar);
+      if (m < enMesafe) { enMesafe = m; enIdx = idx; }
+    });
+    var secilen = kalan.splice(enIdx, 1)[0];
+    sirali.push(secilen);
+    mevcut = secilen.koordinatlar;
+  }
+  adressiz.sort(function(a, b) {
+    return String(a.ilce || '').localeCompare(String(b.ilce || ''), 'tr') ||
+      String(a.isletmeAdi || '').localeCompare(String(b.isletmeAdi || ''), 'tr');
+  });
+  return sirali.concat(adressiz);
+}
+
+function planliRotaAc() {
+  if (!planliDenetimler.length) {
+    bildirimGoster('Rota için planlanan denetim yok.', 'uyari');
+    return;
+  }
+  var liste = planliDenetimler.map(planliIsletmeDetaylariniTamamla).filter(function(i) {
+    return planliKonumMetni(i);
+  });
+  if (!liste.length) {
+    bildirimGoster('Rota için adres veya konum bilgisi bulunamadı.', 'uyari');
+    return;
+  }
+  var sirali = planliRotaSirala(liste);
+  var kurum = 'Afyonkarahisar İl Tarım ve Orman Müdürlüğü';
+  var duraklar = [kurum].concat(sirali.map(planliKonumMetni), [kurum]);
+  var url = 'https://www.google.com/maps/dir/' + duraklar.map(encodeURIComponent).join('/');
+  if (url.length > 7800) {
+    bildirimGoster('Plan sayısı çok yüksek; harita linki cihaz sınırına takılabilir.', 'uyari');
+  }
+  window.open(url, '_blank');
+}
+
 window.planliEkle = planliEkle;
 window.planliCikar = planliCikar;
 window.planliDenetimlerGoster = planliDenetimlerGoster;
+window.planliRotaAc = planliRotaAc;
 
 
 // ── PERFORMANS: debounce + risk listesi önbelleği ──
@@ -5264,8 +5357,8 @@ function isletmeAltFiltreleriGuncelle(secimiKoru) {
   var eskiAlt = secimiKoru ? (altEl.value || '') : '';
   var eskiYer = secimiKoru ? (yerEl.value || '') : '';
 
-  altEl.innerHTML = '<option value="">Alt filtre yok</option>';
-  yerEl.innerHTML = '<option value="">Tüm mahalle/köyler</option>';
+  altEl.innerHTML = '<option value="">Başlık seç</option>';
+  yerEl.innerHTML = '<option value="">Faaliyet başlığı seç</option>';
   altEl.style.display = grup ? '' : 'none';
   yerEl.style.display = grup === 'satis' ? '' : 'none';
 
@@ -5282,25 +5375,28 @@ function isletmeAltFiltreleriGuncelle(secimiKoru) {
   }
 
   if (grup === 'satis') {
-    altEl.options[0].textContent = 'Tüm satış/toplu tüketim faaliyetleri';
-    (typeof SATIS_SORUMLULUK_FAALIYETLERI !== 'undefined' ? SATIS_SORUMLULUK_FAALIYETLERI : []).forEach(function(f) {
-      var opt = document.createElement('option');
-      opt.value = f; opt.textContent = f;
-      altEl.appendChild(opt);
-    });
+    altEl.options[0].textContent = 'Mahalle Köy Kasaba seç';
+    yerEl.options[0].textContent = 'Tüm satış/toplu tüketim başlıkları';
 
     var mahalleler = (typeof MERKEZ_MAHALLE_MASTER !== 'undefined' ? MERKEZ_MAHALLE_MASTER : []).slice().sort(function(a,b){ return a.localeCompare(b, 'tr'); });
     var koyler = (typeof KOY_MASTER !== 'undefined' ? KOY_MASTER : []).slice().sort(function(a,b){ return a.localeCompare(b, 'tr'); });
     mahalleler.forEach(function(m) {
       var opt = document.createElement('option');
-      opt.value = 'mahalle:' + m; opt.textContent = 'Mahalle: ' + m;
-      yerEl.appendChild(opt);
+      opt.value = 'mahalle:' + m; opt.textContent = m;
+      altEl.appendChild(opt);
     });
     koyler.forEach(function(k) {
       var opt = document.createElement('option');
-      opt.value = 'koy:' + k; opt.textContent = 'Köy/Kasaba: ' + k;
+      opt.value = 'koy:' + k; opt.textContent = k;
+      altEl.appendChild(opt);
+    });
+
+    (typeof SATIS_SORUMLULUK_FAALIYETLERI !== 'undefined' ? SATIS_SORUMLULUK_FAALIYETLERI : []).forEach(function(f) {
+      var opt = document.createElement('option');
+      opt.value = f; opt.textContent = f;
       yerEl.appendChild(opt);
     });
+
     altEl.value = eskiAlt;
     yerEl.value = eskiYer;
   }
@@ -5348,6 +5444,8 @@ function isletmeSorguTemizle() {
   isletmeListesiGuncelle();
 }
 
+var sonIsletmeSorguSonuclari = [];
+
 function isletmeListesiGuncelle() {
   if (typeof isletmeSorguSecenekleriDoldur === 'function') {
     var ilceSel = document.getElementById('isletme-filtre-ilce');
@@ -5358,7 +5456,7 @@ function isletmeListesiGuncelle() {
   var ilce = (document.getElementById('isletme-filtre-ilce')||{}).value || '';
   var grup = (document.getElementById('isletme-grup')||{}).value || '';
   var altBaslik = (document.getElementById('isletme-alt-baslik')||{}).value || '';
-  var yerSec = (document.getElementById('isletme-yer-sec')||{}).value || '';
+  var ikinciFiltre = (document.getElementById('isletme-yer-sec')||{}).value || '';
   var el = document.getElementById('isletme-liste');
   var sonucEl = document.getElementById('isletme-liste-sonuc');
 
@@ -5382,10 +5480,11 @@ function isletmeListesiGuncelle() {
   }
   if (grup === 'satis') {
     sonuclar = sonuclar.filter(function(i) {
-      return isletmeSatisFaaliyetUyuyorMu(i, altBaslik) && isletmeSatisYerUyuyorMu(i, yerSec);
+      return isletmeSatisYerUyuyorMu(i, altBaslik) && isletmeSatisFaaliyetUyuyorMu(i, ikinciFiltre);
     });
   }
   if (sorumlulukFiltreAktif) sonuclar = sonuclar.filter(function(i) { return isletmeHerhangiSorumlulukta(i); });
+  sonIsletmeSorguSonuclari = sonuclar.slice();
 
   if (sonucEl) sonucEl.textContent = sonuclar.length.toLocaleString('tr-TR') + ' işletme bulundu';
   if (!el) return;
@@ -5432,6 +5531,81 @@ function isletmeListesiGuncelle() {
   }
 }
 
+function isletmeSorguFiltreOzetiHtml() {
+  function secimText(id, bos) {
+    var el = document.getElementById(id);
+    if (!el) return bos;
+    if (el.tagName === 'SELECT') {
+      return el.options[el.selectedIndex] ? el.options[el.selectedIndex].textContent : bos;
+    }
+    return el.value || bos;
+  }
+  var q = secimText('isletme-filtre', 'Yok');
+  var ilce = secimText('isletme-filtre-ilce', 'Tüm İlçeler');
+  var grup = secimText('isletme-grup', 'Tüm İşletmeler');
+  var alt = secimText('isletme-alt-baslik', 'Tüm başlıklar');
+  var yer = secimText('isletme-yer-sec', 'Tüm faaliyet başlıkları');
+  return '<div class="ozet">' +
+    '<b>Arama:</b> ' + _ekipEsc(q) + ' &nbsp; ' +
+    '<b>İlçe:</b> ' + _ekipEsc(ilce) + ' &nbsp; ' +
+    '<b>Grup:</b> ' + _ekipEsc(grup) + ' &nbsp; ' +
+    '<b>Başlık/Yer:</b> ' + _ekipEsc(alt) + ' &nbsp; ' +
+    '<b>Faaliyet:</b> ' + _ekipEsc(yer) +
+    '</div>';
+}
+
+function isletmeSorguPdfIndir() {
+  if (typeof isletmeListesiGuncelle === 'function') isletmeListesiGuncelle();
+  var liste = (sonIsletmeSorguSonuclari || []).slice();
+  if (!liste.length) {
+    bildirimGoster('PDF için listede işletme bulunamadı.', 'uyari');
+    return;
+  }
+  var tarih = new Date().toLocaleString('tr-TR');
+  var rows = liste.map(function(i, idx) {
+    return '<tr>' +
+      '<td>' + (idx + 1) + '</td>' +
+      '<td>' + _ekipEsc(i.isletmeAdi || '-') + '</td>' +
+      '<td>' + _ekipEsc(i.kayitNo || '-') + '</td>' +
+      '<td>' + _ekipEsc(i.ilce || '-') + '</td>' +
+      '<td>' + _ekipEsc(i.izinDurumu || '-') + '</td>' +
+      '<td>' + _ekipEsc(i.faaliyetAlani || '-') + '</td>' +
+      '<td>' + _ekipEsc(i.adres || '-') + '</td>' +
+      '<td>' + _ekipEsc(i.telefon || '-') + '</td>' +
+      '<td>' + _ekipEsc(i.riskeDayaliDenetimTarihi || '-') + '</td>' +
+      '</tr>';
+  }).join('');
+  var w = window.open('', '_blank');
+  if (!w) {
+    bildirimGoster('PDF penceresi açılamadı. Pop-up iznini kontrol edin.', 'uyari');
+    return;
+  }
+  w.document.write('<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8">' +
+    '<title>İşletme Sorgu Listesi</title>' +
+    '<style>' +
+    'body{font-family:Arial,sans-serif;margin:14mm;color:#222;font-size:10pt;}' +
+    'h1{font-size:15pt;text-align:center;color:#1a5132;margin:0 0 4px;}' +
+    '.alt{text-align:center;color:#555;font-size:9pt;margin-bottom:12px;}' +
+    '.ozet{border:1px solid #ddd;background:#f7f7f7;padding:8px;margin-bottom:10px;font-size:9pt;line-height:1.5;}' +
+    'table{width:100%;border-collapse:collapse;}' +
+    'th,td{border:1px solid #bbb;padding:4px 5px;vertical-align:top;font-size:8.5pt;}' +
+    'th{background:#e8f5e9;color:#1a5132;text-align:left;}' +
+    'td:first-child,th:first-child{text-align:center;width:24px;}' +
+    '.ust{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px;}' +
+    '.btn{padding:8px 14px;background:#1a5132;color:white;border:0;border-radius:6px;cursor:pointer;}' +
+    '@media print{body{margin:8mm}.ust .btn{display:none}th,td{font-size:7.5pt;}}' +
+    '</style></head><body>' +
+    '<div class="ust"><div><h1>İşletme Sorgu Listesi</h1><div class="alt">' + liste.length.toLocaleString('tr-TR') + ' işletme - ' + _ekipEsc(tarih) + '</div></div><button class="btn" onclick="window.print()">PDF Kaydet / Yazdır</button></div>' +
+    isletmeSorguFiltreOzetiHtml() +
+    '<table><thead><tr><th>No</th><th>İşletme</th><th>Kayıt No</th><th>İlçe</th><th>İzin</th><th>Faaliyet Alanı</th><th>Adres</th><th>Telefon</th><th>Risk Tarihi</th></tr></thead><tbody>' +
+    rows +
+    '</tbody></table>' +
+    '<script>setTimeout(function(){window.focus();window.print();},300);<\/script>' +
+    '</body></html>');
+  w.document.close();
+  bildirimGoster('PDF listesi hazırlandı.', 'basari');
+}
+
 function isletmeVergiTcDoldur(i) {
   if (!i || !i.kayitNo) return;
   var _lu = VERGI_LOOKUP[i.kayitNo];
@@ -5461,6 +5635,15 @@ function isletmeHaritaUrl(i) {
     return 'https://maps.google.com/?q=' + i.koordinatlar.lat + ',' + i.koordinatlar.lng;
   }
   return 'https://maps.google.com/?q=' + encodeURIComponent((i && i.adres) || '');
+}
+
+function telefonAramaHtml(tel) {
+  tel = String(tel || '').trim();
+  if (!tel) return '';
+  var temiz = tel.replace(/[^\d+]/g, '');
+  if (!temiz) return _ekipEsc(tel);
+  return _ekipEsc(tel) +
+    ' <a href="tel:' + temiz + '" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;color:var(--yesil);font-size:12px;font-weight:700;text-decoration:none;">☎ Ara</a>';
 }
 
 function isletmeDetayModal(idx) {
@@ -5497,7 +5680,7 @@ function isletmeDetayModal(idx) {
         <span class="deger">${i.riskeDayaliDenetimTarihi || '<span style=\"color:var(--gri)\">Belirtilmemiş</span>'}</span>
         ${isAdmin && !i.riskeDayaliDenetimTarihi ? `<button class="btn btn-gri btn-kucuk" style="margin-left:6px;" onclick="riskTarihDuzenle('${i.kayitNo}','${i.isletmeAdi}')">✏️ Tarih Gir</button>` : ''}
       </div>
-      ${i.telefon ? `<div class="detay-satir"><span class="etiket-kucuk">Telefon</span><span class="deger">${i.telefon}</span></div>` : ''}
+      ${i.telefon ? `<div class="detay-satir"><span class="etiket-kucuk">Telefon</span><span class="deger">${telefonAramaHtml(i.telefon)}</span></div>` : ''}
       <div class="detay-satir"><span class="etiket-kucuk">Vergi Dairesi / No</span><span class="deger">${[i.vergiDairesi,i.vergiNo].filter(Boolean).join(' / ') || '<span style="color:var(--gri)">—</span>'}</span></div>
       <div class="detay-satir"><span class="etiket-kucuk">T.C. Kimlik No</span><span class="deger">${i.tcKimlikNo || '<span style="color:var(--gri)">—</span>'}</span></div>
     </div>
@@ -5680,6 +5863,7 @@ function isletmelerBellegeUygula(liste, kaynak) {
 
   if (typeof denetimler !== 'undefined') denetimlerdenRiskTarihleriniUygula(denetimler || []);
   listeBilgiGuncelle();
+  if (typeof excelGuncellemeBilgisiYaz === 'function') excelGuncellemeBilgisiYaz();
   ozetGuncelle();
   ikaz_sayisiGuncelle();
   if (typeof isletmeSorguSecenekleriDoldur === 'function') {
@@ -5846,7 +6030,7 @@ function isletmelerMasterFirestoreYukle(liste, durumEl) {
           source: 'excel_guncelle_karsilastirmali'
         }, {merge:true}).then(function() {
           localStorage.setItem('isletmeler_master_version', version);
-          localStorage.setItem('isletmeler_guncelleme', new Date().toLocaleString('tr-TR'));
+          isletmelerGuncellemeTarihiKaydet();
           var d = document.getElementById('master-yukleme-durum');
           if (d) d.innerHTML = '<span class="ikaz-ikon">✅</span><span>Karşılaştırmalı güncelleme tamam: '+eklenen.toLocaleString('tr-TR')+' yeni • '+guncellenen.toLocaleString('tr-TR')+' değişen • '+pasifYapilacak.length.toLocaleString('tr-TR')+' pasif • '+degismeyen.toLocaleString('tr-TR')+' aynı</span>';
           return true;
@@ -5879,7 +6063,7 @@ function isletmelerMasterFirestoreYukle(liste, durumEl) {
         source: 'excel_guncelle_karsilastirmali'
       }, {merge:true}).then(function(){
         localStorage.setItem('isletmeler_master_version', version);
-        localStorage.setItem('isletmeler_guncelleme', new Date().toLocaleString('tr-TR'));
+        isletmelerGuncellemeTarihiKaydet();
         var d = document.getElementById('master-yukleme-durum');
         if (d) d.innerHTML = '<span class="ikaz-ikon">✅</span><span>Liste kontrol edildi; değişen kayıt yok. Versiyon yenilendi.</span>';
         return true;
@@ -5906,7 +6090,7 @@ function isletmelerMasterFirestoreCek() {
     snapshot.forEach(function(doc){ var d = doc.data() || {}; if (d.aktif !== false) liste.push(d); });
     var ok = isletmelerBellegeUygula(liste, 'Firestore isletmeler_master');
     if (ok) {
-      localStorage.setItem('isletmeler_guncelleme', new Date().toLocaleString('tr-TR'));
+      isletmelerGuncellemeTarihiKaydet();
       if (typeof riskBildirimYenile === 'function') setTimeout(riskBildirimYenile, 0);
     }
     return ok;
@@ -5928,7 +6112,7 @@ function isletmelerMasterVersiyonDinle() {
         if (isletmelerMasterSonVersion && yeniVersion === isletmelerMasterSonVersion) return;
         isletmelerMasterSonVersion = yeniVersion;
         localStorage.setItem('isletmeler_master_version', yeniVersion);
-        localStorage.setItem('isletmeler_guncelleme', new Date().toLocaleString('tr-TR'));
+        isletmelerGuncellemeTarihiKaydet();
         isletmelerMasterZorunlu = true;
         isletmelerMasterFirestoreCek().then(function(ok) {
           isletmelerMasterZorunlu = false;
@@ -6096,7 +6280,7 @@ function excelYukle(file) {
       });
       ISLETMELER.length = 0;
       birlesikIsletmeler.forEach(function(i){ ISLETMELER.push(i); });
-      localStorage.setItem('isletmeler_guncelleme', new Date().toLocaleString('tr-TR'));
+      isletmelerGuncellemeTarihiKaydet();
       // Yeni listeyi cihaz açılış önbelleğine de yaz — sayfa yenilenince yeni risk tarihleri
       // Firestore'u beklemeden hemen geri gelsin (eski tarihe dönmesin).
       try { if (typeof isletmelerCacheKaydet === 'function') isletmelerCacheKaydet(birlesikIsletmeler); } catch(e){ console.warn('Excel sonrası cache kaydı:', e); }
@@ -6305,6 +6489,21 @@ function listeBilgiGuncelle() {
     </div>`;
 }
 
+function excelGuncellemeBilgisiYaz() {
+  var el = document.getElementById('surum-bilgi');
+  if (!el) return;
+  var guncelleme = '';
+  try { guncelleme = localStorage.getItem('isletmeler_guncelleme') || ''; } catch(e) {}
+  el.textContent = 'Son Excel güncellemesi: ' + (guncelleme || 'Bilinmiyor');
+}
+window.excelGuncellemeBilgisiYaz = excelGuncellemeBilgisiYaz;
+
+function isletmelerGuncellemeTarihiKaydet(deger) {
+  try { localStorage.setItem('isletmeler_guncelleme', deger || new Date().toLocaleString('tr-TR')); } catch(e) {}
+  if (typeof excelGuncellemeBilgisiYaz === 'function') excelGuncellemeBilgisiYaz();
+  if (typeof presenceGuncelle === 'function') presenceGuncelle();
+}
+
 // Başlangıç - Firebase başlatma auth_block'ta
 
 
@@ -6382,6 +6581,7 @@ function _uygulamaGoster(user, ad, ekipId) {
   sohbetBildirimDinle();
   if (typeof bekleyenBildirimDinle === "function") bekleyenBildirimDinle();
   if (typeof pushOtomatikDene === "function") pushOtomatikDene();
+  if (typeof excelGuncellemeBilgisiYaz === 'function') excelGuncellemeBilgisiYaz();
 }
 
 function kayitEkraniAc() {
@@ -7655,7 +7855,7 @@ function koyIsletmeDetay(koyAdi, idx) {
     ['İlçe', isletme.ilce||'-'],
     ['Faaliyet Alanı', isletme.faaliyetAlani||'-'],
   ];
-  if (isletme.telefon) satirlar.push(['📞 Telefon', isletme.telefon]);
+  if (isletme.telefon) satirlar.push(['Telefon', telefonAramaHtml(isletme.telefon)]);
   satirlar.push(['Vergi Dairesi / No', [isletme.vergiDairesi,isletme.vergiNo].filter(Boolean).join(' / ') || '—']);
   satirlar.push(['T.C. Kimlik No', isletme.tcKimlikNo || '—']);
   satirlar.forEach(function(s) {
@@ -7855,7 +8055,7 @@ function isletmeDetayModalUretim(uIdx) {
     ['Faaliyet Alanı', i.faaliyetAlani||'-'],
   ];
   if (i.riskeDayaliDenetimTarihi) satirlar.push(['Risk Denetim Tarihi', i.riskeDayaliDenetimTarihi]);
-  if (i.telefon) satirlar.push(['📞 Telefon', i.telefon]);
+  if (i.telefon) satirlar.push(['Telefon', telefonAramaHtml(i.telefon)]);
   satirlar.push(['Vergi Dairesi / No', [i.vergiDairesi,i.vergiNo].filter(Boolean).join(' / ') || '—']);
   satirlar.push(['T.C. Kimlik No', i.tcKimlikNo || '—']);
   satirlar.forEach(function(s) {
@@ -8078,6 +8278,8 @@ function apDenetciListesi() {
       var sonGorulmeText = sonGorulme
         ? (online ? 'Şu an aktif' : sonGorulme.toLocaleString('tr-TR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}))
         : 'Hiç giriş yapmadı';
+      var excelGuncellemeText = p && p.excelGuncelleme ? p.excelGuncelleme : 'Bilinmiyor';
+      var appSurumText = p && p.appSurum ? p.appSurum : 'Bilinmiyor';
 
       var kAdNorm = _apKisiNorm(k.ad);
       var kEmailNorm = _apKisiNorm(k.email);
@@ -8102,6 +8304,8 @@ function apDenetciListesi() {
             '<div style="font-size:12px;color:var(--gri);">📧 ' + _ekipEsc(k.email || '') + ' • 👤 Denetçi • 👥 ' + kullaniciEkipHtml(k.ekipId) + '</div>' +
             '<div style="font-size:11px;color:var(--gri);margin-top:2px;">UID: ' + _ekipEsc(k.uid || '') + ' • ' + kullaniciDurumEtiketi(k) + '</div>' +
             '<div style="font-size:11px;color:' + (online ? '#1a5132' : 'var(--gri)') + ';margin-top:2px;">' + (online ? '🟢 ' : '⚪ ') + sonGorulmeText + '</div>' +
+            '<div style="font-size:11px;color:var(--gri);margin-top:2px;">📱 Uygulama sürümü: ' + _ekipEsc(appSurumText) + '</div>' +
+            '<div style="font-size:11px;color:var(--gri);margin-top:2px;">📊 Son Excel güncellemesi: ' + _ekipEsc(excelGuncellemeText) + '</div>' +
           '</div>' +
         '</div>' +
         '<span style="background:var(--yesil-acik);color:var(--yesil);padding:3px 10px;border-radius:10px;font-size:13px;font-weight:600;">' + kdenetimler.length + ' denetim</span>';
@@ -9458,9 +9662,18 @@ function konuIdOlustur(uid1, uid2) {
 // Presence güncelle (her 3 dakikada bir heartbeat)
 function presenceGuncelle() {
   if (!mevcutKullanici || typeof firebase === 'undefined') return;
+  var excelGuncelleme = '';
+  var excelVersion = '';
+  var appSurum = '';
+  try { excelGuncelleme = localStorage.getItem('isletmeler_guncelleme') || ''; } catch(e) {}
+  try { excelVersion = localStorage.getItem('isletmeler_master_version') || ''; } catch(e) {}
+  try { appSurum = localStorage.getItem('app_surum') || ''; } catch(e) {}
   firebase.firestore().collection('presence').doc(mevcutKullanici.uid).set({
     uid: mevcutKullanici.uid,
     ad: mevcutKullaniciAdi || mevcutKullanici.email,
+    appSurum: appSurum || 'Bilinmiyor',
+    excelGuncelleme: excelGuncelleme || 'Bilinmiyor',
+    excelVersion: excelVersion || '',
     sonGorulme: firebase.firestore.FieldValue.serverTimestamp()
   }).catch(function(){});
 }
