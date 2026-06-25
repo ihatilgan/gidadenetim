@@ -911,7 +911,14 @@ var KOY_ISLETMELERI = {};
 
 var ISLETME_CACHE_KEY = 'isletmeler_master_cache_v3';
 var MANUEL_KONUM_TOHUM = {
-  'TR-03-K-015904': { lat: 38.786557, lng: 30.564761 }
+  'TR-03-K-015904': { lat: 38.786557, lng: 30.564761 },
+  'TR-03-K-015240': { lat: 38.79623100, lng: 30.48150837 },
+  'TR-03-K-015363': { lat: 38.82045947, lng: 30.51282048 },
+  'TR-03-K-016078': { lat: 38.74185523, lng: 30.56810081 },
+  'TR-03-K-014024': { lat: 38.78355961, lng: 30.46667039 },
+  'TR-03-K-013621': { lat: 38.76548105, lng: 30.56865335 },
+  'TR-03-K-005577': { lat: 38.82762276, lng: 30.51866770 },
+  'TR-03-K-013343': { lat: 38.83827442, lng: 30.51376194 }
 };
 
 function manuelKonumTohumUygula(liste) {
@@ -920,7 +927,12 @@ function manuelKonumTohumUygula(liste) {
     if (!i || !i.kayitNo) return;
     if (i.koordinatlar && i.koordinatlar.lat != null && i.koordinatlar.lng != null) return;
     var koord = MANUEL_KONUM_TOHUM[i.kayitNo];
-    if (koord) i.koordinatlar = { lat: Number(koord.lat), lng: Number(koord.lng) };
+    if (koord) i.koordinatlar = {
+      lat: Number(koord.lat),
+      lng: Number(koord.lng),
+      kaynak: 'manuel_tohum',
+      tarih: '2026-06-25'
+    };
   });
 }
 
