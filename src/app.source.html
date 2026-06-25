@@ -910,12 +910,27 @@ function mahalleAdreseUyuyorMu(adres, mahalleAdi) {
 var KOY_ISLETMELERI = {};
 
 var ISLETME_CACHE_KEY = 'isletmeler_master_cache_v3';
+var MANUEL_KONUM_TOHUM = {
+  'TR-03-K-015904': { lat: 38.786557, lng: 30.564761 }
+};
+
+function manuelKonumTohumUygula(liste) {
+  if (!Array.isArray(liste)) return;
+  liste.forEach(function(i) {
+    if (!i || !i.kayitNo) return;
+    if (i.koordinatlar && i.koordinatlar.lat != null && i.koordinatlar.lng != null) return;
+    var koord = MANUEL_KONUM_TOHUM[i.kayitNo];
+    if (koord) i.koordinatlar = { lat: Number(koord.lat), lng: Number(koord.lng) };
+  });
+}
+
 function isletmelerCacheYukle() {
   try {
     var raw = localStorage.getItem(ISLETME_CACHE_KEY) || '';
     if (!raw) return false;
     var liste = JSON.parse(raw);
     if (!Array.isArray(liste) || liste.length < 10) return false;
+    manuelKonumTohumUygula(liste);
     ISLETMELER.length = 0;
     liste.forEach(function(i){ if (i && i.isletmeAdi) ISLETMELER.push(i); });
     if (typeof URETIM_YERLERI !== 'undefined') {
@@ -1713,7 +1728,18 @@ DEVRE_DISI_BITIS */
         <div class="alan tam" id="konum-alan" style="display:none;">
           <label>GPS Konumu (isteğe bağlı)</label>
           <div id="konum-durum" style="font-size:13px;color:#555;margin-bottom:6px;">Henüz konum kaydı yok.</div>
-          <button type="button" class="btn btn-gri btn-kucuk" onclick="formKonumEkle()">📍 Konumu Kaydet</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+            <button type="button" class="btn btn-gri btn-kucuk" onclick="formKonumEkle()">📍 Konumu Kaydet</button>
+            <button type="button" class="btn btn-gri btn-kucuk" onclick="formManuelKonumAc()">✏️ Manuel Koordinat Gir</button>
+          </div>
+          <div id="manuel-konum-alan" style="display:none;background:#fff8e1;border:1px solid #ffe0a3;border-radius:8px;padding:10px;">
+            <div style="font-size:12px;color:#6d4c00;margin-bottom:8px;">Koordinat hassastır. Lütfen haritadan doğrulayıp enlem ve boylamı ayrı ayrı girin.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+              <input type="number" step="0.000001" id="manuel-lat" placeholder="Enlem örn. 38.756123">
+              <input type="number" step="0.000001" id="manuel-lng" placeholder="Boylam örn. 30.538456">
+            </div>
+            <button type="button" class="btn btn-yesil btn-kucuk" onclick="formManuelKonumKaydet()">Manuel Kaydet</button>
+          </div>
         </div>
         <div class="alan">
           <label>Denetim Tarihi <span class="zorunlu">*</span></label>
@@ -1824,14 +1850,22 @@ DEVRE_DISI_BITIS */
       <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
         <input type="text" id="isletme-filtre" placeholder="🔍 İşletme adı, kayıt no, ilçe, adres..." style="flex:1;min-width:200px;" oninput="isletmeListesiGuncelle()">
         <!-- QR_DEVRE_DISI <button class="btn btn-gri" onclick="qrTara()" title="QR kod ile işletme ara" style="padding:9px 14px;font-size:18px;line-height:1;flex-shrink:0;">📷</button> QR_DEVRE_DISI -->
-        <select id="isletme-filtre-ilce" onchange="isletmeListesiGuncelle()" style="min-width:130px;"><option value="">Tüm İlçeler</option></select>
-        <select id="isletme-grup" onchange="isletmeAltFiltreleriGuncelle();isletmeListesiGuncelle()" style="min-width:170px;">
-          <option value="">Tüm İşletmeler</option>
-          <option value="uretim">Üretim yeri</option>
-          <option value="satis">Satış / toplu tüketim</option>
-        </select>
-        <select id="isletme-alt-baslik" onchange="isletmeListesiGuncelle()" style="min-width:220px;"><option value="">Başlık seç</option></select>
-        <select id="isletme-yer-sec" onchange="isletmeListesiGuncelle()" style="min-width:220px;"><option value="">Faaliyet başlığı seç</option></select>
+        <div class="coklu-filtre" style="position:relative;">
+          <button type="button" id="isletme-ilce-btn" class="btn btn-gri" onclick="isletmeCokluPanelToggle('ilce')" style="min-width:130px;">Tüm İlçeler</button>
+          <div id="isletme-ilce-panel" style="display:none;position:absolute;top:100%;left:0;z-index:80;background:white;border:1px solid var(--sinir);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.14);padding:8px;min-width:220px;max-height:320px;overflow:auto;"></div>
+        </div>
+        <div class="coklu-filtre" style="position:relative;">
+          <button type="button" id="isletme-grup-btn" class="btn btn-gri" onclick="isletmeCokluPanelToggle('grup')" style="min-width:170px;">Tüm İşletmeler</button>
+          <div id="isletme-grup-panel" style="display:none;position:absolute;top:100%;left:0;z-index:80;background:white;border:1px solid var(--sinir);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.14);padding:8px;min-width:240px;max-height:320px;overflow:auto;"></div>
+        </div>
+        <div class="coklu-filtre" style="position:relative;">
+          <button type="button" id="isletme-alt-btn" class="btn btn-gri" onclick="isletmeCokluPanelToggle('alt')" style="min-width:220px;">Mahalle / Köy / Üretim</button>
+          <div id="isletme-alt-panel" style="display:none;position:absolute;top:100%;left:0;z-index:80;background:white;border:1px solid var(--sinir);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.14);padding:8px;min-width:280px;max-height:360px;overflow:auto;"></div>
+        </div>
+        <div class="coklu-filtre" style="position:relative;">
+          <button type="button" id="isletme-faaliyet-btn" class="btn btn-gri" onclick="isletmeCokluPanelToggle('faaliyet')" style="min-width:220px;">Tüm Faaliyetler</button>
+          <div id="isletme-faaliyet-panel" style="display:none;position:absolute;top:100%;left:0;z-index:80;background:white;border:1px solid var(--sinir);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.14);padding:8px;min-width:300px;max-height:360px;overflow:auto;"></div>
+        </div>
         <button class="btn btn-gri" onclick="isletmeSorguTemizle()">Temizle</button>
         <button id="sorumluluk-btn" class="btn btn-gri" onclick="sorumlulukFiltresiToggle()" style="white-space:nowrap;">👤 Sorumluluklarım</button>
       </div>
@@ -2122,6 +2156,7 @@ DEVRE_DISI_BITIS */
         <button class="btn btn-gri" onclick="raporExcel()">📥 Excel İndir</button>
         <button class="btn btn-gri" onclick="raporSifirla()">🔄 Sıfırla</button>
       </div>
+      <div id="excel-guncelleme-raporu" style="margin-bottom:16px;"></div>
       <div id="rapor-sonuc-bilgi" style="font-size:13px;color:var(--gri);margin-bottom:10px;"></div>
       <div id="rapor-liste"></div>
     </div>
@@ -3320,7 +3355,7 @@ function sayfaGoster(id, btn) {
   if (id === 'basliklar') { if (typeof basliklarGoster === 'function') basliklarGoster(); }
   if (id === 'sorunlar') { if (typeof sorunlariGoster === 'function') sorunlariGoster(); }
   if (id === 'ayarlar') { if (typeof ayarlarYukle === 'function') ayarlarYukle(); }
-  if (id === 'raporlar') { if (typeof raporSifirla === 'function') raporSifirla(); }
+  if (id === 'raporlar') { if (typeof raporSifirla === 'function') raporSifirla(); if (typeof excelGuncellemeRaporuGoster === 'function') excelGuncellemeRaporuGoster(); }
   if (id === 'yeni' && !duzenlemeModu) {
     formuSifirla();
   }
@@ -3331,11 +3366,10 @@ function sayfaGoster(id, btn) {
     }
     var el = document.getElementById('isletme-liste');
     var sonucEl = document.getElementById('isletme-liste-sonuc');
-    ['isletme-filtre','isletme-filtre-ilce','isletme-grup','isletme-alt-baslik','isletme-yer-sec'].forEach(function(fid) {
-      var filtre = document.getElementById(fid);
-      if (filtre) filtre.value = '';
-    });
-    if (typeof isletmeAltFiltreleriGuncelle === 'function') isletmeAltFiltreleriGuncelle();
+    var filtre = document.getElementById('isletme-filtre');
+    if (filtre) filtre.value = '';
+    isletmeSorguSecimler = { ilce: [], grup: [], alt: [], faaliyet: [] };
+    if (typeof isletmeSorguSecenekleriDoldur === 'function') isletmeSorguSecenekleriDoldur(false);
     if (typeof isletmeListesiGuncelle === 'function') isletmeListesiGuncelle();
   }
   if (id === 'sorumluluklarim') {
@@ -3577,6 +3611,19 @@ function sonucDegisti() {
   // sonuç değişince ek ikaz vs gösterilebilir
 }
 
+function denetimRiskTarihiniIleriAl(d) {
+  if (!d || !d.isletmeKayitNo || !d.tarih) return;
+  var t = String(d.tarih || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) return;
+  var parca = t.split('-');
+  var base = new Date(Number(parca[0]), Number(parca[1]) - 1, Number(parca[2]));
+  if (isNaN(base.getTime())) return;
+  var birYilSonra = new Date(base.getFullYear() + 1, base.getMonth(), base.getDate());
+  var yeniRisk = birYilSonra.getDate().toString().padStart(2,'0') + '/' +
+    (birYilSonra.getMonth()+1).toString().padStart(2,'0') + '/' + birYilSonra.getFullYear();
+  riskTarihGuncelle(d.isletmeKayitNo, yeniRisk);
+}
+
 // ---- KAYDET ---- // düzenlenen denetimin id'si
 
 function denetimKaydet() {
@@ -3673,6 +3720,7 @@ function denetimKaydet() {
     var hedefSayfa = oncekiSayfa || 'ozet';
     oncekiSayfa = null;
     kaydet();
+    denetimRiskTarihiniIleriAl(yeni);
     firebaseKaydet(yeni);
     var navBtns = document.querySelectorAll('nav button');
     var hedefBtn = null;
@@ -3693,6 +3741,7 @@ function denetimKaydet() {
   } else {
     denetimler.unshift(yeni);
     kaydet();
+    denetimRiskTarihiniIleriAl(yeni);
 
     // Ekler varsa Storage'a yükle
     var kaydetBtn = document.querySelector('[onclick="denetimKaydet()"]');
@@ -4309,6 +4358,7 @@ function detayGoster(id) {
 
     <div class="buton-satir" style="margin-top:20px;">
       <button class="btn btn-gri" onclick="modalKapat()">Kapat</button>
+      ${d.isletmeKayitNo ? '<button class="btn btn-gri" onclick="modalKapat();isletmeDetayModal(\''+String(d.isletmeKayitNo).replace(/'/g,"\\'")+'\')">🏢 İşletme Detayını Gör</button>' : ''}
       <button class="btn btn-gri" onclick="denetimYazdir(${d.id})" title="Yazdır / PDF kaydet">🖨️ Yazdır</button>
       ${denetimDuzenlebilir(d) ? '<button class="btn btn-yesil" onclick="modalKapat();denetimDuzenle('+d.id+')">✏️ Düzenle</button><button class="btn btn-kirmizi" onclick="modalKapat();denetimSilOnayla('+d.id+')">🗑️ Sil</button>' : ''}
     </div>
@@ -4742,6 +4792,8 @@ function planliKonumMetni(i) {
 function planliTemizIsletmeAdi(ad) {
   ad = String(ad || '').trim();
   ad = ad.replace(/\s+/g, ' ');
+  var ilkBolum = ad.split(/\s*[-–]\s*/)[0];
+  if (ilkBolum && _normTR(ilkBolum).length >= 4) ad = ilkBolum;
   ad = ad.replace(/\s*[-–]\s*(Mustafa|Mehmet|Ahmet|Ali|Veli|Fatma|Ayşe|Hasan|Hüseyin|İbrahim|Ismail|İsmail)\b.*$/i, '');
   ad = ad.replace(/\b(A\.?\s*Ş\.?|Anonim Şirketi|Ltd\.?\s*Şti\.?|Limited Şirketi|Tic\.?|Ticaret|San\.?|Sanayi|Nak\.?|Nakliyat|Gıda|Tarım|Ürünleri|Pazarlama|İnşaat|Hayvancılık|Market|Bakkal|Şube|Depo)\b\.?/gi, ' ');
   ad = ad.replace(/[^\wÇĞİÖŞÜçğıöşü\s]/g, ' ');
@@ -5405,75 +5457,110 @@ function isletmeTumListeGetir() {
   return tumListe;
 }
 
-function isletmeSorguSecenekleriDoldur() {
-  var ilceSel = document.getElementById('isletme-filtre-ilce');
-  if (ilceSel) {
-    var eskiIlce = ilceSel.value || '';
-    ilceSel.innerHTML = '<option value="">Tüm İlçeler</option>';
-    var ilceler = {};
-    isletmeTumListeGetir().forEach(function(i){ if (i.ilce) ilceler[i.ilce] = true; });
-    Object.keys(ilceler).sort(function(a,b){ return a.localeCompare(b, 'tr'); }).forEach(function(il) {
-      var opt = document.createElement('option');
-      opt.value = il; opt.textContent = il;
-      ilceSel.appendChild(opt);
-    });
-    ilceSel.value = eskiIlce;
-  }
+var isletmeSorguSecimler = { ilce: [], grup: [], alt: [], faaliyet: [] };
+var isletmeSorguSecenekCache = { ilce: [], alt: [], faaliyet: [] };
 
-  isletmeAltFiltreleriGuncelle(true);
+function isletmeCokluPanelToggle(tip) {
+  ['ilce','grup','alt','faaliyet'].forEach(function(t) {
+    var p = document.getElementById('isletme-' + (t === 'faaliyet' ? 'faaliyet' : t) + '-panel');
+    if (p && t !== tip) p.style.display = 'none';
+  });
+  var panelId = tip === 'faaliyet' ? 'isletme-faaliyet-panel' : 'isletme-' + tip + '-panel';
+  var panel = document.getElementById(panelId);
+  if (!panel) return;
+  panel.style.display = panel.style.display === 'none' || !panel.style.display ? 'block' : 'none';
+}
+
+function isletmeCokluSecimToggle(tip, deger) {
+  var arr = isletmeSorguSecimler[tip] || [];
+  var ix = arr.indexOf(deger);
+  if (ix >= 0) arr.splice(ix, 1); else arr.push(deger);
+  isletmeSorguSecimler[tip] = arr;
+  isletmeSorguSecenekleriDoldur(true);
+  isletmeListesiGuncelle();
+}
+
+function isletmeCokluTumunuTemizle(tip) {
+  isletmeSorguSecimler[tip] = [];
+  isletmeSorguSecenekleriDoldur(true);
+  isletmeListesiGuncelle();
+}
+
+function isletmeCokluButonYazi(tip, bos) {
+  var arr = isletmeSorguSecimler[tip] || [];
+  if (!arr.length) return bos;
+  if (arr.length === 1) {
+    if (tip === 'grup') return arr[0] === 'uretim' ? 'Üretim yeri' : 'Satış / toplu tüketim';
+    var v = arr[0].split(':').slice(1).join(':') || arr[0];
+    return v.length > 24 ? v.slice(0, 24) + '...' : v;
+  }
+  return arr.length + ' seçim';
+}
+
+function isletmeCokluSatir(tip, deger, etiket) {
+  var aktif = (isletmeSorguSecimler[tip] || []).indexOf(deger) >= 0;
+  return '<button type="button" onclick="isletmeCokluSecimToggle(\'' + tip + '\',\'' + _ekipEsc(deger).replace(/'/g,"\\'") + '\')" style="display:block;width:100%;text-align:left;padding:7px 9px;border:0;background:' + (aktif ? 'var(--yesil-acik)' : '#fff') + ';border-radius:6px;cursor:pointer;font-size:13px;margin-bottom:2px;">' + (aktif ? '✓ ' : '') + _ekipEsc(etiket) + '</button>';
+}
+
+function isletmeSorguSecenekleriDoldur(secimiKoru) {
+  var ilceler = {};
+  isletmeTumListeGetir().forEach(function(i){ if (i.ilce) ilceler[i.ilce] = true; });
+  isletmeSorguSecenekCache.ilce = Object.keys(ilceler).sort(function(a,b){ return a.localeCompare(b, 'tr'); });
+  isletmeAltFiltreleriGuncelle(secimiKoru);
+  var ilcePanel = document.getElementById('isletme-ilce-panel');
+  if (ilcePanel) {
+    var h = isletmeCokluSatir('ilce', '', 'Tüm İlçeler').replace("isletmeCokluSecimToggle('ilce','')", "isletmeCokluTumunuTemizle('ilce')");
+    isletmeSorguSecenekCache.ilce.forEach(function(il){ h += isletmeCokluSatir('ilce', il, il); });
+    ilcePanel.innerHTML = h;
+  }
+  var grupPanel = document.getElementById('isletme-grup-panel');
+  if (grupPanel) {
+    grupPanel.innerHTML =
+      isletmeCokluSatir('grup', '', 'Tüm İşletmeler').replace("isletmeCokluSecimToggle('grup','')", "isletmeCokluTumunuTemizle('grup')") +
+      isletmeCokluSatir('grup', 'uretim', 'Üretim yeri') +
+      isletmeCokluSatir('grup', 'satis', 'Satış / toplu tüketim');
+  }
+  var b;
+  b = document.getElementById('isletme-ilce-btn'); if (b) b.textContent = isletmeCokluButonYazi('ilce', 'Tüm İlçeler');
+  b = document.getElementById('isletme-grup-btn'); if (b) b.textContent = isletmeCokluButonYazi('grup', 'Tüm İşletmeler');
+  b = document.getElementById('isletme-alt-btn'); if (b) b.textContent = isletmeCokluButonYazi('alt', 'Mahalle / Köy / Üretim');
+  b = document.getElementById('isletme-faaliyet-btn'); if (b) b.textContent = isletmeCokluButonYazi('faaliyet', 'Tüm Faaliyetler');
 }
 
 function isletmeAltFiltreleriGuncelle(secimiKoru) {
-  var grupEl = document.getElementById('isletme-grup');
-  var altEl = document.getElementById('isletme-alt-baslik');
-  var yerEl = document.getElementById('isletme-yer-sec');
-  if (!grupEl || !altEl || !yerEl) return;
-  var grup = grupEl.value || '';
-  var eskiAlt = secimiKoru ? (altEl.value || '') : '';
-  var eskiYer = secimiKoru ? (yerEl.value || '') : '';
-
-  altEl.innerHTML = '<option value="">Başlık seç</option>';
-  yerEl.innerHTML = '<option value="">Faaliyet başlığı seç</option>';
-  altEl.style.display = grup ? '' : 'none';
-  yerEl.style.display = grup === 'satis' ? '' : 'none';
-
-  if (grup === 'uretim') {
-    altEl.options[0].textContent = 'Tüm üretim başlıkları';
+  var altPanel = document.getElementById('isletme-alt-panel');
+  var faaliyetPanel = document.getElementById('isletme-faaliyet-panel');
+  var gruplar = isletmeSorguSecimler.grup || [];
+  var uretimAcik = !gruplar.length || gruplar.indexOf('uretim') >= 0;
+  var satisAcik = !gruplar.length || gruplar.indexOf('satis') >= 0;
+  var altlar = [];
+  if (uretimAcik) {
     (typeof TUM_URETIM_KATEGORILER !== 'undefined' ? TUM_URETIM_KATEGORILER : []).forEach(function(k) {
-      var opt = document.createElement('option');
-      opt.value = k.id;
-      opt.textContent = k.label;
-      altEl.appendChild(opt);
+      altlar.push({ value:'uretim:' + k.id, label:'Üretim - ' + k.label });
     });
-    altEl.value = eskiAlt;
-    return;
   }
-
-  if (grup === 'satis') {
-    altEl.options[0].textContent = 'Mahalle Köy Kasaba seç';
-    yerEl.options[0].textContent = 'Tüm satış/toplu tüketim başlıkları';
-
-    var mahalleler = (typeof MERKEZ_MAHALLE_MASTER !== 'undefined' ? MERKEZ_MAHALLE_MASTER : []).slice().sort(function(a,b){ return a.localeCompare(b, 'tr'); });
-    var koyler = (typeof KOY_MASTER !== 'undefined' ? KOY_MASTER : []).slice().sort(function(a,b){ return a.localeCompare(b, 'tr'); });
-    mahalleler.forEach(function(m) {
-      var opt = document.createElement('option');
-      opt.value = 'mahalle:' + m; opt.textContent = m;
-      altEl.appendChild(opt);
-    });
-    koyler.forEach(function(k) {
-      var opt = document.createElement('option');
-      opt.value = 'koy:' + k; opt.textContent = k;
-      altEl.appendChild(opt);
-    });
-
-    (typeof SATIS_SORUMLULUK_FAALIYETLERI !== 'undefined' ? SATIS_SORUMLULUK_FAALIYETLERI : []).forEach(function(f) {
-      var opt = document.createElement('option');
-      opt.value = f; opt.textContent = f;
-      yerEl.appendChild(opt);
-    });
-
-    altEl.value = eskiAlt;
-    yerEl.value = eskiYer;
+  (typeof MERKEZ_MAHALLE_MASTER !== 'undefined' ? MERKEZ_MAHALLE_MASTER : []).slice().sort(function(a,b){ return a.localeCompare(b, 'tr'); }).forEach(function(m) {
+    altlar.push({ value:'mahalle:' + m, label:'Mahalle - ' + m });
+  });
+  (typeof KOY_MASTER !== 'undefined' ? KOY_MASTER : []).slice().sort(function(a,b){ return a.localeCompare(b, 'tr'); }).forEach(function(k) {
+    altlar.push({ value:'koy:' + k, label:'Köy/Kasaba - ' + k });
+  });
+  isletmeSorguSecenekCache.alt = altlar;
+  var faaliyetler = [];
+  if (satisAcik) faaliyetler = (typeof SATIS_SORUMLULUK_FAALIYETLERI !== 'undefined' ? SATIS_SORUMLULUK_FAALIYETLERI : []).slice();
+  isletmeSorguSecenekCache.faaliyet = faaliyetler;
+  if (!secimiKoru) { isletmeSorguSecimler.alt = []; isletmeSorguSecimler.faaliyet = []; }
+  isletmeSorguSecimler.alt = (isletmeSorguSecimler.alt || []).filter(function(v){ return altlar.some(function(o){ return o.value === v; }); });
+  isletmeSorguSecimler.faaliyet = (isletmeSorguSecimler.faaliyet || []).filter(function(v){ return faaliyetler.indexOf(v) >= 0; });
+  if (altPanel) {
+    var h = isletmeCokluSatir('alt', '', 'Tümü').replace("isletmeCokluSecimToggle('alt','')", "isletmeCokluTumunuTemizle('alt')");
+    altlar.forEach(function(o){ h += isletmeCokluSatir('alt', o.value, o.label); });
+    altPanel.innerHTML = h;
+  }
+  if (faaliyetPanel) {
+    var fh = isletmeCokluSatir('faaliyet', '', 'Tüm faaliyet başlıkları').replace("isletmeCokluSecimToggle('faaliyet','')", "isletmeCokluTumunuTemizle('faaliyet')");
+    faaliyetler.forEach(function(f){ fh += isletmeCokluSatir('faaliyet', f, f); });
+    faaliyetPanel.innerHTML = fh;
   }
 }
 
@@ -5512,10 +5599,68 @@ function isletmeSatisYerUyuyorMu(i, yer) {
   return true;
 }
 
+function isletmeAltSecimUyuyorMu(i, secimler) {
+  if (!secimler || !secimler.length) return true;
+  for (var s = 0; s < secimler.length; s++) {
+    var val = secimler[s];
+    var p = String(val).split(':');
+    var tip = p[0] || '';
+    var ad = p.slice(1).join(':');
+    if (tip === 'uretim') {
+      var kat = (typeof TUM_URETIM_KATEGORILER !== 'undefined' ? TUM_URETIM_KATEGORILER : []).find(function(k){ return k.id === ad; });
+      if (isletmeUretimBaslikSorguUyuyorMu(i, kat)) return true;
+    } else if (isletmeSatisYerUyuyorMu(i, val)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function isletmeFaaliyetSecimUyuyorMu(i, secimler) {
+  if (!secimler || !secimler.length) return true;
+  for (var f = 0; f < secimler.length; f++) {
+    if (isletmeSatisFaaliyetUyuyorMu(i, secimler[f])) return true;
+  }
+  return false;
+}
+
+function isletmeSorguYerSirasi(i) {
+  var adres = String((i && i.adres) || '');
+  var ilce = String((i && i.ilce) || '');
+  var adaylar = [];
+  if (typeof MERKEZ_MAHALLE_MASTER !== 'undefined') adaylar = adaylar.concat(MERKEZ_MAHALLE_MASTER.map(function(x){ return {tip:'mahalle', ad:x}; }));
+  if (typeof KOY_MASTER !== 'undefined') adaylar = adaylar.concat(KOY_MASTER.map(function(x){ return {tip:'koy', ad:x}; }));
+  for (var a = 0; a < adaylar.length; a++) {
+    var yer = adaylar[a];
+    if (yer.tip === 'mahalle' && typeof mahalleAdreseUyuyorMu === 'function' && mahalleAdreseUyuyorMu(adres, yer.ad)) return yer.ad;
+    if (yer.tip === 'koy' && typeof koyAdreseUyuyorMu === 'function' && koyAdreseUyuyorMu(adres + ' ' + ilce, yer.ad)) return yer.ad;
+  }
+  var m = adres.match(/([A-Za-zÇĞİÖŞÜçğıöşü\s]+)\s+Mah(?:\.|allesi)?/i);
+  if (m && m[1]) return m[1].trim();
+  return ilce || '';
+}
+
+function isletmeSorguSirala(liste) {
+  return (liste || []).slice().sort(function(a, b) {
+    var aMerkez = _normTR(a && a.ilce) === 'merkez' ? 0 : 1;
+    var bMerkez = _normTR(b && b.ilce) === 'merkez' ? 0 : 1;
+    if (aMerkez !== bMerkez) return aMerkez - bMerkez;
+    if (aMerkez === 0) {
+      var yer = isletmeSorguYerSirasi(a).localeCompare(isletmeSorguYerSirasi(b), 'tr');
+      if (yer) return yer;
+    }
+    var ilceSirasi = String((a && a.ilce) || '').localeCompare(String((b && b.ilce) || ''), 'tr');
+    if (ilceSirasi) return ilceSirasi;
+    var adresSirasi = isletmeSorguYerSirasi(a).localeCompare(isletmeSorguYerSirasi(b), 'tr');
+    if (adresSirasi) return adresSirasi;
+    return String((a && a.isletmeAdi) || '').localeCompare(String((b && b.isletmeAdi) || ''), 'tr');
+  });
+}
+
 function isletmeSorguTemizle() {
-  var ids = ['isletme-filtre', 'isletme-filtre-ilce', 'isletme-grup', 'isletme-alt-baslik', 'isletme-yer-sec'];
-  ids.forEach(function(id){ var el = document.getElementById(id); if (el) el.value = ''; });
-  isletmeAltFiltreleriGuncelle();
+  var qEl = document.getElementById('isletme-filtre'); if (qEl) qEl.value = '';
+  isletmeSorguSecimler = { ilce: [], grup: [], alt: [], faaliyet: [] };
+  isletmeSorguSecenekleriDoldur(false);
   isletmeListesiGuncelle();
 }
 
@@ -5523,15 +5668,14 @@ var sonIsletmeSorguSonuclari = [];
 
 function isletmeListesiGuncelle() {
   if (typeof isletmeSorguSecenekleriDoldur === 'function') {
-    var ilceSel = document.getElementById('isletme-filtre-ilce');
-    if (ilceSel && ilceSel.options.length <= 1) isletmeSorguSecenekleriDoldur();
+    if (!isletmeSorguSecenekCache.ilce || !isletmeSorguSecenekCache.ilce.length) isletmeSorguSecenekleriDoldur(true);
   }
   var qRaw = (document.getElementById('isletme-filtre')||{}).value || '';
   var q = _normTR(qRaw);
-  var ilce = (document.getElementById('isletme-filtre-ilce')||{}).value || '';
-  var grup = (document.getElementById('isletme-grup')||{}).value || '';
-  var altBaslik = (document.getElementById('isletme-alt-baslik')||{}).value || '';
-  var ikinciFiltre = (document.getElementById('isletme-yer-sec')||{}).value || '';
+  var ilcelerSecili = isletmeSorguSecimler.ilce || [];
+  var gruplarSecili = isletmeSorguSecimler.grup || [];
+  var altSecili = isletmeSorguSecimler.alt || [];
+  var faaliyetSecili = isletmeSorguSecimler.faaliyet || [];
   var el = document.getElementById('isletme-liste');
   var sonucEl = document.getElementById('isletme-liste-sonuc');
 
@@ -5543,22 +5687,18 @@ function isletmeListesiGuncelle() {
       _normTR(i.faaliyetAlani||'').indexOf(q) >= 0 ||
       _normTR(i.adres||'').indexOf(q) >= 0;
   });
-  if (ilce) sonuclar = sonuclar.filter(function(i) { return i.ilce === ilce; });
-  if (grup === 'uretim') {
+  if (ilcelerSecili.length) sonuclar = sonuclar.filter(function(i) { return ilcelerSecili.indexOf(i.ilce || '') >= 0; });
+  if (gruplarSecili.length) {
     sonuclar = sonuclar.filter(function(i) {
-      if (altBaslik) {
-        var kat = (typeof TUM_URETIM_KATEGORILER !== 'undefined' ? TUM_URETIM_KATEGORILER : []).find(function(k){ return k.id === altBaslik; });
-        return isletmeUretimBaslikSorguUyuyorMu(i, kat);
-      }
-      return isletmeUretimHerhangiBaslikMi(i);
+      var u = isletmeUretimHerhangiBaslikMi(i);
+      var s = typeof satisFaaliyetiMi === 'function' && satisFaaliyetiMi(i);
+      return (gruplarSecili.indexOf('uretim') >= 0 && u) || (gruplarSecili.indexOf('satis') >= 0 && s);
     });
   }
-  if (grup === 'satis') {
-    sonuclar = sonuclar.filter(function(i) {
-      return isletmeSatisYerUyuyorMu(i, altBaslik) && isletmeSatisFaaliyetUyuyorMu(i, ikinciFiltre);
-    });
-  }
+  if (altSecili.length) sonuclar = sonuclar.filter(function(i) { return isletmeAltSecimUyuyorMu(i, altSecili); });
+  if (faaliyetSecili.length) sonuclar = sonuclar.filter(function(i) { return isletmeFaaliyetSecimUyuyorMu(i, faaliyetSecili); });
   if (sorumlulukFiltreAktif) sonuclar = sonuclar.filter(function(i) { return isletmeHerhangiSorumlulukta(i); });
+  sonuclar = isletmeSorguSirala(sonuclar);
   sonIsletmeSorguSonuclari = sonuclar.slice();
 
   if (sonucEl) sonucEl.textContent = sonuclar.length.toLocaleString('tr-TR') + ' işletme bulundu';
@@ -5570,7 +5710,9 @@ function isletmeListesiGuncelle() {
     return;
   }
 
-  var goster = sonuclar.slice(0, 100);
+  var aktifFiltreSayisi = (q ? 1 : 0) + ilcelerSecili.length + gruplarSecili.length + altSecili.length + faaliyetSecili.length + (sorumlulukFiltreAktif ? 1 : 0);
+  var limitUygula = aktifFiltreSayisi <= 1;
+  var goster = limitUygula ? sonuclar.slice(0, 100) : sonuclar.slice();
   goster.forEach(function(isletme) {
     var row = document.createElement('div');
     row.style.cssText = 'border-bottom:1px solid var(--sinir);padding:10px 4px;cursor:pointer;position:relative;padding-right:72px;';
@@ -5598,7 +5740,7 @@ function isletmeListesiGuncelle() {
     el.appendChild(row);
   });
 
-  if (sonuclar.length > 100) {
+  if (limitUygula && sonuclar.length > 100) {
     var more = document.createElement('div');
     more.style.cssText = 'text-align:center;padding:14px;color:var(--gri);font-size:13px;';
     more.textContent = '... ve ' + (sonuclar.length-100).toLocaleString('tr-TR') + ' kayıt daha. Aramayı daraltın.';
@@ -5607,19 +5749,16 @@ function isletmeListesiGuncelle() {
 }
 
 function isletmeSorguFiltreOzetiHtml() {
-  function secimText(id, bos) {
-    var el = document.getElementById(id);
-    if (!el) return bos;
-    if (el.tagName === 'SELECT') {
-      return el.options[el.selectedIndex] ? el.options[el.selectedIndex].textContent : bos;
-    }
-    return el.value || bos;
+  function arrText(arr, bos) {
+    arr = arr || [];
+    if (!arr.length) return bos;
+    return arr.map(function(v){ return String(v).split(':').slice(1).join(':') || (v === 'uretim' ? 'Üretim' : v === 'satis' ? 'Satış' : v); }).join(', ');
   }
-  var q = secimText('isletme-filtre', 'Yok');
-  var ilce = secimText('isletme-filtre-ilce', 'Tüm İlçeler');
-  var grup = secimText('isletme-grup', 'Tüm İşletmeler');
-  var alt = secimText('isletme-alt-baslik', 'Tüm başlıklar');
-  var yer = secimText('isletme-yer-sec', 'Tüm faaliyet başlıkları');
+  var q = (document.getElementById('isletme-filtre')||{}).value || 'Yok';
+  var ilce = arrText(isletmeSorguSecimler.ilce, 'Tüm İlçeler');
+  var grup = arrText(isletmeSorguSecimler.grup, 'Tüm İşletmeler');
+  var alt = arrText(isletmeSorguSecimler.alt, 'Tüm başlıklar');
+  var yer = arrText(isletmeSorguSecimler.faaliyet, 'Tüm faaliyet başlıkları');
   return '<div class="ozet">' +
     '<b>Arama:</b> ' + _ekipEsc(q) + ' &nbsp; ' +
     '<b>İlçe:</b> ' + _ekipEsc(ilce) + ' &nbsp; ' +
@@ -5721,6 +5860,46 @@ function telefonAramaHtml(tel) {
     ' <a href="tel:' + temiz + '" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;color:var(--yesil);font-size:12px;font-weight:700;text-decoration:none;">☎ Ara</a>';
 }
 
+function isletmeTelefonlarHtml(i) {
+  var telList = [];
+  if (i && i.telefon) telList.push({ etiket:'Ana', tel:i.telefon });
+  (Array.isArray(i && i.ekTelefonlar) ? i.ekTelefonlar : []).forEach(function(t, ix) {
+    if (t && telList.every(function(x){ return x.tel !== t; })) telList.push({ etiket:'Ek ' + (ix + 1), tel:t });
+  });
+  var html = telList.length
+    ? telList.map(function(x){ return '<div style="margin-bottom:3px;"><span style="font-size:11px;color:var(--gri);display:inline-block;width:38px;">' + _ekipEsc(x.etiket) + '</span>' + telefonAramaHtml(x.tel) + '</div>'; }).join('')
+    : '<span style="color:var(--gri)">—</span>';
+  if (i && i.kayitNo) {
+    html += '<button class="btn btn-gri btn-kucuk" style="margin-top:5px;" onclick="isletmeTelefonEklePrompt(\'' + String(i.kayitNo).replace(/'/g,"\\'") + '\')">📞 Telefon Ekle</button>';
+  }
+  return html;
+}
+
+function isletmeTelefonEklePrompt(kayitNo) {
+  var ist = ISLETMELER.find(function(x){ return x.kayitNo === kayitNo; });
+  if (!ist) { bildirimGoster('İşletme bulunamadı.', 'hata'); return; }
+  var tel = prompt('Eklenecek telefon numarası:', '');
+  if (tel == null) return;
+  tel = String(tel || '').trim();
+  if (!tel) { bildirimGoster('Telefon numarası boş olamaz.', 'uyari'); return; }
+  var ekler = Array.isArray(ist.ekTelefonlar) ? ist.ekTelefonlar.slice() : [];
+  if (tel === ist.telefon || ekler.indexOf(tel) >= 0) { bildirimGoster('Bu telefon zaten kayıtlı.', 'uyari'); return; }
+  ekler.push(tel);
+  var docId = isletmeDocId(ist);
+  if (!docId) { bildirimGoster('Belge kimliği bulunamadı.', 'hata'); return; }
+  firebase.firestore().collection('isletmeler_master').doc(docId)
+    .set({ ekTelefonlar: ekler }, { merge: true })
+    .then(function() {
+      ist.ekTelefonlar = ekler;
+      try { if (typeof isletmelerCacheKaydet === 'function') isletmelerCacheKaydet(ISLETMELER); } catch(e) {}
+      if (typeof aktiviteKaydet === 'function') aktiviteKaydet('telefon_ekle', ist.isletmeAdi + ' telefon eklendi', { isletmeKayitNo:kayitNo, telefon:tel });
+      bildirimGoster('✅ Telefon eklendi', 'basari');
+      modalKapat();
+      isletmeDetayModal(kayitNo);
+    })
+    .catch(function(e){ bildirimGoster('Telefon kaydedilemedi: ' + e.message, 'hata'); });
+}
+
 function isletmeDetayModal(idx) {
   // idx sayı ise index, string ise kayıt no
   const i = (typeof idx === 'number') ? ISLETMELER[idx] : ISLETMELER.find(function(x){ return x.kayitNo === idx; });
@@ -5755,12 +5934,12 @@ function isletmeDetayModal(idx) {
         <span class="deger">${i.riskeDayaliDenetimTarihi || '<span style=\"color:var(--gri)\">Belirtilmemiş</span>'}</span>
         ${isAdmin && !i.riskeDayaliDenetimTarihi ? `<button class="btn btn-gri btn-kucuk" style="margin-left:6px;" onclick="riskTarihDuzenle('${i.kayitNo}','${i.isletmeAdi}')">✏️ Tarih Gir</button>` : ''}
       </div>
-      ${i.telefon ? `<div class="detay-satir"><span class="etiket-kucuk">Telefon</span><span class="deger">${telefonAramaHtml(i.telefon)}</span></div>` : ''}
+      <div class="detay-satir"><span class="etiket-kucuk">Telefon</span><span class="deger">${isletmeTelefonlarHtml(i)}</span></div>
       <div class="detay-satir"><span class="etiket-kucuk">Vergi Dairesi / No</span><span class="deger">${[i.vergiDairesi,i.vergiNo].filter(Boolean).join(' / ') || '<span style="color:var(--gri)">—</span>'}</span></div>
       <div class="detay-satir"><span class="etiket-kucuk">T.C. Kimlik No</span><span class="deger">${i.tcKimlikNo || '<span style="color:var(--gri)">—</span>'}</span></div>
     </div>
     ${i.adres ? `<div onclick="window.open('${_haritaUrl}','_blank')" style="background:var(--gri-acik);border-radius:7px;padding:10px 12px;font-size:13px;margin-top:8px;cursor:pointer;">📍 ${i.adres}${_gpsRozet} <span style="font-size:11px;color:var(--yesil);">🗺️ Haritada Göster</span></div>` : ''}
-        ${(i.koordinatlar && i.koordinatlar.lat) ? `<div id="_koord-kart" style="margin-top:8px;padding:10px 12px;background:#e8f5e9;border-radius:8px;border:1px solid #a5d6a7;"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:12px;font-weight:700;color:#1a5132;margin-bottom:2px;">📡 Kayıtlı GPS Konumu</div><div style="font-size:12px;color:#333;">${i.koordinatlar.lat.toFixed(6)}, ${i.koordinatlar.lng.toFixed(6)}</div></div><div style="display:flex;gap:6px;"><a href="https://maps.google.com/?q=${i.koordinatlar.lat},${i.koordinatlar.lng}" target="_blank" style="font-size:11px;color:#1a73e8;text-decoration:none;background:#fff;padding:4px 8px;border-radius:6px;border:1px solid #1a73e8;">🗺️ Harita</a> ${isAdmin ? `<button onclick="_koordinatSil('${i.kayitNo}')" style="font-size:11px;color:#c0392b;background:#fff;padding:4px 8px;border-radius:6px;border:1px solid #c0392b;cursor:pointer;">🗑️ Sil</button>` : ''}</div></div></div>` : ''}
+        ${(i.koordinatlar && i.koordinatlar.lat) ? `<div id="_koord-kart" style="margin-top:8px;padding:10px 12px;background:#e8f5e9;border-radius:8px;border:1px solid #a5d6a7;"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div><div style="font-size:12px;font-weight:700;color:#1a5132;margin-bottom:2px;">📡 Kayıtlı GPS Konumu</div><div style="font-size:12px;color:#333;">${Number(i.koordinatlar.lat).toFixed(6)}, ${Number(i.koordinatlar.lng).toFixed(6)}</div><div style="font-size:11px;color:#4f6f58;margin-top:2px;">${koordinatKaynakEtiketi(i.koordinatlar.kaynak)}${i.koordinatlar.tarih ? ' • ' + new Date(i.koordinatlar.tarih).toLocaleString('tr-TR') : ''}</div></div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;"><a href="https://maps.google.com/?q=${i.koordinatlar.lat},${i.koordinatlar.lng}" target="_blank" style="font-size:11px;color:#1a73e8;text-decoration:none;background:#fff;padding:4px 8px;border-radius:6px;border:1px solid #1a73e8;">🗺️ Harita</a> ${_sorumluBu ? `<button onclick="isletmeManuelKonumPrompt('${i.kayitNo}')" style="font-size:11px;color:#6d4c00;background:#fff;padding:4px 8px;border-radius:6px;border:1px solid #d19a00;cursor:pointer;">✏️ Manuel</button>` : ''} ${Array.isArray(i.koordinatGecmisi) && i.koordinatGecmisi.length > 1 ? `<button onclick="isletmeKoordinatGeriAl('${i.kayitNo}')" style="font-size:11px;color:#0d7a4e;background:#fff;padding:4px 8px;border-radius:6px;border:1px solid #0d7a4e;cursor:pointer;">↩ Yedekten Al</button>` : ''}</div></div></div>` : (_sorumluBu ? `<div style="margin-top:8px;padding:10px 12px;background:#fff8e1;border-radius:8px;border:1px solid #ffe0a3;"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><div style="font-size:12px;color:#6d4c00;">Bu işletmede kayıtlı GPS konumu yok.</div><button onclick="isletmeManuelKonumPrompt('${i.kayitNo}')" style="font-size:11px;color:#6d4c00;background:#fff;padding:4px 8px;border-radius:6px;border:1px solid #d19a00;cursor:pointer;">✏️ Manuel Koordinat Gir</button></div></div>` : '')}
     <div style="margin-top:16px;padding:12px;background:var(--yesil-acik);border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
       <span style="font-size:14px;font-weight:600;">Bu işletmede ${denetimSayisi} denetim kaydı var</span>
       ${_denetimEkleBtnHtml}
@@ -5796,12 +5975,179 @@ function yeniDenetimIsletmeyle(isletmeAdi, kayitNoVeyaIdx) {
   }, 50);
 }
 
+function koordinatVarMi(koord) {
+  return !!(koord && koord.lat != null && koord.lng != null && !isNaN(Number(koord.lat)) && !isNaN(Number(koord.lng)));
+}
+
+function koordinatKisa(koord) {
+  if (!koordinatVarMi(koord)) return '';
+  return Number(koord.lat).toFixed(6) + ', ' + Number(koord.lng).toFixed(6);
+}
+
+function koordinatKaynakEtiketi(kaynak) {
+  if (kaynak === 'manuel') return 'manuel giriş';
+  if (kaynak === 'denetim_formu') return 'denetim formu otomatik GPS';
+  if (kaynak === 'hizli_denetim') return 'hızlı denetim otomatik GPS';
+  if (kaynak === 'geri_al') return 'yedekten geri alma';
+  if (kaynak === 'silme_yedegi') return 'silmeden önceki yedek';
+  return kaynak || 'konum kaydı';
+}
+
+function koordinatGecmisEntry(koord, kaynak, notMetni) {
+  var tarih = new Date().toISOString();
+  return {
+    lat: Number(koord.lat),
+    lng: Number(koord.lng),
+    kaynak: kaynak || '',
+    kaynakEtiketi: koordinatKaynakEtiketi(kaynak),
+    not: notMetni || '',
+    tarih: tarih,
+    kullaniciId: mevcutKullanici ? mevcutKullanici.uid : '',
+    kullaniciAd: mevcutKullaniciAdi || ''
+  };
+}
+
+function koordinatGecmisHazirla(isletme, yeniKoord, kaynak, notMetni) {
+  var gecmis = Array.isArray(isletme && isletme.koordinatGecmisi) ? isletme.koordinatGecmisi.slice(-19) : [];
+  var mevcut = isletme && isletme.koordinatlar;
+  var mevcutVar = koordinatVarMi(mevcut);
+  var son = gecmis.length ? gecmis[gecmis.length - 1] : null;
+  if (mevcutVar && (!son || Math.abs(Number(son.lat) - Number(mevcut.lat)) > 0.0000005 || Math.abs(Number(son.lng) - Number(mevcut.lng)) > 0.0000005)) {
+    gecmis.push(koordinatGecmisEntry(mevcut, mevcut.kaynak || 'onceki_kayit', 'Üzerine yazmadan önce otomatik yedeklendi'));
+  }
+  gecmis.push(koordinatGecmisEntry(yeniKoord, kaynak, notMetni));
+  return gecmis.slice(-20);
+}
+
+function koordinatUzerineYazmaOnayi(isletme, yeniKoord, kaynak) {
+  if (!koordinatVarMi(isletme && isletme.koordinatlar)) return true;
+  var eski = koordinatKisa(isletme.koordinatlar);
+  var yeni = koordinatKisa(yeniKoord);
+  return confirm(
+    'Bu işletmenin kayıtlı koordinatı zaten var:\n' + eski + '\n\n' +
+    'Yeni ' + koordinatKaynakEtiketi(kaynak) + ' koordinatı:\n' + yeni + '\n\n' +
+    'Yanlış koordinat gerçek konumun üzerine yazılabilir. Eski konum yedeklenecek.\nDevam edilsin mi?'
+  );
+}
+
+function koordinatKaydetGuvenli(isletme, koord, kaynak, basariMesaji, hataMesaji) {
+  if (!isletme || !isletme.kayitNo) { bildirimGoster('Önce bir işletme seçin.', 'hata'); return Promise.reject(new Error('İşletme yok')); }
+  if (!koordinatVarMi(koord)) { bildirimGoster('Geçerli enlem ve boylam girilmedi.', 'hata'); return Promise.reject(new Error('Geçersiz koordinat')); }
+  var temizKoord = {
+    lat: Number(koord.lat),
+    lng: Number(koord.lng),
+    kaynak: kaynak || '',
+    tarih: new Date().toISOString(),
+    kullaniciId: mevcutKullanici ? mevcutKullanici.uid : '',
+    kullaniciAd: mevcutKullaniciAdi || ''
+  };
+  if (temizKoord.lat < -90 || temizKoord.lat > 90 || temizKoord.lng < -180 || temizKoord.lng > 180) {
+    bildirimGoster('Koordinat aralığı hatalı.', 'hata');
+    return Promise.reject(new Error('Koordinat aralığı hatalı'));
+  }
+  if (!koordinatUzerineYazmaOnayi(isletme, temizKoord, kaynak)) return Promise.resolve(false);
+  var ist = ISLETMELER.find(function(x){ return x.kayitNo === isletme.kayitNo; }) || isletme;
+  var oncekiKoord = koordinatVarMi(ist.koordinatlar) ? { lat: Number(ist.koordinatlar.lat), lng: Number(ist.koordinatlar.lng), kaynak: ist.koordinatlar.kaynak || '' } : null;
+  var gecmis = koordinatGecmisHazirla(ist, temizKoord, kaynak, '');
+  var docId = isletmeDocId(ist);
+  if (!docId) { bildirimGoster('Belge kimliği bulunamadı.', 'hata'); return Promise.reject(new Error('Belge kimliği yok')); }
+  return firebase.firestore().collection('isletmeler_master').doc(docId)
+    .update({ koordinatlar: temizKoord, koordinatGecmisi: gecmis })
+    .then(function() {
+      ist.koordinatlar = temizKoord;
+      ist.koordinatGecmisi = gecmis;
+      if (isletmeSecildi && isletmeSecildi.kayitNo === ist.kayitNo) {
+        isletmeSecildi.koordinatlar = temizKoord;
+        isletmeSecildi.koordinatGecmisi = gecmis;
+      }
+      aktiviteKaydet('konum_alindi', ist.isletmeAdi + ' konumu kaydedildi (' + koordinatKaynakEtiketi(kaynak) + ')', { lat: temizKoord.lat, lng: temizKoord.lng, isletmeKayitNo: ist.kayitNo, isletmeAdi: ist.isletmeAdi, kaynak: kaynak });
+      firebase.firestore().collection('konum_kayitlari').add({
+        isletmeAdi: ist.isletmeAdi,
+        isletmeKayitNo: ist.kayitNo || '',
+        lat: temizKoord.lat,
+        lng: temizKoord.lng,
+        kaynak: kaynak || '',
+        oncekiKoordinat: oncekiKoord,
+        tarih: temizKoord.tarih,
+        kullaniciId: temizKoord.kullaniciId,
+        kullaniciAd: temizKoord.kullaniciAd
+      }).catch(function(e){ console.warn('konum_kayitlari yazılamadı:', e.message); });
+      if (typeof isletmelerCacheKaydet === 'function') isletmelerCacheKaydet(ISLETMELER);
+      bildirimGoster(basariMesaji || '✅ Konum kaydedildi', 'basari');
+      return true;
+    })
+    .catch(function(e) {
+      bildirimGoster((hataMesaji || '❌ Konum kaydedilemedi: ') + e.message, 'hata');
+      throw e;
+    });
+}
+
+function manuelKoordinatParse(latVal, lngVal) {
+  var lat = Number(String(latVal || '').replace(',', '.'));
+  var lng = Number(String(lngVal || '').replace(',', '.'));
+  if (isNaN(lat) || isNaN(lng)) return null;
+  return { lat: lat, lng: lng };
+}
+
+function formManuelKonumAc() {
+  var box = document.getElementById('manuel-konum-alan');
+  if (!box) return;
+  box.style.display = (box.style.display === 'none' || !box.style.display) ? 'block' : 'none';
+  if (isletmeSecildi && koordinatVarMi(isletmeSecildi.koordinatlar)) {
+    var lat = document.getElementById('manuel-lat'), lng = document.getElementById('manuel-lng');
+    if (lat && !lat.value) lat.value = Number(isletmeSecildi.koordinatlar.lat).toFixed(6);
+    if (lng && !lng.value) lng.value = Number(isletmeSecildi.koordinatlar.lng).toFixed(6);
+  }
+}
+
+function formManuelKonumKaydet() {
+  var isletme = isletmeSecildi;
+  var koord = manuelKoordinatParse(document.getElementById('manuel-lat').value, document.getElementById('manuel-lng').value);
+  if (!koord) { bildirimGoster('Enlem ve boylam sayısal olmalı.', 'hata'); return; }
+  koordinatKaydetGuvenli(isletme, koord, 'manuel', '✅ Manuel koordinat kaydedildi').then(function(ok) {
+    if (ok) _formKonumDurumGuncelle();
+  });
+}
+
+function isletmeManuelKonumPrompt(kayitNo) {
+  var ist = ISLETMELER.find(function(x){ return x.kayitNo === kayitNo; });
+  if (!ist) { bildirimGoster('İşletme bulunamadı.', 'hata'); return; }
+  var varsayilan = koordinatVarMi(ist.koordinatlar) ? koordinatKisa(ist.koordinatlar) : '';
+  var giris = prompt('Manuel koordinatı "enlem, boylam" şeklinde girin.\nÖrnek: 38.756123, 30.538456', varsayilan);
+  if (giris == null) return;
+  var parca = String(giris).split(/[;, ]+/).filter(Boolean);
+  var koord = manuelKoordinatParse(parca[0], parca[1]);
+  if (!koord) { bildirimGoster('Koordinat biçimi okunamadı.', 'hata'); return; }
+  koordinatKaydetGuvenli(ist, koord, 'manuel', '✅ Manuel koordinat kaydedildi').then(function(ok) {
+    if (ok) { modalKapat(); isletmeDetayModal(kayitNo); }
+  });
+}
+
+function isletmeKoordinatGeriAl(kayitNo) {
+  var ist = ISLETMELER.find(function(x){ return x.kayitNo === kayitNo; });
+  if (!ist || !Array.isArray(ist.koordinatGecmisi) || ist.koordinatGecmisi.length < 2) {
+    bildirimGoster('Geri alınacak yedek koordinat yok.', 'uyari');
+    return;
+  }
+  var mevcut = ist.koordinatlar;
+  var adaylar = ist.koordinatGecmisi.slice().reverse().filter(function(k) {
+    return koordinatVarMi(k) && (!koordinatVarMi(mevcut) || Math.abs(Number(k.lat) - Number(mevcut.lat)) > 0.0000005 || Math.abs(Number(k.lng) - Number(mevcut.lng)) > 0.0000005);
+  });
+  var onceki = adaylar[0];
+  if (!onceki) { bildirimGoster('Farklı bir yedek koordinat bulunamadı.', 'uyari'); return; }
+  if (!confirm('Kayıtlı konum yedekten geri alınacak:\n' + koordinatKisa(onceki) + '\n\nMevcut konum da yedekte kalacak. Devam edilsin mi?')) return;
+  koordinatKaydetGuvenli(ist, onceki, 'geri_al', '✅ Koordinat yedekten geri alındı').then(function(ok) {
+    if (ok) { modalKapat(); isletmeDetayModal(kayitNo); }
+  });
+}
+
 function _formKonumDurumGuncelle() {
   var el = document.getElementById('konum-durum');
   if (!el) return;
   var i = isletmeSecildi;
   if (i && i.koordinatlar && i.koordinatlar.lat) {
-    el.innerHTML = '📡 Kayıtlı konum: ' + i.koordinatlar.lat.toFixed(6) + ', ' + i.koordinatlar.lng.toFixed(6) + ' <a href="https://maps.google.com/?q=' + i.koordinatlar.lat + ',' + i.koordinatlar.lng + '" target="_blank" style="color:#1a73e8;">🗺️ Harita</a>';
+    var etiket = i.koordinatlar.kaynak ? ' • ' + koordinatKaynakEtiketi(i.koordinatlar.kaynak) : '';
+    el.innerHTML = '📡 Kayıtlı konum: ' + Number(i.koordinatlar.lat).toFixed(6) + ', ' + Number(i.koordinatlar.lng).toFixed(6) + etiket + ' <a href="https://maps.google.com/?q=' + i.koordinatlar.lat + ',' + i.koordinatlar.lng + '" target="_blank" style="color:#1a73e8;">🗺️ Harita</a>';
   } else {
     el.textContent = 'Henüz konum kaydı yok.';
   }
@@ -5811,36 +6157,12 @@ function formKonumEkle() {
   var isletme = isletmeSecildi;
   if (!isletme || !isletme.kayitNo) { bildirimGoster('Önce bir işletme seçin.', 'hata'); return; }
   if (!navigator.geolocation) { bildirimGoster('Cihaz konum desteklemiyor.', 'hata'); return; }
-  var mevcut = isletme.koordinatlar && isletme.koordinatlar.lat;
-  if (mevcut && !confirm('Bu işletmenin konumu zaten kayıtlı (' + isletme.koordinatlar.lat.toFixed(5) + ', ' + isletme.koordinatlar.lng.toFixed(5) + ').\nYeni konumla değiştirmek istiyor musunuz?')) return;
   bildirimGoster('📍 Konum alınıyor...', 'bilgi');
   navigator.geolocation.getCurrentPosition(function(pos) {
     var koord = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-    var ist = ISLETMELER.find(function(x){ return x.kayitNo === isletme.kayitNo; });
-    if (ist) ist.koordinatlar = koord;
-    if (isletmeSecildi) isletmeSecildi.koordinatlar = koord;
-    try {
-      var docId = isletmeDocId(isletme);
-      if (docId) {
-        firebase.firestore().collection('isletmeler_master').doc(docId)
-          .update({ koordinatlar: koord })
-          .then(function() {
-            aktiviteKaydet('konum_alindi', isletme.isletmeAdi + ' konumu kaydedildi (denetim formu)', { lat: koord.lat, lng: koord.lng, isletmeKayitNo: isletme.kayitNo, isletmeAdi: isletme.isletmeAdi });
-            firebase.firestore().collection('konum_kayitlari').add({
-              isletmeAdi: isletme.isletmeAdi,
-              isletmeKayitNo: isletme.kayitNo || '',
-              lat: koord.lat,
-              lng: koord.lng,
-              tarih: new Date().toISOString(),
-              kullaniciId: mevcutKullanici ? mevcutKullanici.uid : '',
-              kullaniciAd: mevcutKullaniciAdi || ''
-            }).catch(function(e){ console.warn('konum_kayitlari yazılamadı:', e.message); });
-          })
-          .catch(function(e){ bildirimGoster('❌ Konum kaydedilemedi: ' + e.message, 'hata'); });
-      }
-    } catch(e){ console.warn('konum kayıt hatası:', e.message); }
-    _formKonumDurumGuncelle();
-    bildirimGoster('✅ Konum kaydedildi', 'basari');
+    koordinatKaydetGuvenli(isletme, koord, 'denetim_formu', '✅ Konum kaydedildi').then(function(ok) {
+      if (ok) _formKonumDurumGuncelle();
+    }).catch(function(e){ console.warn('konum kayıt hatası:', e.message); });
   }, function(e){ bildirimGoster('❌ Konum alınamadı: ' + e.message, 'hata'); }, { enableHighAccuracy: true, timeout: 10000 });
 }
 
@@ -5885,6 +6207,15 @@ function isletmeDocId(i) {
 
 function isletmeNormalize(i) {
   i = i || {};
+  function telefonListeNormalize(v) {
+    if (!Array.isArray(v)) return [];
+    var gorulen = {};
+    return v.map(function(t){ return String(t || '').trim(); }).filter(function(t) {
+      if (!t || gorulen[t]) return false;
+      gorulen[t] = true;
+      return true;
+    }).slice(0, 5);
+  }
   var _o = {
     no: String(i.no || ''),
     isletmeAdi: String(i.isletmeAdi || i['İşletme Adı'] || ''),
@@ -5899,9 +6230,33 @@ function isletmeNormalize(i) {
     sorumluBirim: String(i.sorumluBirim || i['Sorumlu Birim'] || ''),
     vergiDairesi: String(i.vergiDairesi || ''),
     vergiNo: String(i.vergiNo || ''),
-    tcKimlikNo: String(i.tcKimlikNo || '')
+    tcKimlikNo: String(i.tcKimlikNo || ''),
+    ekTelefonlar: telefonListeNormalize(i.ekTelefonlar)
   };
-  if (i.koordinatlar && i.koordinatlar.lat != null) { _o.koordinatlar = { lat: Number(i.koordinatlar.lat), lng: Number(i.koordinatlar.lng) }; }
+  if (i.koordinatlar && i.koordinatlar.lat != null) {
+    _o.koordinatlar = {
+      lat: Number(i.koordinatlar.lat),
+      lng: Number(i.koordinatlar.lng),
+      kaynak: String(i.koordinatlar.kaynak || ''),
+      tarih: String(i.koordinatlar.tarih || ''),
+      kullaniciId: String(i.koordinatlar.kullaniciId || ''),
+      kullaniciAd: String(i.koordinatlar.kullaniciAd || '')
+    };
+  }
+  if (Array.isArray(i.koordinatGecmisi)) {
+    _o.koordinatGecmisi = i.koordinatGecmisi.filter(koordinatVarMi).slice(-20).map(function(k) {
+      return {
+        lat: Number(k.lat),
+        lng: Number(k.lng),
+        kaynak: String(k.kaynak || ''),
+        kaynakEtiketi: String(k.kaynakEtiketi || koordinatKaynakEtiketi(k.kaynak || '')),
+        not: String(k.not || ''),
+        tarih: String(k.tarih || ''),
+        kullaniciId: String(k.kullaniciId || ''),
+        kullaniciAd: String(k.kullaniciAd || '')
+      };
+    });
+  }
   return _o;
 }
 
@@ -5909,6 +6264,7 @@ function isletmelerBellegeUygula(liste, kaynak) {
   if (!Array.isArray(liste) || liste.length < 10) return false;
   var temiz = liste.map(isletmeNormalize).filter(function(i){ return i.isletmeAdi; });
   if (temiz.length < 10) return false;
+  manuelKonumTohumUygula(temiz);
 
   temiz.sort(function(a,b){
     var na = parseInt(a.no || '0', 10), nb = parseInt(b.no || '0', 10);
@@ -5948,6 +6304,94 @@ function isletmelerBellegeUygula(liste, kaynak) {
     isletmeListesiGuncelle();
   }
   return true;
+}
+
+function isletmeExcelRaporEtiketi(i) {
+  var b = (typeof isletmeBaslikBelirle === 'function') ? isletmeBaslikBelirle(i) : null;
+  var baslik = (typeof _baslikAdGoster === 'function') ? _baslikAdGoster(b) : '';
+  var se = (typeof isletmeSorumluEkip === 'function') ? isletmeSorumluEkip(i) : null;
+  var ekip = se && se.ekip ? (se.ekip.ad || se.ekip.id || '') : '';
+  return [ekip, baslik].filter(Boolean).join(' / ') || 'başlık belirlenemedi';
+}
+
+function isletmeAlanDegisimleri(eski, yeni) {
+  eski = eski || {};
+  yeni = yeni || {};
+  var alanlar = [
+    ['isletmeAdi','İşletme adı'], ['faaliyetAlani','Faaliyet'], ['adres','Adres'],
+    ['ilce','İlçe'], ['izinDurumu','İzin durumu'], ['riskeDayaliDenetimTarihi','Risk tarihi'],
+    ['telefon','Telefon'], ['firmaTuru','Firma türü'], ['sorumluBirim','Sorumlu birim'],
+    ['vergiDairesi','Vergi dairesi'], ['vergiNo','Vergi no'], ['tcKimlikNo','TC kimlik no']
+  ];
+  var farklar = [];
+  alanlar.forEach(function(a) {
+    var k = a[0], et = a[1];
+    if (String(eski[k] || '') !== String(yeni[k] || '')) {
+      farklar.push({ alan: et, eski: String(eski[k] || '—'), yeni: String(yeni[k] || '—') });
+    }
+  });
+  return farklar;
+}
+
+function telefonlariBirlestir(eskiVeri, excelTelefon) {
+  eskiVeri = eskiVeri || {};
+  var ana = String(eskiVeri.telefon || excelTelefon || '').trim();
+  var ekler = Array.isArray(eskiVeri.ekTelefonlar) ? eskiVeri.ekTelefonlar.slice() : [];
+  var excel = String(excelTelefon || '').trim();
+  if (excel && ana && excel !== ana && ekler.indexOf(excel) < 0) ekler.push(excel);
+  var gorulen = {};
+  ekler = ekler.map(function(t){ return String(t || '').trim(); }).filter(function(t) {
+    if (!t || t === ana || gorulen[t]) return false;
+    gorulen[t] = true;
+    return true;
+  }).slice(0, 5);
+  return { telefon: ana, ekTelefonlar: ekler };
+}
+
+function excelGuncellemeRaporuKaydet(rapor) {
+  try { localStorage.setItem('excel_guncelleme_raporu', JSON.stringify(rapor || {})); } catch(e) {}
+  if (typeof excelGuncellemeRaporuGoster === 'function') excelGuncellemeRaporuGoster();
+}
+
+function excelGuncellemeRaporuGoster() {
+  var el = document.getElementById('excel-guncelleme-raporu');
+  if (!el) return;
+  var rapor = null;
+  try { rapor = JSON.parse(localStorage.getItem('excel_guncelleme_raporu') || 'null'); } catch(e) {}
+  if (!rapor) {
+    el.innerHTML = '<div style="padding:12px;background:var(--gri-acik);border-radius:8px;font-size:13px;color:var(--gri);">Henüz Excel güncelleme raporu yok.</div>';
+    return;
+  }
+  function listeHtml(baslik, liste, renk, render) {
+    liste = liste || [];
+    var h = '<details style="border:1px solid var(--sinir);border-radius:8px;margin-bottom:8px;background:#fff;" ' + (liste.length ? 'open' : '') + '>' +
+      '<summary style="cursor:pointer;padding:9px 12px;font-weight:700;font-size:13px;color:' + renk + ';">' + baslik + ' (' + liste.length + ')</summary>';
+    if (!liste.length) h += '<div style="padding:0 12px 10px;font-size:12px;color:var(--gri);">Kayıt yok.</div>';
+    else {
+      h += '<div style="max-height:260px;overflow:auto;padding:0 12px 10px;">';
+      liste.slice(0, 300).forEach(function(x){ h += render(x); });
+      if (liste.length > 300) h += '<div style="font-size:12px;color:var(--gri);padding:6px 0;">... ve ' + (liste.length - 300) + ' kayıt daha</div>';
+      h += '</div>';
+    }
+    return h + '</details>';
+  }
+  var html = '<div style="padding:12px;background:#f7fbf8;border:1px solid #d8eadf;border-radius:10px;">' +
+    '<div style="font-weight:800;font-size:14px;margin-bottom:4px;color:#1a5132;">📊 Son Excel Güncelleme Raporu</div>' +
+    '<div style="font-size:12px;color:var(--gri);margin-bottom:10px;">' + _ekipEsc(rapor.tarih || '') + ' • ' + (rapor.toplam || 0).toLocaleString('tr-TR') + ' işletme</div>';
+  html += listeHtml('Yeni eklenenler', rapor.eklenenler, 'var(--yesil)', function(x) {
+    return '<div style="padding:6px 0;border-top:1px solid var(--sinir);font-size:12px;"><b>' + _ekipEsc(x.kayitNo || '') + '</b> ' + _ekipEsc(x.ad || '') + '<br><span style="color:var(--gri);">' + _ekipEsc(x.etiket || '') + '</span></div>';
+  });
+  html += listeHtml('Excelde olmadığı için pasif/silinmiş sayılanlar', rapor.silinenler, 'var(--kirmizi)', function(x) {
+    return '<div style="padding:6px 0;border-top:1px solid var(--sinir);font-size:12px;"><b>' + _ekipEsc(x.kayitNo || '') + '</b> ' + _ekipEsc(x.ad || '') + '</div>';
+  });
+  html += listeHtml('Risk tarihi değişenler', rapor.tarihGuncellenenler, 'var(--turuncu)', function(x) {
+    return '<div style="padding:6px 0;border-top:1px solid var(--sinir);font-size:12px;"><b>' + _ekipEsc(x.kayitNo || '') + '</b> ' + _ekipEsc(x.ad || '') + '<br><span style="color:var(--gri);">' + _ekipEsc(x.eski || '—') + '</span> → <span style="color:var(--yesil);font-weight:700;">' + _ekipEsc(x.yeni || '—') + '</span></div>';
+  });
+  html += listeHtml('Diğer bilgi değişiklikleri', rapor.degisenler, '#1a56c4', function(x) {
+    var alan = (x.alanlar || []).slice(0, 4).map(function(a){ return a.alan + ': ' + a.eski + ' → ' + a.yeni; }).join(' • ');
+    return '<div style="padding:6px 0;border-top:1px solid var(--sinir);font-size:12px;"><b>' + _ekipEsc(x.kayitNo || '') + '</b> ' + _ekipEsc(x.ad || '') + '<br><span style="color:var(--gri);">' + _ekipEsc(alan) + '</span></div>';
+  });
+  el.innerHTML = html + '</div>';
 }
 
 // --- Gömülü sorumlu tohum: hesaplama / kaydetme / açılışta uygulama ---
@@ -6026,7 +6470,7 @@ function gomuluTohumUygula(){
 function isletmelerMasterAlanEsitMi(a, b) {
   a = isletmeNormalize(a || {});
   b = isletmeNormalize(b || {});
-  var alanlar = ['no','isletmeAdi','kayitNo','faaliyetAlani','adres','ilce','izinDurumu','riskeDayaliDenetimTarihi','telefon','firmaTuru','sorumluBirim','vergiDairesi','vergiNo','tcKimlikNo'];
+  var alanlar = ['no','isletmeAdi','kayitNo','faaliyetAlani','adres','ilce','izinDurumu','riskeDayaliDenetimTarihi','telefon','firmaTuru','sorumluBirim','vergiDairesi','vergiNo','tcKimlikNo','ekTelefonlar'];
   return alanlar.every(function(k){ return String(a[k] || '') === String(b[k] || ''); }) && (b.aktif !== false);
 }
 
@@ -6068,11 +6512,16 @@ function isletmelerMasterFirestoreYukle(liste, durumEl) {
         eklenen++;
         yeni.createdAtClient = version;
         yazilacak.push({id:id, data:yeni});
-      } else if (!isletmelerMasterAlanEsitMi(yeni, eski)) {
-        guncellenen++;
-        yazilacak.push({id:id, data:yeni});
       } else {
-        degismeyen++;
+        var telKoruma = telefonlariBirlestir(eski, yeni.telefon);
+        yeni.telefon = telKoruma.telefon;
+        yeni.ekTelefonlar = telKoruma.ekTelefonlar;
+        if (!isletmelerMasterAlanEsitMi(yeni, eski)) {
+          guncellenen++;
+          yazilacak.push({id:id, data:yeni});
+        } else {
+          degismeyen++;
+        }
       }
     });
 
@@ -6334,22 +6783,33 @@ function excelYukle(file) {
       var eskiKayitlar = {};
       ISLETMELER.forEach(function(i){ eskiKayitlar[i.kayitNo] = i; });
       var eklenen = 0, silinen = 0, tarihGuncellenen = 0;
-      var eklenenListe = [], tarihListe = [], silinenListe = [];
+      var eklenenListe = [], tarihListe = [], silinenListe = [], degisenListe = [];
       Object.keys(eskiKayitlar).forEach(function(k){ if (!yeniKayitlar[k]) { silinen++; var _e=eskiKayitlar[k]; silinenListe.push({ad:(_e&&_e.isletmeAdi)||k, kayitNo:k}); } });
       yeniIsletmeler.forEach(function(i) {
-        if (!eskiKayitlar[i.kayitNo]) { eklenen++; eklenenListe.push({ad:i.isletmeAdi||'', kayitNo:i.kayitNo||'', tarih:i.riskeDayaliDenetimTarihi||''}); }
-        else if (i.riskeDayaliDenetimTarihi && eskiKayitlar[i.kayitNo].riskeDayaliDenetimTarihi !== i.riskeDayaliDenetimTarihi) {
-          tarihGuncellenen++;
-          tarihListe.push({ad:i.isletmeAdi||'', kayitNo:i.kayitNo||'', eski:eskiKayitlar[i.kayitNo].riskeDayaliDenetimTarihi||'—', yeni:i.riskeDayaliDenetimTarihi});
+        var eskiI = eskiKayitlar[i.kayitNo];
+        if (!eskiI) { eklenen++; eklenenListe.push({ad:i.isletmeAdi||'', kayitNo:i.kayitNo||'', tarih:i.riskeDayaliDenetimTarihi||'', etiket:isletmeExcelRaporEtiketi(i)}); }
+        else {
+          var farklar = isletmeAlanDegisimleri(eskiI, i);
+          if (i.riskeDayaliDenetimTarihi !== eskiI.riskeDayaliDenetimTarihi) {
+            tarihGuncellenen++;
+            tarihListe.push({ad:i.isletmeAdi||'', kayitNo:i.kayitNo||'', eski:eskiI.riskeDayaliDenetimTarihi||'—', yeni:i.riskeDayaliDenetimTarihi || '—'});
+          }
+          var digerFarklar = farklar.filter(function(f){ return f.alan !== 'Risk tarihi'; });
+          if (digerFarklar.length) degisenListe.push({ad:i.isletmeAdi||'', kayitNo:i.kayitNo||'', alanlar:digerFarklar});
         }
       });
 
-      // ISLETMELER güncelle — mevcut işletmelerin faaliyetAlani korunur (kategori donması)
-      // Yeni işletmelerde GGBS verisi aynen kullanılır; eski işletmelerde sadece detaylar güncellenir.
+      // ISLETMELER güncelle — konum hariç tüm alanlarda Excel/GGBS verisi esastır.
       var birlesikIsletmeler = yeniIsletmeler.map(function(i){
         var eskiVeri = eskiKayitlar[i.kayitNo];
         if (eskiVeri) {
-          return Object.assign({}, i, {faaliyetAlani: eskiVeri.faaliyetAlani || i.faaliyetAlani});
+          var korunan = {};
+          if (eskiVeri.koordinatlar) korunan.koordinatlar = eskiVeri.koordinatlar;
+          if (Array.isArray(eskiVeri.koordinatGecmisi)) korunan.koordinatGecmisi = eskiVeri.koordinatGecmisi;
+          var telKoruma = telefonlariBirlestir(eskiVeri, i.telefon);
+          korunan.telefon = telKoruma.telefon;
+          korunan.ekTelefonlar = telKoruma.ekTelefonlar;
+          return Object.assign({}, i, korunan);
         }
         return i;
       });
@@ -6481,6 +6941,15 @@ function excelYukle(file) {
       if (silinen) parcalar.push(silinen + ' Excelde yok / pasif yapılacak');
       if (tarihGuncellenen + uretimGunc > 0) parcalar.push((tarihGuncellenen + uretimGunc) + ' risk tarihi güncellendi');
 
+      excelGuncellemeRaporuKaydet({
+        tarih: new Date().toLocaleString('tr-TR'),
+        toplam: birlesikIsletmeler.length,
+        eklenenler: eklenenListe,
+        silinenler: silinenListe,
+        tarihGuncellenenler: tarihListe,
+        degisenler: degisenListe
+      });
+
       // Aktivite log — özet + hangi işletmeler eklendi / tarihleri değişti (tek tek)
       try {
         if (typeof aktiviteKaydet === 'function') {
@@ -6492,7 +6961,8 @@ function excelYukle(file) {
             silinenSayi: silinen,
             eklenenler: eklenenListe.slice(0, _MAXDETAY),
             tarihGuncellenenler: tarihListe.slice(0, _MAXDETAY),
-            silinenler: silinenListe.slice(0, _MAXDETAY)
+            silinenler: silinenListe.slice(0, _MAXDETAY),
+            degisenler: degisenListe.slice(0, _MAXDETAY)
           });
         }
       } catch(e) { console.warn('Excel aktivite log hatası:', e); }
@@ -6818,9 +7288,13 @@ function kullaniciBilgiYukle(user) {
   }).catch(function() {});
 }
 
-function denetimlerdenRiskTarihleriniUygula(denetimListesi) {
+function denetimlerdenRiskTarihleriniUygula(denetimListesi, secenek) {
+  secenek = secenek || {};
   // Her işletmenin en son denetiminden 1 yıl sonrasını risk tarihi olarak hesapla
   var sonDenetim = {}; // kayitNo -> en son denetim tarihi (YYYY-MM-DD string)
+  var masterVersion = '';
+  try { masterVersion = localStorage.getItem('isletmeler_master_version') || ''; } catch(e) {}
+  var masterMs = masterVersion ? Date.parse(masterVersion) : 0;
 
   function normalizeTarih(t) {
     if (!t) return null;
@@ -6836,6 +7310,10 @@ function denetimlerdenRiskTarihleriniUygula(denetimListesi) {
 
   denetimListesi.forEach(function(d) {
     if (!d.isletmeKayitNo || !d.tarih) return;
+    if (masterMs && d.olusturma) {
+      var olMs = Date.parse(d.olusturma);
+      if (!isNaN(olMs) && olMs <= masterMs) return;
+    }
     var t = normalizeTarih(d.tarih);
     if (!t) return;
     if (!sonDenetim[d.isletmeKayitNo] || t > sonDenetim[d.isletmeKayitNo]) {
@@ -6848,8 +7326,8 @@ function denetimlerdenRiskTarihleriniUygula(denetimListesi) {
     var birYilSonra = new Date(son.getFullYear()+1, son.getMonth(), son.getDate());
     var yeniTarih = birYilSonra.getDate().toString().padStart(2,'0') + '/' +
       (birYilSonra.getMonth()+1).toString().padStart(2,'0') + '/' + birYilSonra.getFullYear();
-    // Denetimden türeyen tarih risk tarihini yalnızca İLERİ taşımalı.
-    // GGBS/Excel ile gelen daha yeni bir tarihi, eski bir denetime dayanan tarih GERİ ALMAMALI.
+    // Denetim Excel'den sonra girildiyse risk tarihini ileri taşır; yeni Excel gelince masterVersion
+    // değişeceği için eski denetimler artık tekrar Excel tarihini ezmez.
     var yeniNorm = birYilSonra.getFullYear() + '-' +
       (birYilSonra.getMonth()+1).toString().padStart(2,'0') + '-' +
       birYilSonra.getDate().toString().padStart(2,'0');
@@ -8508,7 +8986,7 @@ function hizliDenetimEkle(isletme, _btn) {
       '<div style="font-size:26px;margin-bottom:8px;">📍</div>' +
       '<div style="font-weight:700;font-size:15px;margin-bottom:6px;">' + _ekipEsc(isletme.isletmeAdi) + '</div>' +
       '<div style="font-size:12px;color:#0d7a4e;background:#f0faf5;border-radius:8px;padding:8px;margin-bottom:14px;">Mevcut konum: ' + latStr + ', ' + lngStr + '</div>' +
-      '<div style="font-size:13px;color:#555;line-height:1.55;margin-bottom:16px;">Bu işletmenin konumu daha önce kaydedilmiş.<br>Ne yapmak istersiniz?</div>' +
+      '<div style="font-size:13px;color:#555;line-height:1.55;margin-bottom:16px;">Bu işletmenin konumu daha önce kaydedilmiş. Yeni konum alırsanız eski koordinat yedeklenecek; yine de yanlış konum gerçek konumun üzerine yazılabilir.<br>Ne yapmak istersiniz?</div>' +
       '<div style="display:flex;flex-direction:column;gap:10px;">' +
         '<button id="_hd-onayla" class="btn btn-yesil" style="font-size:14px;padding:11px 14px;">✅ Mevcut konumu koru</button>' +
         '<button id="_hd-yenikonum" class="btn" style="background:#1a73e8;color:#fff;font-size:14px;padding:11px 14px;border-radius:10px;border:none;cursor:pointer;">📍 Yeni konum al</button>' +
@@ -8578,28 +9056,8 @@ function _hizliDenetimKaydet(isletme, _btn, konumdaYim) {
         if (konumdaYim && isletme.kayitNo && navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(function(pos) {
             var koord = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            var ist = ISLETMELER.find(function(x){ return x.kayitNo === isletme.kayitNo; });
-            if (ist) ist.koordinatlar = koord;
-            try {
-              var docId = isletmeDocId(isletme);
-              if (docId) {
-                firebase.firestore().collection('isletmeler_master').doc(docId)
-                  .update({ koordinatlar: koord })
-                  .then(function() {
-                    aktiviteKaydet('konum_alindi', isletme.isletmeAdi + ' konumu kaydedildi', { lat: koord.lat, lng: koord.lng, isletmeKayitNo: isletme.kayitNo, isletmeAdi: isletme.isletmeAdi });
-                    firebase.firestore().collection('konum_kayitlari').add({
-                      isletmeAdi: isletme.isletmeAdi,
-                      isletmeKayitNo: isletme.kayitNo || '',
-                      lat: koord.lat,
-                      lng: koord.lng,
-                      tarih: new Date().toISOString(),
-                      kullaniciId: mevcutKullanici ? mevcutKullanici.uid : '',
-                      kullaniciAd: mevcutKullaniciAdi || ''
-                    }).catch(function(e){ console.warn('konum_kayitlari yazılamadı:', e.message); });
-                  })
-                  .catch(function(e){ console.warn('koordinat kaydı başarısız:', e.message); });
-              }
-            } catch(e){ console.warn('koordinat kayıt hatası:', e.message); }
+            koordinatKaydetGuvenli(isletme, koord, 'hizli_denetim', '✅ Hızlı denetim konumu kaydedildi')
+              .catch(function(e){ console.warn('koordinat kayıt hatası:', e.message); });
           }, function(e){ console.warn('konum alınamadı:', e.message); },
           { enableHighAccuracy: true, timeout: 10000 });
         }
@@ -9663,17 +10121,23 @@ function _apKonumCiz(el, metaMap) {
     var altSatir = meta
       ? (_ekipEsc(meta.kullaniciAd || '—') + ' • ' + (meta.tarih ? new Date(meta.tarih).toLocaleString('tr-TR') : '—'))
       : '<span style="color:#aaa;">(eski kayıt — kim/ne zaman bilgisi yok)</span>';
-    var silBtn = '<button onclick="_koordinatSil(\'' + (i.kayitNo||'') + '\')" style="font-size:11px;color:#c0392b;background:#fff;padding:4px 8px;border-radius:6px;border:1px solid #c0392b;cursor:pointer;">🗑️ Sil</button>';
+    var kaynakSatir = i.koordinatlar.kaynak ? ('<div style="font-size:11px;color:#4f6f58;margin-top:2px;">' + _ekipEsc(koordinatKaynakEtiketi(i.koordinatlar.kaynak)) + (Array.isArray(i.koordinatGecmisi) && i.koordinatGecmisi.length ? ' • ' + i.koordinatGecmisi.length + ' yedek' : '') + '</div>') : '';
+    var manuelBtn = '<button onclick="isletmeManuelKonumPrompt(\'' + (i.kayitNo||'') + '\')" style="font-size:11px;color:#6d4c00;background:#fff;padding:4px 8px;border-radius:6px;border:1px solid #d19a00;cursor:pointer;">✏️ Manuel</button>';
+    var geriBtn = (Array.isArray(i.koordinatGecmisi) && i.koordinatGecmisi.length > 1)
+      ? '<button onclick="isletmeKoordinatGeriAl(\'' + (i.kayitNo||'') + '\')" style="font-size:11px;color:#0d7a4e;background:#fff;padding:4px 8px;border-radius:6px;border:1px solid #0d7a4e;cursor:pointer;">↩ Yedekten Al</button>'
+      : '';
     row.innerHTML =
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
         '<div class="apk-info" style="min-width:0;cursor:pointer;">' +
           '<div style="font-weight:600;font-size:14px;">' + _ekipEsc(i.isletmeAdi || '—') + '</div>' +
           '<div style="font-size:12px;color:var(--gri);margin-top:2px;">' + altSatir + '</div>' +
           '<div style="font-size:11px;color:#888;margin-top:2px;">' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '</div>' +
+          kaynakSatir +
         '</div>' +
         '<div style="display:flex;flex-direction:column;gap:5px;white-space:nowrap;">' +
           '<a href="' + mapsUrl + '" target="_blank" style="font-size:11px;color:#1a73e8;text-decoration:none;text-align:center;">🗺️ Harita</a>' +
-          silBtn +
+          manuelBtn +
+          geriBtn +
         '</div>' +
       '</div>';
     el.appendChild(row);
@@ -9682,15 +10146,20 @@ function _apKonumCiz(el, metaMap) {
 }
 
 function _koordinatSil(kayitNo) {
-  if (!confirm('Bu işletmenin GPS konumu silinecek. Emin misiniz?')) return;
+  bildirimGoster('Koordinat kayıtları artık silinmez; yanlışlık varsa yedekten geri alın veya manuel doğru koordinatı kaydedin.', 'uyari');
+  return;
+  if (!confirm('Bu işletmenin GPS konumu silinecek. Mevcut koordinat önce yedeklenecek; gerektiğinde yedekten geri alınabilir.\nDevam edilsin mi?')) return;
   var ist = ISLETMELER.find(function(x){ return x.kayitNo === kayitNo; });
   if (!ist) { bildirimGoster('❌ İşletme bulunamadı', 'hata'); return; }
   var docId = isletmeDocId(ist);
   if (!docId) { bildirimGoster('❌ Belge kimliği bulunamadı', 'hata'); return; }
+  var gecmis = Array.isArray(ist.koordinatGecmisi) ? ist.koordinatGecmisi.slice(-19) : [];
+  if (koordinatVarMi(ist.koordinatlar)) gecmis.push(koordinatGecmisEntry(ist.koordinatlar, 'silme_yedegi', 'Silinmeden önce yedeklendi'));
   firebase.firestore().collection('isletmeler_master').doc(docId)
-    .update({ koordinatlar: firebase.firestore.FieldValue.delete() })
+    .update({ koordinatlar: firebase.firestore.FieldValue.delete(), koordinatGecmisi: gecmis.slice(-20) })
     .then(function() {
       delete ist.koordinatlar;
+      ist.koordinatGecmisi = gecmis.slice(-20);
       bildirimGoster('✅ Konum silindi', 'basari');
       aktiviteKaydet('konum_silindi', ist.isletmeAdi + ' konumu silindi', { isletmeKayitNo: kayitNo });
       modalKapat();
