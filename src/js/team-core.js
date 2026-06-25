@@ -232,6 +232,7 @@ function aktifEkibeGec(id, yenidenCiz) {
   if (!ek) return;
   if(typeof riskCacheTemizle==='function') riskCacheTemizle();
   ekipKurallariUygula(ek);
+  try { if (typeof planliEkipDenetimlerYukle === 'function') planliEkipDenetimlerYukle(); } catch(e){}
   // Gömülü sorumluluk tohumunu bu ekibe göre tekrar hesapla (varsa)
   try { if (typeof sorumluTohumHesapla === 'function') { /* tohum aktif kurala göre yeniden üretilir */ } } catch(e){}
   if (yenidenCiz !== false) {

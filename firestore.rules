@@ -33,6 +33,16 @@ service cloud.firestore {
       );
     }
 
+    function aktifEkipUyesi(ekipId) {
+      return aktifKullanici() && (
+        adminMi() ||
+        (
+          exists(/databases/$(database)/documents/kullanicilar/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/kullanicilar/$(request.auth.uid)).data.get('ekipId', '') == ekipId
+        )
+      );
+    }
+
     // ── Kullanıcılar ──────────────────────────────────────────────────────
     match /kullanicilar/{uid} {
       // Kayıt sırasında yeni belge oluşturabilir (durum: beklemede olmalı)
@@ -75,6 +85,14 @@ service cloud.firestore {
     match /planlanan_denetimler/{uid}/{docId} {
       allow read:   if girisYapti() && (request.auth.uid == uid || adminMi());
       allow write:  if girisYapti() && (request.auth.uid == uid || adminMi());
+    }
+    match /planlanan_denetimler_ekip/{ekipId} {
+      allow read:   if aktifEkipUyesi(ekipId);
+      allow write:  if aktifEkipUyesi(ekipId);
+    }
+    match /planlanan_denetimler_ekip/{ekipId}/{docId} {
+      allow read:   if aktifEkipUyesi(ekipId);
+      allow write:  if aktifEkipUyesi(ekipId);
     }
 
     // ── Aktiviteler (log) ─────────────────────────────────────────────────
