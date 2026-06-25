@@ -4814,9 +4814,14 @@ function _planliListeGuncelle() {
   var actions = document.createElement('div');
   actions.style.cssText = 'display:flex;align-items:center;gap:8px;flex-shrink:0;';
   var rotaBtn = document.createElement('button');
+  rotaBtn.type = 'button';
   rotaBtn.className = 'btn btn-yesil btn-kucuk';
   rotaBtn.textContent = 'Rota Oluştur';
-  rotaBtn.onclick = function() { planliRotaSecimAc(); };
+  rotaBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    planliRotaSecimAc();
+  });
   var closeB = document.createElement('button');
   closeB.style.cssText = 'background:none;border:none;font-size:18px;cursor:pointer;color:var(--gri);';
   closeB.textContent = '✕';
@@ -5034,48 +5039,67 @@ function planliRotaSecimAc() {
   function ciz() {
     var h = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">' +
       '<div><div style="font-weight:800;font-size:16px;">Rota için işletme seç</div><div id="planli-rota-secim-sayi" style="font-size:12px;color:var(--gri);margin-top:2px;">' + sayi() + ' / ' + liste.length + ' seçili</div></div>' +
-      '<button id="planli-rota-secim-kapat" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--gri);">✕</button></div>';
+      '<button type="button" id="planli-rota-secim-kapat" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--gri);touch-action:manipulation;">✕</button></div>';
     h += '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">' +
-      '<button id="planli-rota-tumunu-sec" class="btn btn-gri btn-kucuk">Tümünü Seç</button>' +
-      '<button id="planli-rota-temizle" class="btn btn-gri btn-kucuk">Temizle</button>' +
-      '<button id="planli-rota-secili-ac" class="btn btn-yesil btn-kucuk">Seçilenlerle Rota Aç</button></div>';
+      '<button type="button" id="planli-rota-tumunu-sec" class="btn btn-gri btn-kucuk" style="touch-action:manipulation;">Tümünü Seç</button>' +
+      '<button type="button" id="planli-rota-temizle" class="btn btn-gri btn-kucuk" style="touch-action:manipulation;">Temizle</button>' +
+      '<button type="button" id="planli-rota-secili-ac" class="btn btn-yesil btn-kucuk" style="touch-action:manipulation;">Seçilenlerle Rota Aç</button></div>';
     h += '<div style="border-top:1px solid var(--sinir);">';
     liste.forEach(function(p) {
       var kn = p.kayitNo || '';
       var checked = secili[kn] ? 'checked' : '';
       var alt = [(p.ilce ? '📍 ' + p.ilce : ''), (p.__planAdres && p.__planAdres.etiket ? '🧭 ' + p.__planAdres.etiket : ''), (p.adres ? p.adres : '')].filter(Boolean).join('  ');
-      h += '<div data-planli-rota-satir="' + _ekipEsc(kn) + '" style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--sinir);cursor:pointer;user-select:none;">' +
+      h += '<div role="button" tabindex="0" data-planli-rota-satir="' + _ekipEsc(kn) + '" style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--sinir);cursor:pointer;user-select:none;touch-action:manipulation;">' +
         '<input type="checkbox" data-planli-rota-kayit="' + _ekipEsc(kn) + '" ' + checked + ' style="margin-top:3px;width:18px;height:18px;pointer-events:none;">' +
         '<span style="flex:1;min-width:0;"><span style="display:block;font-weight:700;font-size:13px;">' + _ekipEsc(p.isletmeAdi || '-') + '</span>' +
         '<span style="display:block;font-size:11px;color:var(--gri);margin-top:2px;">' + _ekipEsc([kn, alt].filter(Boolean).join(' • ')) + '</span></span></div>';
     });
     h += '</div>';
     box.innerHTML = h;
-    var kapatBtn = box.querySelector('#planli-rota-secim-kapat');
-    if (kapatBtn) kapatBtn.onclick = function(){ ov.remove(); };
-    var tumBtn = box.querySelector('#planli-rota-tumunu-sec');
-    if (tumBtn) tumBtn.onclick = function(){ planliRotaSecimTumunuAyarla(true); };
-    var temizBtn = box.querySelector('#planli-rota-temizle');
-    if (temizBtn) temizBtn.onclick = function(){ planliRotaSecimTumunuAyarla(false); };
-    var acBtn = box.querySelector('#planli-rota-secili-ac');
-    if (acBtn) acBtn.onclick = function(){ planliRotaSecilenleriAc(); };
-    box.querySelectorAll('[data-planli-rota-satir]').forEach(function(row) {
-      row.onclick = function() {
-        var kn = this.getAttribute('data-planli-rota-satir');
-        secili[kn] = !secili[kn];
-        var ch = this.querySelector('[data-planli-rota-kayit]');
-        if (ch) ch.checked = !!secili[kn];
-        var s = document.getElementById('planli-rota-secim-sayi');
-        if (s) s.textContent = sayi() + ' / ' + liste.length + ' seçili';
-      };
-    });
-    box.querySelectorAll('[data-planli-rota-kayit]').forEach(function(ch) {
-      ch.onchange = function() {
-        secili[this.getAttribute('data-planli-rota-kayit')] = this.checked;
-        var s = document.getElementById('planli-rota-secim-sayi');
-        if (s) s.textContent = sayi() + ' / ' + liste.length + ' seçili';
-      };
-    });
+    box.onclick = function(e) {
+      var hedef = e.target;
+      if (hedef.closest('#planli-rota-secim-kapat')) {
+        e.preventDefault();
+        e.stopPropagation();
+        ov.remove();
+        return;
+      }
+      if (hedef.closest('#planli-rota-tumunu-sec')) {
+        e.preventDefault();
+        e.stopPropagation();
+        planliRotaSecimTumunuAyarla(true);
+        return;
+      }
+      if (hedef.closest('#planli-rota-temizle')) {
+        e.preventDefault();
+        e.stopPropagation();
+        planliRotaSecimTumunuAyarla(false);
+        return;
+      }
+      if (hedef.closest('#planli-rota-secili-ac')) {
+        e.preventDefault();
+        e.stopPropagation();
+        planliRotaSecilenleriAc();
+        return;
+      }
+      var row = hedef.closest('[data-planli-rota-satir]');
+      if (!row || !box.contains(row)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var kn = row.getAttribute('data-planli-rota-satir');
+      secili[kn] = !secili[kn];
+      var ch = row.querySelector('[data-planli-rota-kayit]');
+      if (ch) ch.checked = !!secili[kn];
+      var s = document.getElementById('planli-rota-secim-sayi');
+      if (s) s.textContent = sayi() + ' / ' + liste.length + ' seçili';
+    };
+    box.onkeydown = function(e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var row = e.target.closest('[data-planli-rota-satir]');
+      if (!row || !box.contains(row)) return;
+      e.preventDefault();
+      row.click();
+    };
   }
   window.planliRotaSecimTumunuAyarla = function(deger) {
     liste.forEach(function(p){ if (p.kayitNo) secili[p.kayitNo] = !!deger; });
