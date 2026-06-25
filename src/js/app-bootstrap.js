@@ -62,64 +62,38 @@ function addClickHandler(el, fn) {
 var ADMIN_UID = 'sIKGnuwKj7cAMGnPvJg3BF1JWXf1';
 window.ADMIN_UID = ADMIN_UID;
 
-// Vergi/TC lookup - Excel importtan kalıcı veri
-var VERGI_LOOKUP = (function() {
-  try { return JSON.parse(localStorage.getItem('vergi_lookup') || '{}'); } catch(e) { return {}; }
-})();
+// Vergi/TC bilgileri artık kişisel veri riski nedeniyle kullanılmaz ve saklanmaz.
+var VERGI_LOOKUP = {};
 
 function vergiLookupUygula(liste) {
   if (!liste || !liste.length) return;
   liste.forEach(function(ist) {
-    var lu = ist.kayitNo && VERGI_LOOKUP[ist.kayitNo];
-    if (!lu) return;
-    if (!ist.vergiDairesi && lu.vergiDairesi) ist.vergiDairesi = lu.vergiDairesi;
-    if (!ist.vergiNo && lu.vergiNo) ist.vergiNo = lu.vergiNo;
-    if (!ist.tcKimlikNo && lu.tcKimlikNo) ist.tcKimlikNo = lu.tcKimlikNo;
+    if (!ist) return;
+    delete ist.vergiDairesi;
+    delete ist.vergiNo;
+    delete ist.tcKimlikNo;
   });
 }
 
-// --- Vergi/TC lookup Firestore senkronizasyonu ---
-// localStorage hızlı yerel önbellek olarak kalır; Firestore kalıcı ana kaynaktır.
-// Tüm harita tek dokümanda tutulur: app_meta/vergi_lookup
 function _fbAktifMi() {
   return typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length;
 }
 
-// Belleği + localStorage önbelleğini güncelle, sonra Firestore'a yaz.
 var _vergiKaydetZaman = null;
 function vergiLookupKaydet() {
-  // Yerel önbellek (anında, çevrimdışı için)
-  try { localStorage.setItem('vergi_lookup', JSON.stringify(VERGI_LOOKUP)); } catch(e) {}
-  // Firestore'a yaz (kısa debounce ile peş peşe yazımları birleştir)
+  VERGI_LOOKUP = {};
+  try { localStorage.removeItem('vergi_lookup'); } catch(e) {}
   if (_vergiKaydetZaman) clearTimeout(_vergiKaydetZaman);
   _vergiKaydetZaman = setTimeout(function() {
     if (!_fbAktifMi()) return;
     firebase.firestore().collection('app_meta').doc('vergi_lookup')
-      .set({ veri: VERGI_LOOKUP, guncelleme: new Date().toISOString() })
-      .catch(function(e){ console.warn('vergi_lookup Firestore kaydı başarısız:', e.message); });
+      .delete()
+      .catch(function(e){ console.warn('vergi_lookup Firestore temizliği başarısız:', e.message); });
   }, 800);
 }
 
-// Açılışta Firestore'dan yükle, bellek + önbelleği güncelle, listelere uygula.
 function vergiLookupFirestoreYukle() {
-  if (!_fbAktifMi()) return;
-  firebase.firestore().collection('app_meta').doc('vergi_lookup').get()
-    .then(function(doc) {
-      if (!doc.exists) {
-        // İlk kez: yerel önbellekte veri varsa Firestore'a taşı (tek seferlik geçiş)
-        if (Object.keys(VERGI_LOOKUP).length) vergiLookupKaydet();
-        return;
-      }
-      var uzak = (doc.data() || {}).veri || {};
-      // Uzak veri ile belleği birleştir (uzaktaki değerler önceliklidir)
-      Object.assign(VERGI_LOOKUP, uzak);
-      try { localStorage.setItem('vergi_lookup', JSON.stringify(VERGI_LOOKUP)); } catch(e) {}
-      // Yüklenmiş listelere yeniden uygula
-      try { if (typeof ISLETMELER !== 'undefined') vergiLookupUygula(ISLETMELER); } catch(e) {}
-      try { if (typeof URETIM_YERLERI !== 'undefined') vergiLookupUygula(URETIM_YERLERI); } catch(e) {}
-      try { if (typeof KOY_ISLETMELERI !== 'undefined') Object.keys(KOY_ISLETMELERI).forEach(function(k){ vergiLookupUygula(KOY_ISLETMELERI[k]); }); } catch(e) {}
-    })
-    .catch(function(e){ console.warn('vergi_lookup Firestore okuması başarısız:', e.message); });
+  vergiLookupKaydet();
 }
 if (window._fbHazir) { vergiLookupFirestoreYukle(); }
 else { window.addEventListener('fb-hazir', vergiLookupFirestoreYukle); }
