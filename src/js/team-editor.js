@@ -134,12 +134,15 @@ function ekipIsletmeSayisi(ekip){
   return (s.ekipToplam&&s.ekipToplam[ekip.id])||0;
 }
 function ekipSeciciDoldur(){
-  var opts=EKIPLER.map(function(e){ return '<option value="'+_ekipEsc(e.id)+'"'+(e.id===aktifEkipId?' selected':'')+'>'+_ekipEsc(e.ad||e.id)+' ('+ekipIsletmeSayisi(e)+' işletme)</option>'; }).join('');
+  var tumSecili=(typeof adminTumEkipSecili==='function'&&adminTumEkipSecili());
+  var tumSayi=EKIPLER.reduce(function(top,e){ return top+ekipIsletmeSayisi(e); },0);
+  var opts=((typeof isAdmin!=='undefined'&&isAdmin)?'<option value="__tum__"'+(tumSecili?' selected':'')+'>Tümü ('+tumSayi+' işletme) - görüntüleme</option>':'')+
+    EKIPLER.map(function(e){ return '<option value="'+_ekipEsc(e.id)+'"'+(!tumSecili&&e.id===aktifEkipId?' selected':'')+'>'+_ekipEsc(e.ad||e.id)+' ('+ekipIsletmeSayisi(e)+' işletme)</option>'; }).join('');
   ['ekip-secici','ekip-secici-ozet'].forEach(function(id){ var sel=document.getElementById(id); if(sel) sel.innerHTML=opts; });
 }
 function ekipSeciciDegisti(id){
   if(typeof aktifEkibeGec==='function') aktifEkibeGec(id);
-  _duzenlenenEkipId = id;
+  if(id!=='__tum__') _duzenlenenEkipId = id;
   try{ if(typeof sorumluluklarimGoster==='function') sorumluluklarimGoster(); }catch(e){}
   try{ if(typeof ekipYonetimiGoster==='function' && document.getElementById('ekip-yonetim-root')) ekipYonetimiGoster(); }catch(e){}
   if(typeof ekipSeciciDoldur==='function') ekipSeciciDoldur();
@@ -208,6 +211,18 @@ function ekipSecenekSayilari(){
 // Aktif ekibin (başlığı belirlenebilen) işletmeleri — önbellekli indeksden, tüm listeyi taramadan
 function aktifEkipUyeleri(){
   var c=ekipSecenekSayilari();
+  if(typeof adminTumEkipSecili==='function'&&adminTumEkipSecili()){
+    var out=[], gorulen={};
+    Object.keys((c&&c.ekipUyeleri)||{}).forEach(function(eid){
+      (c.ekipUyeleri[eid]||[]).forEach(function(rec){
+        var key=(rec.i&&rec.i.kayitNo)||(rec.i&&rec.i.isletmeAdi+'|'+rec.i.adres)||'';
+        if(key&&gorulen[key]) return;
+        if(key) gorulen[key]=true;
+        out.push(rec);
+      });
+    });
+    return out;
+  }
   return (c && c.ekipUyeleri && c.ekipUyeleri[aktifEkipId]) || [];
 }
 // Önbellekli başlık: ekipSecenekSayilari pass'inde hesaplanmış değeri döndürür (ekip geçişinde yeniden hesaplama yok)

@@ -60,6 +60,7 @@ if (window._fbHazir) { ekstraBasliklarYukle(); } else { window.addEventListener(
 
 function baslikEkle(tip) {
   if (!isAdmin) { bildirimGoster('Bu işlemi sadece admin yapabilir.', 'hata'); return; }
+  if (typeof tumEkipGoruntulemeModu==='function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde başlık düzenlenemez. Önce bir ekip seçin.', 'uyari'); return; }
   var deger = (_baslikEklemeDeger[tip]||'').trim();
   if (!deger) { bildirimGoster('Lütfen bir ad girin.', 'hata'); return; }
   if (tip==='mahalle') {
@@ -85,6 +86,7 @@ function baslikEkle(tip) {
 }
 function baslikEkstraSil(tip, deger) {
   if (!isAdmin) { bildirimGoster('Bu işlemi sadece admin yapabilir.', 'hata'); return; }
+  if (typeof tumEkipGoruntulemeModu==='function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde başlık düzenlenemez. Önce bir ekip seçin.', 'uyari'); return; }
   if (tip==='mahalle') {
     MAHALLE_EKSTRA = MAHALLE_EKSTRA.filter(function(m){return m!==deger;});
     var idx = MERKEZ_MAHALLE_MASTER.indexOf(deger); if(idx>=0) MERKEZ_MAHALLE_MASTER.splice(idx,1);
@@ -133,6 +135,7 @@ function baslikAd(tip, key) {
   return key;
 }
 function baslikEkibeAta(tip, key, ekipId) {
+  if (typeof tumEkipGoruntulemeModu==='function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde sorumluluk düzenlenemez. Önce bir ekip seçin.', 'uyari'); return; }
   var eskiEkip = null, yeniEkip = null;
   EKIPLER.forEach(function(e){
     var l = _baslikListe(e, tip);

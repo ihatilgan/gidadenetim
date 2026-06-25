@@ -144,7 +144,12 @@ async function offlineKuyruguGonder() {
         await firebase.firestore().collection('denetimler').doc(String(item.id)).set(gonderilecek);
       }
       basariliAnahtarlar.push(item.type + ':' + item.id);
-    } catch(e) { console.warn('Offline sync hatası:', e); }
+    } catch(e) {
+      console.warn('Offline sync hatası:', e);
+      if (item.type === 'delete' && e && (e.code === 'permission-denied' || /permission|insufficient/i.test(e.message || ''))) {
+        offlineDurumGuncelle('⚠️ Denetim silme yetki hatası - Firestore rules güncellenmeli');
+      }
+    }
   }
   if (basariliAnahtarlar.length) {
     var kalan = kuyruk.filter(function(x){ return basariliAnahtarlar.indexOf(x.type + ':' + x.id) === -1; });

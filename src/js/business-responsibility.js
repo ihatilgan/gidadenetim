@@ -60,6 +60,7 @@ function isletmeSorumlulukSatiri(i){
 
 var _baslikDegisArama = '';
 function isletmeBaslikDegistirAc(an){
+  if(typeof tumEkipGoruntulemeModu==='function' && tumEkipGoruntulemeModu()){ bildirimGoster('Tüm ekipler görünümünde işletme düzenlenemez. Önce bir ekip seçin.','uyari'); return; }
   var i=_isletmeBulAnahtar(an); if(!i) return;
   _baslikDegisArama='';
   var ov=document.getElementById('baslik-degis-overlay'); if(ov) ov.remove();
@@ -143,6 +144,7 @@ function _baslikDegisGuncelle(an){
 }
 function _baslikDegisYeniEkle(an, deger){
   if(!isAdmin){ bildirimGoster('Bu işlemi sadece admin yapabilir.','hata'); return; }
+  if(typeof tumEkipGoruntulemeModu==='function' && tumEkipGoruntulemeModu()){ bildirimGoster('Tüm ekipler görünümünde işletme düzenlenemez. Önce bir ekip seçin.','uyari'); return; }
   deger = deger.trim();
   if(!deger){ bildirimGoster('Başlık adı boş olamaz.','hata'); return; }
   var anKey = an.replace(/[^a-zA-Z0-9]/g,'_');
@@ -168,6 +170,7 @@ function _baslikDegisYeniEkle(an, deger){
   isletmeBaslikUygula(an, tip, key);
 }
 function isletmeBaslikUygula(an, tip, key){
+  if(typeof tumEkipGoruntulemeModu==='function' && tumEkipGoruntulemeModu()){ bildirimGoster('Tüm ekipler görünümünde işletme düzenlenemez. Önce bir ekip seçin.','uyari'); return; }
   var i=_isletmeBulAnahtar(an);
   manuelBaslik[an]={tip:tip,key:key};
   if(typeof manuelEkip!=='undefined') delete manuelEkip[an];
@@ -181,6 +184,7 @@ function isletmeBaslikUygula(an, tip, key){
   _detayTazele(an);
 }
 function isletmeOtomatigeDondur(an){
+  if(typeof tumEkipGoruntulemeModu==='function' && tumEkipGoruntulemeModu()){ bildirimGoster('Tüm ekipler görünümünde işletme düzenlenemez. Önce bir ekip seçin.','uyari'); return; }
   var i=_isletmeBulAnahtar(an);
   if(typeof manuelBaslik!=='undefined') delete manuelBaslik[an];
   if(typeof manuelEkip!=='undefined') delete manuelEkip[an];
@@ -192,6 +196,7 @@ function isletmeOtomatigeDondur(an){
   _detayTazele(an);
 }
 function isletmeYoksayEt(an){
+  if(typeof tumEkipGoruntulemeModu==='function' && tumEkipGoruntulemeModu()){ bildirimGoster('Tüm ekipler görünümünde işletme düzenlenemez. Önce bir ekip seçin.','uyari'); return; }
   var i=_isletmeBulAnahtar(an);
   if(typeof yoksayListesi!=='undefined' && yoksayListesi.indexOf(an)<0) yoksayListesi.push(an);
   if(typeof yoksayKaydet==='function') yoksayKaydet();
@@ -201,6 +206,7 @@ function isletmeYoksayEt(an){
   _detayTazele(an);
 }
 function isletmeYoksayKaldir(an){
+  if(typeof tumEkipGoruntulemeModu==='function' && tumEkipGoruntulemeModu()){ bildirimGoster('Tüm ekipler görünümünde işletme düzenlenemez. Önce bir ekip seçin.','uyari'); return; }
   var i=_isletmeBulAnahtar(an);
   if(typeof yoksayListesi!=='undefined'){ var ix=yoksayListesi.indexOf(an); if(ix>=0) yoksayListesi.splice(ix,1); }
   if(typeof yoksayKaydet==='function') yoksayKaydet();
@@ -215,6 +221,7 @@ window.isletmeBaslikUygula=isletmeBaslikUygula;
 window.isletmeOtomatigeDondur=isletmeOtomatigeDondur;
 window.isletmeYoksayEt=isletmeYoksayEt;
 function isletmeEkibeAta(an, ekipId){
+  if(typeof tumEkipGoruntulemeModu==='function' && tumEkipGoruntulemeModu()){ bildirimGoster('Tüm ekipler görünümünde işletme düzenlenemez. Önce bir ekip seçin.','uyari'); return; }
   var i=_isletmeBulAnahtar(an);
   if(typeof manuelEkip==='undefined') return;
   manuelEkip[an]=ekipId;
@@ -227,6 +234,7 @@ function isletmeEkibeAta(an, ekipId){
   _detayTazele(an);
 }
 function isletmeEkipOverrideKaldir(an){
+  if(typeof tumEkipGoruntulemeModu==='function' && tumEkipGoruntulemeModu()){ bildirimGoster('Tüm ekipler görünümünde işletme düzenlenemez. Önce bir ekip seçin.','uyari'); return; }
   var i=_isletmeBulAnahtar(an);
   if(typeof manuelEkip!=='undefined') delete manuelEkip[an];
   if(typeof manuelEkipKaydet==='function') manuelEkipKaydet();

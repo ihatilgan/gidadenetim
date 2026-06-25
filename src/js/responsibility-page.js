@@ -71,8 +71,9 @@ function sorumluluklarimGoster() {
   if(aramaDiv) aramaDiv.style.display='flex';
   if(sonucDiv) sonucDiv.style.display='none';
 
+  var tumModu = (typeof adminTumEkipSecili==='function'&&adminTumEkipSecili());
   var ekip = (typeof aktifEkip==='function') ? aktifEkip() : null;
-  if (!ekip){ liste.innerHTML='<div class="bos-durum"><div class="ikon">👤</div><p>Henüz bir ekibe atanmadınız. Yöneticinize başvurun.</p></div>'; _sorumluTabSayiGuncelle({}); return; }
+  if (!ekip && !tumModu){ liste.innerHTML='<div class="bos-durum"><div class="ikon">👤</div><p>Henüz bir ekibe atanmadınız. Yöneticinize başvurun.</p></div>'; _sorumluTabSayiGuncelle({}); return; }
 
   var arama = ((document.getElementById('sorumluluk-arama')||{}).value||'').trim().toLocaleLowerCase('tr');
   var aktifTipler = {};
@@ -107,7 +108,9 @@ function sorumluluklarimGoster() {
   _sonGruplar = gruplar;
 
   var h='';
-  if(!isAdminF){
+  if(tumModu){
+    h+='<div style="font-weight:600;font-size:14px;margin-bottom:10px;">👁 Tüm Ekipler <span style="color:var(--gri);font-weight:400;">('+toplam+' işletme · sadece görüntüleme)</span></div>';
+  } else if(!isAdminF){
     h+='<div style="font-weight:600;font-size:14px;margin-bottom:10px;">👁 '+_ekipEsc(ekip.ad||ekip.id)+' <span style="color:var(--gri);font-weight:400;">('+toplam+' işletme)</span></div>';
   }
   h+='<button class="btn '+(_sorumlulukRiskFiltre?'btn-turuncu':'btn-gri')+'" style="width:100%;margin-bottom:12px;" onclick="_sorumlulukRiskFiltre=!_sorumlulukRiskFiltre;sorumluluklarimGoster();">'+(_sorumlulukRiskFiltre?'✓ ':'')+'⚠️ Risk Tarihi Geçenleri Filtrele ('+riskSay+')</button>';
@@ -138,7 +141,7 @@ function sorumluluklarimGoster() {
         h+='<div style="font-size:11px;color:var(--gri);margin-top:2px;">'+_ekipEsc(i.kayitNo||'')+riskHtml+'</div>';
         h+='</div>';
       });
-      if(isAdminF){
+      if(isAdminF && !tumModu){
         var gkDomId='mgr-'+gk.replace(/[^a-zA-Z0-9]/g,'_');
         if(_manuelEklemeGrubu===gk){
           h+='<div style="margin-top:6px;">';
@@ -184,6 +187,7 @@ function _manuelGrubaEkleSonucHTML(gk) {
 }
 function _manuelGrubaEkle(gk, kayitNo) {
   if (!isAdmin) { bildirimGoster('Bu işlemi sadece admin yapabilir.', 'hata'); return; }
+  if (typeof tumEkipGoruntulemeModu==='function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde sorumluluk düzenlenemez. Önce bir ekip seçin.', 'uyari'); return; }
   var isletme = (typeof ISLETMELER!=='undefined'?ISLETMELER:[]).find(function(i){ return i.kayitNo===kayitNo; });
   if (!isletme) { bildirimGoster('İşletme bulunamadı.', 'hata'); return; }
   var kolonIdx = gk.indexOf(':');
@@ -257,6 +261,7 @@ function isletmeSorumluMuDetayli(isletme) {
 }
 function sorumlulukCikar(kayitNo) {
   if (!isAdmin) { bildirimGoster('Bu işlemi sadece admin yapabilir.', 'hata'); return; }
+  if (typeof tumEkipGoruntulemeModu==='function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde sorumluluk düzenlenemez. Önce bir ekip seçin.', 'uyari'); return; }
   if (!haricTutulanlar.includes(kayitNo)) {
     haricTutulanlar.push(kayitNo);
     if (typeof manuelSorumlular !== 'undefined') manuelSorumlular = manuelSorumlular.filter(function(k){ return k !== kayitNo; });
@@ -292,6 +297,7 @@ function sorumlulukGeriAl(kayitNo) {
 // Manuel sorumluluğa alma (admin) — kategorisine göre listeye girer, Firebase + gömülü tohum güncellenir
 function sorumlulukAl(kayitNo) {
   if (!isAdmin) { bildirimGoster('Bu işlemi sadece admin yapabilir.', 'hata'); return; }
+  if (typeof tumEkipGoruntulemeModu==='function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde sorumluluk düzenlenemez. Önce bir ekip seçin.', 'uyari'); return; }
   if (!kayitNo) { bildirimGoster('Kayıt numarası olmayan işletme eklenemez.', 'hata'); return; }
   haricTutulanlar = haricTutulanlar.filter(function(k){ return k !== kayitNo; });
   if (typeof manuelSorumlular === 'undefined') manuelSorumlular = [];

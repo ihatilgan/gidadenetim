@@ -2994,6 +2994,7 @@ function hizliDenetimIdx(idx) {
 }
 
 function riskTarihDuzenle(kayitNo, isletmeAdi) {
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde düzenleme yapılamaz. Önce bir ekip seçin.', 'uyari'); return; }
   var mevcut = '';
   var isletme = ISLETMELER.find(function(x){ return x.kayitNo===kayitNo||x.isletmeAdi===isletmeAdi; }) ||
                 URETIM_YERLERI.find(function(x){ return x.kayitNo===kayitNo; });
@@ -3038,6 +3039,7 @@ function riskTarihDuzenle(kayitNo, isletmeAdi) {
 }
 function denetimDuzenlebilir(d) {
   if (!mevcutKullanici) return false;
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) return false;
   if (isAdmin) return true;
   if (d.kullaniciId && d.kullaniciId === mevcutKullanici.uid) return true;
   if (!d.kullaniciId && d.denetciler && d.denetciler.includes(mevcutKullaniciAdi)) return true;
@@ -3052,8 +3054,20 @@ function denetimSilOnayla(id) {
     var silinen = d;
     denetimler = denetimler.filter(function(x){return x.id!==id;});
     localStorage.setItem('denetimler', JSON.stringify(denetimler));
-    if (typeof firebaseSil === 'function') firebaseSil(id);
-    aktiviteKaydet('denetim_sil', silinen.isletme + ' denetimi silindi', {kayitNo: silinen.isletmeKayitNo, denetimNo: silinen.denetimNo});
+    var sunucuSilme = (typeof firebaseSil === 'function')
+      ? firebaseSil(id, { sessiz: false, denetim: silinen })
+      : Promise.resolve({ durum: 'yerel' });
+    Promise.resolve(sunucuSilme).then(function(sonuc) {
+      if (sonuc && sonuc.durum === 'kuyruk') {
+        bildirimGoster('🗑️ Denetim yerelden silindi, sunucu silmesi çevrimiçi olunca tamamlanacak.', 'uyari');
+      } else {
+        bildirimGoster('🗑️ Denetim silindi.');
+      }
+    }).catch(function(e) {
+      console.error('Denetim silme tamamlanamadı:', e);
+      bildirimGoster('Denetim yerelden kaldırıldı ancak sunucu silmesi tamamlanamadı. İnternete bağlanınca tekrar denenecek.', 'uyari');
+    });
+    aktiviteKaydet('denetim_sil', silinen.isletme + ' denetimi silindi', {kayitNo: silinen.isletmeKayitNo, denetimNo: silinen.denetimNo, denetimId: String(id)});
     // Risk tarihini geri al - bu işletmenin başka denetimi var mı?
     if (silinen.isletmeKayitNo) {
       var kalanDenetimler = denetimler.filter(function(x){
@@ -3074,7 +3088,6 @@ function denetimSilOnayla(id) {
     }
     ozetGuncelle();
     listeGuncelle();
-    bildirimGoster('🗑️ Denetim silindi.');
   });
 }
 var haricTutulanlar = JSON.parse(localStorage.getItem('haricTutulanlar') || '[]');
@@ -3330,6 +3343,10 @@ function menuKapat() {
 }
 
 function sayfaGoster(id, btn) {
+  if (id === 'yeni' && typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) {
+    bildirimGoster('Tüm ekipler görünümünde denetim eklenemez. Önce bir ekip seçin.', 'uyari');
+    return;
+  }
   // Toggle: aynı sayfaya tekrar basılınca sıfırla (özete gitme)
   var simdikiAktif = document.querySelector('.sayfa.aktif');
   if (simdikiAktif && simdikiAktif.id === 'sayfa-' + id) {
@@ -3646,6 +3663,7 @@ function denetimRiskTarihiniIleriAl(d) {
 // ---- KAYDET ---- // düzenlenen denetimin id'si
 
 function denetimKaydet() {
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde denetim eklenemez. Önce bir ekip seçin.', 'uyari'); return; }
   const isletme = document.getElementById('isletme-adi').value.trim();
   const tarih = document.getElementById('denetim-tarihi').value;
   const sonuc = document.getElementById('genel-sonuc').value;
@@ -3705,6 +3723,8 @@ function denetimKaydet() {
       sicaklik: document.getElementById('kl-sicaklik')?.checked || false,
     },
     denetciler: [...denetciler],
+    kullaniciId: mevcutKullanici ? mevcutKullanici.uid : '',
+    kullaniciAd: mevcutKullaniciAdi || '',
     sonuc,
     notlar: document.getElementById('denetim-notlari').value,
     cezalar: cezaAktif ? (() => {
@@ -3731,8 +3751,11 @@ function denetimKaydet() {
 
   if (duzenlemeModu) {
     var eskiIdx = denetimler.findIndex(function(d){ return d.id === duzenlemeModu; });
+    var eskiDenetim = eskiIdx >= 0 ? denetimler[eskiIdx] : null;
     yeni.id = duzenlemeModu;
-    yeni.olusturma = eskiIdx >= 0 ? denetimler[eskiIdx].olusturma : yeni.olusturma;
+    yeni.olusturma = eskiDenetim ? eskiDenetim.olusturma : yeni.olusturma;
+    if (eskiDenetim && eskiDenetim.kullaniciId) yeni.kullaniciId = eskiDenetim.kullaniciId;
+    if (eskiDenetim && eskiDenetim.kullaniciAd) yeni.kullaniciAd = eskiDenetim.kullaniciAd;
     if (eskiIdx >= 0) denetimler[eskiIdx] = yeni;
     else denetimler.unshift(yeni);
     duzenlemeModu = null;
@@ -4088,6 +4111,7 @@ function denetimSil(id) {
 }
 
 function denetimDuzenle(id) {
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde denetim düzenlenemez. Önce bir ekip seçin.', 'uyari'); return; }
   const d = denetimler.find(x => x.id === id);
   if (!d) return;
 
@@ -4541,6 +4565,7 @@ function kontrolIkaz(d) {
 
 // Aktif ekibin denetimlerini döner; admin için tüm liste
 function ekipDenetimleri() {
+  if (typeof adminTumEkipSecili === 'function' && adminTumEkipSecili()) return denetimler.slice();
   var eid = aktifEkipId;
   return denetimler.filter(function(d) {
     // Yeni kayıtlar: ekipId alanı var
@@ -4578,7 +4603,7 @@ function ozetGuncelle() {
       var nList = isletmeNotlari[an] || [];
       if (!nList.length) return;
       var _ni = (ISLETMELER || []).find(function(i){ return (i.kayitNo||i.isletmeAdi) === an; });
-      if (_ni && isletmeSorumluEkipId(_ni) === aktifEkipId) notluSayisi++;
+      if (_ni && ((typeof adminTumEkipSecili === 'function' && adminTumEkipSecili()) || isletmeSorumluEkipId(_ni) === aktifEkipId)) notluSayisi++;
     });
   }
   var planliSayisi = (typeof planliDenetimler !== 'undefined') ? planliDenetimler.length : 0;
@@ -4742,6 +4767,7 @@ function planliEkipDenetimlerYukle() {
 }
 
 function planliEkle(isletme) {
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde planlama yapılamaz. Önce bir ekip seçin.', 'uyari'); return; }
   if (!mevcutKullanici) { bildirimGoster('Giriş yapmanız gerekli.', 'hata'); return; }
   var kayitNo = isletme.kayitNo;
   if (planliDenetimler.some(function(p) { return p.kayitNo === kayitNo; })) {
@@ -4755,6 +4781,7 @@ function planliEkle(isletme) {
 }
 
 function planliEkipEkle(isletme) {
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde ekip planı değiştirilemez. Önce bir ekip seçin.', 'uyari'); return; }
   if (!mevcutKullanici) { bildirimGoster('Giriş yapmanız gerekli.', 'hata'); return; }
   if (!aktifEkipId) { bildirimGoster('Aktif ekip bulunamadı.', 'hata'); return; }
   var kayitNo = isletme.kayitNo;
@@ -4769,6 +4796,7 @@ function planliEkipEkle(isletme) {
 }
 
 function planliCikar(kayitNo, tip) {
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde plan değiştirilemez. Önce bir ekip seçin.', 'uyari'); return; }
   if (!mevcutKullanici) return;
   tip = planliListeTipi(tip || _planliAktifTip);
   planliListeAta(tip, planliListeGetir(tip).filter(function(p) { return p.kayitNo !== kayitNo; }));
@@ -6164,6 +6192,7 @@ function telefonAramaHtml(tel) {
 }
 
 function isletmeTelefonlarHtml(i) {
+  var saltGorunum = (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu());
   var telList = [];
   if (i && i.telefon) telList.push({ etiket:'Ana', tel:i.telefon, ana:true });
   (Array.isArray(i && i.ekTelefonlar) ? i.ekTelefonlar : []).forEach(function(t, ix) {
@@ -6172,7 +6201,7 @@ function isletmeTelefonlarHtml(i) {
   var html = telList.length
     ? telList.map(function(x){
         var aksiyon = '';
-        if (!x.ana && i && i.kayitNo) {
+        if (!saltGorunum && !x.ana && i && i.kayitNo) {
           var kn = String(i.kayitNo).replace(/'/g,"\\'");
           aksiyon = ' <button type="button" onclick="event.stopPropagation();isletmeTelefonDuzenlePrompt(\'' + kn + '\',' + x.ekIx + ')" style="margin-left:6px;border:1px solid var(--sinir);background:#fff;border-radius:5px;padding:2px 6px;font-size:11px;cursor:pointer;">Düzenle</button>' +
             ' <button type="button" onclick="event.stopPropagation();isletmeTelefonSil(\'' + kn + '\',' + x.ekIx + ')" style="margin-left:4px;border:1px solid #f3c2c2;background:#fff5f5;color:#b91c1c;border-radius:5px;padding:2px 6px;font-size:11px;cursor:pointer;">Sil</button>';
@@ -6180,7 +6209,7 @@ function isletmeTelefonlarHtml(i) {
         return '<div style="margin-bottom:4px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;"><span style="font-size:11px;color:var(--gri);display:inline-block;width:38px;">' + _ekipEsc(x.etiket) + '</span><span>' + telefonAramaHtml(x.tel) + aksiyon + '</span></div>';
       }).join('')
     : '<span style="color:var(--gri)">—</span>';
-  if (i && i.kayitNo) {
+  if (!saltGorunum && i && i.kayitNo) {
     html += '<button class="btn btn-gri btn-kucuk" style="margin-top:5px;" onclick="isletmeTelefonEklePrompt(\'' + String(i.kayitNo).replace(/'/g,"\\'") + '\')">📞 Telefon Ekle</button>';
   }
   return html;
@@ -6203,6 +6232,7 @@ function isletmeEkTelefonlariKaydet(ist, ekler, mesaj, aktiviteTip, detay) {
 }
 
 function isletmeTelefonEklePrompt(kayitNo) {
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde telefon değiştirilemez. Önce bir ekip seçin.', 'uyari'); return; }
   var ist = ISLETMELER.find(function(x){ return x.kayitNo === kayitNo; });
   if (!ist) { bildirimGoster('İşletme bulunamadı.', 'hata'); return; }
   var tel = prompt('Eklenecek telefon numarası:', '');
@@ -6216,6 +6246,7 @@ function isletmeTelefonEklePrompt(kayitNo) {
 }
 
 function isletmeTelefonDuzenlePrompt(kayitNo, ix) {
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde telefon değiştirilemez. Önce bir ekip seçin.', 'uyari'); return; }
   var ist = ISLETMELER.find(function(x){ return x.kayitNo === kayitNo; });
   if (!ist) { bildirimGoster('İşletme bulunamadı.', 'hata'); return; }
   var ekler = Array.isArray(ist.ekTelefonlar) ? ist.ekTelefonlar.slice() : [];
@@ -6234,6 +6265,7 @@ function isletmeTelefonDuzenlePrompt(kayitNo, ix) {
 }
 
 function isletmeTelefonSil(kayitNo, ix) {
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde telefon silinemez. Önce bir ekip seçin.', 'uyari'); return; }
   var ist = ISLETMELER.find(function(x){ return x.kayitNo === kayitNo; });
   if (!ist) { bildirimGoster('İşletme bulunamadı.', 'hata'); return; }
   var ekler = Array.isArray(ist.ekTelefonlar) ? ist.ekTelefonlar.slice() : [];
@@ -6254,7 +6286,8 @@ function isletmeDetayModal(idx) {
   isletmeVergiTcDoldur(i);
   // Denetim sayısı
   const denetimSayisi = denetimler.filter(d => d.isletmeKayitNo === i.kayitNo || d.isletme === i.isletmeAdi).length;
-  var _sorumluBu = isAdmin || isletmeSorumluEkipId(i) === aktifEkipId;
+  var _saltGorunum = (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu());
+  var _sorumluBu = !_saltGorunum && (isAdmin || isletmeSorumluEkipId(i) === aktifEkipId);
   var _haritaUrl = isletmeHaritaUrl(i);
   var _gpsRozet = (i.koordinatlar && i.koordinatlar.lat) ? ' <span style="font-size:10px;color:#1a5132;font-weight:700;">📡 GPS</span>' : '';
   var _denetimEkleBtnHtml = '';
@@ -6280,7 +6313,7 @@ function isletmeDetayModal(idx) {
       <div class="detay-satir"><span class="etiket-kucuk">Sorumlu Birim</span><span class="deger">${i.sorumluBirim}</span></div>
       <div class="detay-satir"><span class="etiket-kucuk">Risk Denetim Tarihi</span>
         <span class="deger">${i.riskeDayaliDenetimTarihi || '<span style=\"color:var(--gri)\">Belirtilmemiş</span>'}</span>
-        ${isAdmin && !i.riskeDayaliDenetimTarihi ? `<button class="btn btn-gri btn-kucuk" style="margin-left:6px;" onclick="riskTarihDuzenle('${i.kayitNo}','${i.isletmeAdi}')">✏️ Tarih Gir</button>` : ''}
+        ${isAdmin && !_saltGorunum && !i.riskeDayaliDenetimTarihi ? `<button class="btn btn-gri btn-kucuk" style="margin-left:6px;" onclick="riskTarihDuzenle('${i.kayitNo}','${i.isletmeAdi}')">✏️ Tarih Gir</button>` : ''}
       </div>
       <div class="detay-satir"><span class="etiket-kucuk">Telefon</span><span class="deger">${isletmeTelefonlarHtml(i)}</span></div>
       <div class="detay-satir"><span class="etiket-kucuk">Vergi Dairesi / No</span><span class="deger">${[i.vergiDairesi,i.vergiNo].filter(Boolean).join(' / ') || '<span style="color:var(--gri)">—</span>'}</span></div>
@@ -6297,17 +6330,20 @@ function isletmeDetayModal(idx) {
     ${isletmeNotBolumu(i)}
     ${isletmeSorunButonu(i)}
     <div class="buton-satir" style="margin-top:16px;">
-      <button class="btn btn-gri btn-planla-modal">${(typeof planliDenetimler!=='undefined'&&planliDenetimler.some(function(p){return p.kayitNo===i.kayitNo;}))?'✅ Planlandı':'📅 Planla'}</button>
-      <button class="btn btn-gri btn-ekip-planla-modal">${(typeof ekipPlanliDenetimler!=='undefined'&&ekipPlanliDenetimler.some(function(p){return p.kayitNo===i.kayitNo;}))?'✅ Ekip Planında':'👥 Ekip Planına Ekle'}</button>
+      ${_saltGorunum ? '<span style="font-size:12px;color:var(--gri);align-self:center;">Tüm ekipler görünümü: sadece görüntüleme</span>' : `<button class="btn btn-gri btn-planla-modal">${(typeof planliDenetimler!=='undefined'&&planliDenetimler.some(function(p){return p.kayitNo===i.kayitNo;}))?'✅ Planlandı':'📅 Planla'}</button>
+      <button class="btn btn-gri btn-ekip-planla-modal">${(typeof ekipPlanliDenetimler!=='undefined'&&ekipPlanliDenetimler.some(function(p){return p.kayitNo===i.kayitNo;}))?'✅ Ekip Planında':'👥 Ekip Planına Ekle'}</button>`}
       <button class="btn btn-gri" onclick="modalKapat()">Kapat</button>
     </div>
   `;
-  (function(){ var _pb=document.querySelector('#modal-icerik .btn-planla-modal'); if(_pb) _pb.onclick=function(){ var planli=(typeof planliDenetimler!=='undefined'&&planliDenetimler.some(function(p){return p.kayitNo===i.kayitNo;})); if(planli){ planliCikar(i.kayitNo); _pb.textContent='📅 Planla'; } else { planliEkle(i); _pb.textContent='✅ Planlandı'; } }; })();
-  (function(){ var _epb=document.querySelector('#modal-icerik .btn-ekip-planla-modal'); if(_epb) _epb.onclick=function(){ var planli=(typeof ekipPlanliDenetimler!=='undefined'&&ekipPlanliDenetimler.some(function(p){return p.kayitNo===i.kayitNo;})); if(planli){ planliCikar(i.kayitNo, 'ekip'); _epb.textContent='👥 Ekip Planına Ekle'; } else { planliEkipEkle(i); _epb.textContent='✅ Ekip Planında'; } }; })();
+  if (!_saltGorunum) {
+    (function(){ var _pb=document.querySelector('#modal-icerik .btn-planla-modal'); if(_pb) _pb.onclick=function(){ var planli=(typeof planliDenetimler!=='undefined'&&planliDenetimler.some(function(p){return p.kayitNo===i.kayitNo;})); if(planli){ planliCikar(i.kayitNo); _pb.textContent='📅 Planla'; } else { planliEkle(i); _pb.textContent='✅ Planlandı'; } }; })();
+    (function(){ var _epb=document.querySelector('#modal-icerik .btn-ekip-planla-modal'); if(_epb) _epb.onclick=function(){ var planli=(typeof ekipPlanliDenetimler!=='undefined'&&ekipPlanliDenetimler.some(function(p){return p.kayitNo===i.kayitNo;})); if(planli){ planliCikar(i.kayitNo, 'ekip'); _epb.textContent='👥 Ekip Planına Ekle'; } else { planliEkipEkle(i); _epb.textContent='✅ Ekip Planında'; } }; })();
+  }
   document.getElementById('modal-arkaplan').classList.add('acik');
 }
 
 function yeniDenetimIsletmeyle(isletmeAdi, kayitNoVeyaIdx) {
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde denetim eklenemez. Önce bir ekip seçin.', 'uyari'); return; }
   sayfaGoster('yeni', document.querySelectorAll('nav button')[1]);
   setTimeout(() => {
     var arrIdx = -1;
@@ -6440,6 +6476,7 @@ function manuelKoordinatParse(latVal, lngVal) {
 }
 
 function formManuelKonumAc() {
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde koordinat değiştirilemez. Önce bir ekip seçin.', 'uyari'); return; }
   var box = document.getElementById('manuel-konum-alan');
   if (!box) return;
   box.style.display = (box.style.display === 'none' || !box.style.display) ? 'block' : 'none';
@@ -6451,6 +6488,7 @@ function formManuelKonumAc() {
 }
 
 function formManuelKonumKaydet() {
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde koordinat kaydedilemez. Önce bir ekip seçin.', 'uyari'); return; }
   var isletme = isletmeSecildi;
   var koord = manuelKoordinatParse(document.getElementById('manuel-lat').value, document.getElementById('manuel-lng').value);
   if (!koord) { bildirimGoster('Enlem ve boylam sayısal olmalı.', 'hata'); return; }
@@ -6460,6 +6498,7 @@ function formManuelKonumKaydet() {
 }
 
 function isletmeManuelKonumPrompt(kayitNo) {
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde koordinat değiştirilemez. Önce bir ekip seçin.', 'uyari'); return; }
   var ist = ISLETMELER.find(function(x){ return x.kayitNo === kayitNo; });
   if (!ist) { bildirimGoster('İşletme bulunamadı.', 'hata'); return; }
   var varsayilan = koordinatVarMi(ist.koordinatlar) ? koordinatKisa(ist.koordinatlar) : '';
@@ -6474,6 +6513,7 @@ function isletmeManuelKonumPrompt(kayitNo) {
 }
 
 function isletmeKoordinatGeriAl(kayitNo) {
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde koordinat geri alınamaz. Önce bir ekip seçin.', 'uyari'); return; }
   var ist = ISLETMELER.find(function(x){ return x.kayitNo === kayitNo; });
   if (!ist || !Array.isArray(ist.koordinatGecmisi) || ist.koordinatGecmisi.length < 2) {
     bildirimGoster('Geri alınacak yedek koordinat yok.', 'uyari');
@@ -7450,6 +7490,7 @@ function _uygulamaGoster(user, ad, ekipId) {
     }
     if (typeof aktifEkibeGec === 'function') { try { aktifEkibeGec(aktifEkipId, false); } catch(e){} }
   }
+  if (isAdmin && aktifEkipId === '__tum__' && typeof aktifEkibeGec === 'function') { try { aktifEkibeGec('__tum__', false); } catch(e){} }
   if (isAdmin && typeof ekipSeciciDoldur === 'function') ekipSeciciDoldur();
   if (isAdmin && typeof sorunBadgeDinle === 'function') sorunBadgeDinle();
   try { if (typeof sayfaGoster === 'function') sayfaGoster('ozet', document.querySelector('nav button')); } catch(e){}
@@ -7864,20 +7905,28 @@ async function firebaseKaydet(denetim) {
   }
 }
 
-async function firebaseSil(id) {
+async function firebaseSil(id, secenek) {
+  secenek = secenek || {};
   if (!navigator.onLine || typeof firebase === 'undefined') {
     offlineSilKuyrugaEkle(id);
     offlineDurumGuncelle('🔴 Çevrimdışı - silme kuyruğa alındı');
-    return;
+    return { durum: 'kuyruk' };
   }
   try {
     await firebase.firestore().collection('denetimler').doc(String(id)).delete();
     offlineKuyruguGonder();
+    var elSync = document.getElementById('sync-durum');
+    if (elSync) { elSync.textContent = '☁️'; setTimeout(function(){ elSync.textContent=''; }, 2000); }
+    return { durum: 'silindi' };
   }
   catch(e) {
     console.error('Firebase silme hatası:', e);
     offlineSilKuyrugaEkle(id);
     offlineDurumGuncelle('⚠️ Silme sunucuya gönderilemedi, kuyruğa alındı');
+    if (e && (e.code === 'permission-denied' || /permission|insufficient/i.test(e.message || ''))) {
+      if (!secenek.sessiz) bildirimGoster('Sunucu silmeyi reddetti. Firestore rules güncellenmeli; silme kuyruğa alındı.', 'hata');
+    }
+    return { durum: 'kuyruk', hata: e };
   }
 }
 
@@ -8772,7 +8821,8 @@ function koyIsletmeDetay(koyAdi, idx) {
   var riskDiv = document.createElement('div'); riskDiv.className='detay-satir';
   riskDiv.innerHTML = '<span class="etiket-kucuk">Risk Denetim Tarihi</span>' +
     '<span class="deger">'+(isletme.riskeDayaliDenetimTarihi||'<span style="color:var(--gri)">Belirtilmemiş</span>')+'</span>';
-  if (isAdmin && !isletme.riskeDayaliDenetimTarihi) {
+  var _koySaltGorunum = (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu());
+  if (isAdmin && !_koySaltGorunum && !isletme.riskeDayaliDenetimTarihi) {
     var rBtn = document.createElement('button');
     rBtn.className='btn btn-gri btn-kucuk'; rBtn.style.marginLeft='6px'; rBtn.textContent='✏️ Tarih Gir';
     rBtn.onclick = function(){ riskTarihDuzenle(isletme.kayitNo, isletme.isletmeAdi); };
@@ -8803,7 +8853,7 @@ function koyIsletmeDetay(koyAdi, idx) {
   var dBtn = document.createElement('button');
   dBtn.className='btn btn-yesil btn-kucuk'; dBtn.textContent='+ Denetim Ekle';
   dBtn.onclick = function(){ modalKapatForce(); yeniDenetimIsletmeyle(isletme.isletmeAdi, -1, 'koy'); };
-  var _koySorumlu = isAdmin || isletmeSorumluEkipId(isletme) === aktifEkipId;
+  var _koySorumlu = !_koySaltGorunum && (isAdmin || isletmeSorumluEkipId(isletme) === aktifEkipId);
   if (_koySorumlu) dBtnRow.appendChild(dBtn);
   var hzBtn = document.createElement('button');
   hzBtn.className='btn btn-yesil btn-kucuk'; hzBtn.textContent='⚡ Hızlı Denetim';
@@ -8821,7 +8871,7 @@ function koyIsletmeDetay(koyAdi, idx) {
   sorSpan.style.cssText='font-size:13px;color:var(--yesil);font-weight:600;';
   sorSpan.textContent='✅ Sorumluluğunuzdaki işletme';
   sorDiv.appendChild(sorSpan);
-  if (isAdmin) {
+  if (isAdmin && !_koySaltGorunum) {
     var cikarBtn = document.createElement('button');
     cikarBtn.className='btn btn-kirmizi btn-kucuk'; cikarBtn.textContent='⛔ Sorumluluk Dışına Al';
     cikarBtn.onclick = function(){ sorumlulukCikar(isletme.kayitNo); };
@@ -8936,6 +8986,7 @@ function isletmeDetayModalUretim(uIdx) {
   if (!i) return;
   isletmeVergiTcDoldur(i);
   var denetimSayisi = denetimler.filter(function(d){ return d.isletmeKayitNo===i.kayitNo||d.isletme===i.isletmeAdi; }).length;
+  var _urtSaltGorunum = (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu());
   var sorumlu = isletmeHerhangiSorumlulukta(i);
   var haric = haricTutulanlar.includes(i.kayitNo);
   var modal = document.getElementById('modal-icerik');
@@ -8990,7 +9041,7 @@ function isletmeDetayModalUretim(uIdx) {
   var dBtn = document.createElement('button');
   dBtn.className='btn btn-yesil btn-kucuk'; dBtn.textContent='+ Denetim Ekle';
   dBtn.onclick = (function(ad, ui){ return function(){ modalKapatForce(); yeniDenetimIsletmeyle(ad, ui, 'uretim'); }; })(i.isletmeAdi, uIdx);
-  var _urtSorumlu = isAdmin || isletmeSorumluEkipId(i) === aktifEkipId;
+  var _urtSorumlu = !_urtSaltGorunum && (isAdmin || isletmeSorumluEkipId(i) === aktifEkipId);
   if (_urtSorumlu) dBtnRow.appendChild(dBtn);
   // Hızlı denetim butonu - risk tarihi geçmişse veya yoksa
   var hzBtn3 = document.createElement('button');
@@ -9007,7 +9058,7 @@ function isletmeDetayModalUretim(uIdx) {
     var s1 = document.createElement('span');
     s1.style.cssText='font-size:13px;color:var(--yesil);font-weight:600;'; s1.textContent='✅ Sorumluluğunuzdaki işletme';
     sorDiv.appendChild(s1);
-    if (isAdmin) {
+    if (isAdmin && !_urtSaltGorunum) {
       var cb = document.createElement('button'); cb.className='btn btn-kirmizi btn-kucuk'; cb.textContent='⛔ Sorumluluk Dışına Al';
       cb.onclick = (function(kno){ return function(){ sorumlulukCikar(kno); }; })(i.kayitNo);
       sorDiv.appendChild(cb);
@@ -9016,7 +9067,7 @@ function isletmeDetayModalUretim(uIdx) {
     var s2 = document.createElement('span');
     s2.style.cssText='font-size:13px;color:var(--gri);'; s2.textContent='⛔ Sorumluluk dışına alındı';
     sorDiv.appendChild(s2);
-    if (isAdmin) {
+    if (isAdmin && !_urtSaltGorunum) {
       var gb = document.createElement('button'); gb.className='btn btn-gri btn-kucuk'; gb.textContent='↩ Geri Al';
       gb.onclick = (function(kno){ return function(){ sorumlulukGeriAl(kno); modalKapatForce(); }; })(i.kayitNo);
       sorDiv.appendChild(gb);
@@ -9025,7 +9076,7 @@ function isletmeDetayModalUretim(uIdx) {
     var s3 = document.createElement('span');
     s3.style.cssText='font-size:13px;color:var(--gri);'; s3.textContent='Bu işletme sorumluluğunuzda değil';
     sorDiv.appendChild(s3);
-    if (isAdmin && i.kayitNo) {
+    if (isAdmin && !_urtSaltGorunum && i.kayitNo) {
       var ab = document.createElement('button'); ab.className='btn btn-yesil btn-kucuk'; ab.textContent='➕ Sorumluluğa Al';
       ab.onclick = (function(kno){ return function(){ sorumlulukAl(kno); }; })(i.kayitNo);
       sorDiv.appendChild(ab);
@@ -9313,6 +9364,11 @@ function apSilinenListesi() {
 }
 
 function hizliDenetimEkle(isletme, _btn) {
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) {
+    bildirimGoster('Tüm ekipler görünümünde hızlı denetim yapılamaz. Önce bir ekip seçin.', 'uyari');
+    if (_btn) { _btn.disabled=false; _btn.textContent='⚡ Hızlı Denetim'; }
+    return;
+  }
   if (!isletme || !isletme.isletmeAdi) {
     bildirimGoster('❌ İşletme bilgisi bulunamadı', 'hata');
     if (_btn) { _btn.disabled=false; _btn.textContent='⚡ Hızlı Denetim'; }
@@ -11146,7 +11202,7 @@ function _g7Anahtar(i){ return (i && (i.kayitNo || i.isletmeAdi)) || ''; }
 function isletmeNotBolumu(i){
   var an=_g7Anahtar(i); var anEsc=_ekipEsc(an).replace(/'/g,"\\'");
   var notlar=isletmeNotlari[an]||[];
-  var _notSorumlu = isAdmin || isletmeSorumluEkipId(i) === aktifEkipId;
+  var _notSorumlu = !(typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) && (isAdmin || isletmeSorumluEkipId(i) === aktifEkipId);
   if (!_notSorumlu && !notlar.length) return '';
   var h='<div style="margin-top:12px;padding:12px;border:1px solid var(--sinir);border-radius:8px;">';
   h+='<div style="font-weight:600;font-size:14px;margin-bottom:8px;">📝 Hızlı Notlar</div>';
@@ -11169,6 +11225,7 @@ function isletmeNotBolumu(i){
   return h;
 }
 function isletmeNotEkle(an){
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde not eklenemez. Önce bir ekip seçin.', 'uyari'); return; }
   var inp=document.getElementById('not-girdi-'+an);
   var v=inp?inp.value.trim():'';
   if(!v) return;
@@ -11181,6 +11238,7 @@ function isletmeNotEkle(an){
   _g7DetayTazele(an);
 }
 function isletmeNotSil(an, ix){
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde not silinemez. Önce bir ekip seçin.', 'uyari'); return; }
   if(!isletmeNotlari[an]) return;
   var _ist=(typeof ISLETMELER!=='undefined'?ISLETMELER:[]).find(function(x){return (x.kayitNo||x.isletmeAdi)===an;});
   isletmeNotlari[an].splice(ix,1);
@@ -11205,6 +11263,7 @@ var SORUN_SECENEKLERI = [
 ];
 // Detayda "Sorun Bildir" butonu — yalnız sorumlu olunan işletmede veya admin
 function isletmeSorunButonu(i){
+  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) return '';
   var sorumlu = (typeof isletmeHerhangiSorumlulukta==='function') && isletmeHerhangiSorumlulukta(i);
   if(!sorumlu && !(typeof isAdmin!=='undefined'&&isAdmin)) return '';
   var anEsc=_ekipEsc(_g7Anahtar(i)).replace(/'/g,"\\'");

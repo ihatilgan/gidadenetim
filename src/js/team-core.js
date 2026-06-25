@@ -22,6 +22,7 @@ try { KAT_EKSTRA = JSON.parse(localStorage.getItem('ekstra_kategoriler')||'[]');
 
 var EKIPLER = [];
 var aktifEkipId = null;
+var TUM_EKIPLER_ID = '__tum__';
 var EKIP_URETIM_KATEGORILERI = [];  // aktif ekibin sorumlu olduğu üretim kategori id'leri
 var DEV_MODU = false;  // dev sürümünde true yapılır: ekip ayarları _dev'e yazılır, canlı veriye dokunulmaz
 var AKTIF_EKIP_KEY = DEV_MODU ? 'aktif_ekip_id_dev' : 'aktif_ekip_id';
@@ -134,8 +135,10 @@ function ekiplerFirestoreYukle() {
         // Profil fetch localStorage'a daha güncel bir ekipId yazmış olabilir — onu oku
         try { var _lsEkip = localStorage.getItem(AKTIF_EKIP_KEY); if (_lsEkip) aktifEkipId = _lsEkip; } catch(e){}
         // Aktif ekip kuralını tazele
-        var ek = ekipBul(aktifEkipId) || EKIPLER[0];
-        if (ek) { aktifEkipId = ek.id; ekipKurallariUygula(ek); }
+        if (aktifEkipId !== TUM_EKIPLER_ID) {
+          var ek = ekipBul(aktifEkipId) || EKIPLER[0];
+          if (ek) { aktifEkipId = ek.id; ekipKurallariUygula(ek); }
+        }
         // Ekip listesi değişti — sayım önbelleğini iptal et ki yeni dağılım hesaplansın
         try { _ekipSayiCache = null; _ekipSayiLen = -1; } catch(e){}
         // Bekleyen ekip geçişi varsa şimdi uygula (profil fetch EKIPLER'den önce geldiyse)
@@ -163,11 +166,14 @@ function ekiplerFirestoreYukle() {
 }
 
 function ekipBul(id) {
+  if (id === TUM_EKIPLER_ID) return null;
   if (!id) return null;
   for (var i=0;i<EKIPLER.length;i++){ if (EKIPLER[i].id === id) return EKIPLER[i]; }
   return null;
 }
-function aktifEkip() { return ekipBul(aktifEkipId) || EKIPLER[0] || null; }
+function adminTumEkipSecili() { return !!(typeof isAdmin !== 'undefined' && isAdmin && aktifEkipId === TUM_EKIPLER_ID); }
+function tumEkipGoruntulemeModu() { return adminTumEkipSecili(); }
+function aktifEkip() { if (adminTumEkipSecili()) return null; return ekipBul(aktifEkipId) || EKIPLER[0] || null; }
 
 // İlk kurulum: Ekip 1 = mevcut (gömülü) kurallar
 function ekip1Tohumla() {
@@ -228,6 +234,28 @@ function ekipKurallariUygula(ekip) {
 
 // Aktif ekibi değiştir + ekranı tazele (admin ekip geçişi / giriş)
 function aktifEkibeGec(id, yenidenCiz) {
+  if (id === TUM_EKIPLER_ID) {
+    if (!(typeof isAdmin !== 'undefined' && isAdmin)) return;
+    aktifEkipId = TUM_EKIPLER_ID;
+    try { localStorage.setItem(AKTIF_EKIP_KEY, aktifEkipId); } catch(e){}
+    try {
+      var _heaAll=document.getElementById('header-ekip-adi');
+      if(_heaAll){
+        _heaAll.textContent='Tüm Ekipler';
+        _heaAll.style.display='';
+        _heaAll.dataset.personel='[]';
+      }
+    }catch(e){}
+    if(typeof riskCacheTemizle==='function') riskCacheTemizle();
+    if (yenidenCiz !== false) {
+      try { if (typeof ozetGuncelle === 'function') ozetGuncelle(); } catch(e){}
+      try {
+        var _sorAll = document.getElementById('sayfa-sorumluluklarim');
+        if (typeof sorumluluklarimGoster === 'function' && _sorAll && _sorAll.classList.contains('aktif')) sorumluluklarimGoster();
+      } catch(e){}
+    }
+    return;
+  }
   var ek = ekipBul(id);
   if (!ek) return;
   if(typeof riskCacheTemizle==='function') riskCacheTemizle();
@@ -267,6 +295,7 @@ function ekipSistemiBaslat() {
   ekiplerYukle();
   if (!EKIPLER.length) ekip1Tohumla();
   ekipKategoriMigrasyon();
+  if (aktifEkipId === TUM_EKIPLER_ID) return;
   var ek = ekipBul(aktifEkipId) || EKIPLER[0];
   if (ek) { aktifEkipId = ek.id; ekipKurallariUygula(ek); }
 }
@@ -283,5 +312,7 @@ if (window._fbHazir) { ekiplerFirestoreYukle(); } else { window.addEventListener
 window.EKIPLER = EKIPLER;
 window.aktifEkip = aktifEkip;
 window.aktifEkibeGec = aktifEkibeGec;
+window.adminTumEkipSecili = adminTumEkipSecili;
+window.tumEkipGoruntulemeModu = tumEkipGoruntulemeModu;
 window.tumMahalleSecenekleri = tumMahalleSecenekleri;
 window.ekiplerKaydet = ekiplerKaydet;

@@ -43,6 +43,17 @@ service cloud.firestore {
       );
     }
 
+    function kendiDenetimiMi() {
+      return aktifKullanici() && (
+        resource.data.get('kullaniciId', '') == request.auth.uid ||
+        (
+          resource.data.get('kullaniciId', '') == '' &&
+          exists(/databases/$(database)/documents/kullanicilar/$(request.auth.uid)) &&
+          resource.data.get('denetciler', []).hasAny([get(/databases/$(database)/documents/kullanicilar/$(request.auth.uid)).data.get('ad', '')])
+        )
+      );
+    }
+
     // ── Kullanıcılar ──────────────────────────────────────────────────────
     match /kullanicilar/{uid} {
       // Kayıt sırasında yeni belge oluşturabilir (durum: beklemede olmalı)
@@ -68,7 +79,7 @@ service cloud.firestore {
       allow read:   if aktifKullanici();
       allow create: if aktifKullanici();
       allow update: if aktifKullanici();
-      allow delete: if adminMi();
+      allow delete: if adminMi() || kendiDenetimiMi();
     }
 
     // ── İşletmeler master ─────────────────────────────────────────────────
