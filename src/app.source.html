@@ -5823,7 +5823,6 @@ function isletmeSorguPdfIndir() {
       '<td>' + _ekipEsc(i.isletmeAdi || '-') + '</td>' +
       '<td>' + _ekipEsc(i.kayitNo || '-') + '</td>' +
       '<td>' + _ekipEsc(i.ilce || '-') + '</td>' +
-      '<td>' + _ekipEsc(i.izinDurumu || '-') + '</td>' +
       '<td>' + _ekipEsc(i.faaliyetAlani || '-') + '</td>' +
       '<td>' + _ekipEsc(i.adres || '-') + '</td>' +
       '<td>' + _ekipEsc(i.telefon || '-') + '</td>' +
@@ -5852,7 +5851,7 @@ function isletmeSorguPdfIndir() {
     '</style></head><body>' +
     '<div class="ust"><div><h1>İşletme Sorgu Listesi</h1><div class="alt">' + liste.length.toLocaleString('tr-TR') + ' işletme - ' + _ekipEsc(tarih) + '</div></div><button class="btn" onclick="window.print()">PDF Kaydet / Yazdır</button></div>' +
     isletmeSorguFiltreOzetiHtml() +
-    '<table><thead><tr><th>No</th><th>İşletme</th><th>Kayıt No</th><th>İlçe</th><th>İzin</th><th>Faaliyet Alanı</th><th>Adres</th><th>Telefon</th><th>Risk Tarihi</th></tr></thead><tbody>' +
+    '<table><thead><tr><th>No</th><th>İşletme</th><th>Kayıt No</th><th>İlçe</th><th>Faaliyet Alanı</th><th>Adres</th><th>Telefon</th><th>Risk Tarihi</th></tr></thead><tbody>' +
     rows +
     '</tbody></table>' +
     '<script>setTimeout(function(){window.focus();window.print();},300);<\/script>' +
@@ -5999,11 +5998,9 @@ function isletmeDetayModal(idx) {
     </div>
     <div class="detay-grid">
       <div class="detay-satir"><span class="etiket-kucuk">Kayıt No</span><span class="deger">${i.kayitNo}</span></div>
-      <div class="detay-satir"><span class="etiket-kucuk">İzin Durumu</span><span class="deger">${i.izinDurumu === 'Aktif' ? '✅ Aktif' : i.izinDurumu}</span></div>
       <div class="detay-satir"><span class="etiket-kucuk">İlçe</span><span class="deger">${i.ilce}</span></div>
       <div class="detay-satir"><span class="etiket-kucuk">Firma Türü</span><span class="deger">${i.firmaTuru}</span></div>
       <div class="detay-satir"><span class="etiket-kucuk">Faaliyet Alanı</span><span class="deger">${i.faaliyetAlani}</span></div>
-      <div class="detay-satir"><span class="etiket-kucuk">Sorumlu Birim</span><span class="deger">${i.sorumluBirim}</span></div>
       <div class="detay-satir"><span class="etiket-kucuk">Risk Denetim Tarihi</span>
         <span class="deger">${i.riskeDayaliDenetimTarihi || '<span style=\"color:var(--gri)\">Belirtilmemiş</span>'}</span>
         ${isAdmin && !_saltGorunum && !i.riskeDayaliDenetimTarihi ? `<button class="btn btn-gri btn-kucuk" style="margin-left:6px;" onclick="riskTarihDuzenle('${i.kayitNo}','${i.isletmeAdi}')">✏️ Tarih Gir</button>` : ''}
@@ -6304,11 +6301,9 @@ function isletmeNormalize(i) {
     faaliyetAlani: String(i.faaliyetAlani || i['Faaliyet Alanı'] || ''),
     adres: String(i.adres || i['Adres'] || ''),
     ilce: String(i.ilce || i['İlçe'] || ''),
-    izinDurumu: String(i.izinDurumu || i['İzin Durumu'] || ''),
     riskeDayaliDenetimTarihi: String(i.riskeDayaliDenetimTarihi || i['Riske Dayalı Denetim Tarihi'] || ''),
     telefon: String(i.telefon || i['Cep Telefonu'] || ''),
     firmaTuru: String(i.firmaTuru || i['Firma Türü'] || ''),
-    sorumluBirim: String(i.sorumluBirim || i['Sorumlu Birim'] || ''),
     ekTelefonlar: telefonListeNormalize(i.ekTelefonlar)
   };
   if (i.koordinatlar && i.koordinatlar.lat != null) {
@@ -6397,8 +6392,8 @@ function isletmeAlanDegisimleri(eski, yeni, secenek) {
   yeni = yeni || {};
   var alanlar = [
     ['isletmeAdi','İşletme adı'], ['faaliyetAlani','Faaliyet'], ['adres','Adres'],
-    ['ilce','İlçe'], ['izinDurumu','İzin durumu'], ['riskeDayaliDenetimTarihi','Risk tarihi'],
-    ['telefon','Telefon'], ['firmaTuru','Firma türü'], ['sorumluBirim','Sorumlu birim']
+    ['ilce','İlçe'], ['riskeDayaliDenetimTarihi','Risk tarihi'],
+    ['telefon','Telefon'], ['firmaTuru','Firma türü']
   ];
   var farklar = [];
   alanlar.forEach(function(a) {
@@ -6547,7 +6542,7 @@ function gomuluTohumUygula(){
 function isletmelerMasterAlanEsitMi(a, b) {
   a = isletmeNormalize(a || {});
   b = isletmeNormalize(b || {});
-  var alanlar = ['no','isletmeAdi','kayitNo','faaliyetAlani','adres','ilce','izinDurumu','riskeDayaliDenetimTarihi','telefon','firmaTuru','sorumluBirim','ekTelefonlar'];
+  var alanlar = ['no','isletmeAdi','kayitNo','faaliyetAlani','adres','ilce','riskeDayaliDenetimTarihi','telefon','firmaTuru','ekTelefonlar'];
   return alanlar.every(function(k){ return String(a[k] || '') === String(b[k] || ''); }) && (b.aktif !== false);
 }
 
@@ -6861,7 +6856,6 @@ function excelYukle(file) {
           faaliyetAlani: String(row['Faaliyet Alanı'] || ''),
           adres: String(row['Adres'] || ''),
           ilce: String(row['İlçe'] || ''),
-          izinDurumu: String(row['İzin Durumu'] || ''),
           riskeDayaliDenetimTarihi: (function(v) {
             if (!v && v !== 0) return '';
             // XLSX.js tarihleri Excel seri numarası veya string olarak döndürür
@@ -6884,7 +6878,6 @@ function excelYukle(file) {
           })(row['Riske Dayalı Denetim Tarihi']),
           telefon: telefon,
           firmaTuru: String(row['Firma Türü'] || ''),
-          sorumluBirim: String(row['Sorumlu Birim'] || ''),
         };
       }).filter(function(i){ return i.isletmeAdi; });
 
@@ -8712,7 +8705,6 @@ function isletmeDetayModalUretim(uIdx) {
   var grid = document.createElement('div'); grid.className='detay-grid';
   var satirlar = [
     ['Kayıt No', i.kayitNo],
-    ['İzin Durumu', i.izinDurumu==='Aktif'?'✅ Aktif':(i.izinDurumu||'-')],
     ['İlçe', i.ilce||'-'],
     ['Faaliyet Alanı', i.faaliyetAlani||'-'],
   ];
@@ -9991,29 +9983,74 @@ function pushTrigger(payload) {
 var _g7dev = (typeof DEV_MODU!=='undefined'&&DEV_MODU);
 var ISLETME_NOT_KEY = _g7dev?'isletme_notlari_dev':'isletme_notlari';
 var ISLETME_NOT_DOC = _g7dev?'isletme_notlari_dev':'isletme_notlari';
+var ISLETME_NOT_KOLEKSIYON = _g7dev?'isletme_hizli_notlar_dev':'isletme_hizli_notlar';
 var SORUN_KOLEKSIYON = _g7dev?'sorun_bildirimleri_dev':'sorun_bildirimleri';
 var isletmeNotlari = {};
 try { isletmeNotlari = JSON.parse(localStorage.getItem(ISLETME_NOT_KEY)||'{}') || {}; } catch(e){ isletmeNotlari={}; }
 
-var _notKayitZaman=null;
-function isletmeNotKaydet(){
+function isletmeNotlariYerelKaydet(){
   try { localStorage.setItem(ISLETME_NOT_KEY, JSON.stringify(isletmeNotlari)); } catch(e){}
-  if(_notKayitZaman) clearTimeout(_notKayitZaman);
-  _notKayitZaman=setTimeout(function(){
-    if(typeof firebase==='undefined'||!firebase.apps||!firebase.apps.length) return;
-    if(typeof mevcutKullanici==='undefined'||!mevcutKullanici) return;
-    firebase.firestore().collection('app_meta').doc(ISLETME_NOT_DOC)
-      .set({notlar:isletmeNotlari, guncelleme:new Date().toISOString()})
-      .catch(function(e){ console.warn('not kaydı başarısız:', e.message); });
-  }, 800);
 }
+function isletmeNotKaydet(){ isletmeNotlariYerelKaydet(); }
+function isletmeNotObjesiOlustur(docId, d) {
+  d = d || {};
+  return {
+    id: docId || d.id || '',
+    t: d.tarih || d.t || '',
+    m: d.mesaj || d.m || '',
+    kim: d.kim || '',
+    uid: d.uid || ''
+  };
+}
+var _legacyIsletmeNotlari = {};
+function isletmeNotlariniBirlestir(yeniNotlar) {
+  var birlesik = {};
+  Object.keys(yeniNotlar || {}).forEach(function(an) {
+    birlesik[an] = (yeniNotlar[an] || []).slice();
+  });
+  Object.keys(_legacyIsletmeNotlari || {}).forEach(function(an) {
+    if (!birlesik[an]) birlesik[an] = [];
+    birlesik[an] = birlesik[an].concat(_legacyIsletmeNotlari[an] || []);
+  });
+  Object.keys(birlesik).forEach(function(an) {
+    birlesik[an].sort(function(a,b){ return String(b.t||'').localeCompare(String(a.t||'')); });
+  });
+  return birlesik;
+}
+var _isletmeNotDinleyici = null;
 function isletmeNotlariFirestoreYukle(){
   if(typeof firebase==='undefined'||!firebase.apps||!firebase.apps.length) return;
+  if (_isletmeNotDinleyici) { try { _isletmeNotDinleyici(); } catch(e){} _isletmeNotDinleyici = null; }
+  _isletmeNotDinleyici = firebase.firestore().collection(ISLETME_NOT_KOLEKSIYON).onSnapshot(function(snap) {
+    var yeni = {};
+    snap.forEach(function(doc) {
+      var d = doc.data() || {};
+      var an = d.isletmeKey || d.kayitNo || '';
+      if (!an) return;
+      if (!yeni[an]) yeni[an] = [];
+      yeni[an].push(isletmeNotObjesiOlustur(doc.id, d));
+    });
+    isletmeNotlari = isletmeNotlariniBirlestir(yeni);
+    isletmeNotlariYerelKaydet();
+  }, function(e){ console.warn('hızlı not dinleyici hatası:', e.message); });
+
+  // Eski tek-doküman notları sadece okunur olarak belleğe katılır; yeni kayıtlar ayrı dokümanlara yazılır.
   firebase.firestore().collection('app_meta').doc(ISLETME_NOT_DOC).get().then(function(doc){
     if(!doc.exists) return;
     var d=doc.data()||{};
-    if(d.notlar && typeof d.notlar==='object'){ isletmeNotlari=d.notlar; try{localStorage.setItem(ISLETME_NOT_KEY,JSON.stringify(isletmeNotlari));}catch(e){} }
-  }).catch(function(e){ console.warn('not okuması başarısız:', e.message); });
+    if(d.notlar && typeof d.notlar==='object'){
+      _legacyIsletmeNotlari = {};
+      Object.keys(d.notlar).forEach(function(an) {
+        if (!_legacyIsletmeNotlari[an]) _legacyIsletmeNotlari[an] = [];
+        (d.notlar[an] || []).forEach(function(n, ix) {
+          if (!n || !n.m) return;
+          _legacyIsletmeNotlari[an].push(isletmeNotObjesiOlustur('legacy-'+an+'-'+ix, n));
+        });
+      });
+      isletmeNotlari = isletmeNotlariniBirlestir(isletmeNotlari);
+      isletmeNotlariYerelKaydet();
+    }
+  }).catch(function(e){ console.warn('eski not okuması başarısız:', e.message); });
 }
 if (window._fbHazir) { isletmeNotlariFirestoreYukle(); } else { window.addEventListener('fb-hazir', isletmeNotlariFirestoreYukle); }
 
@@ -10023,21 +10060,21 @@ function _g7Anahtar(i){ return (i && (i.kayitNo || i.isletmeAdi)) || ''; }
 function isletmeNotBolumu(i){
   var an=_g7Anahtar(i); var anEsc=_ekipEsc(an).replace(/'/g,"\\'");
   var notlar=isletmeNotlari[an]||[];
-  var _notSorumlu = !(typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) && (isAdmin || isletmeSorumluEkipId(i) === aktifEkipId);
-  if (!_notSorumlu && !notlar.length) return '';
+  var _notYazabilir = !!(typeof mevcutKullanici !== 'undefined' && mevcutKullanici);
   var h='<div style="margin-top:12px;padding:12px;border:1px solid var(--sinir);border-radius:8px;">';
   h+='<div style="font-weight:600;font-size:14px;margin-bottom:8px;">📝 Hızlı Notlar</div>';
   if(notlar.length){
     notlar.forEach(function(n,ix){
       var t=new Date(n.t); var ts=t.toLocaleDateString('tr')+' '+t.toLocaleTimeString('tr',{hour:'2-digit',minute:'2-digit'});
+      var silebilir = _notYazabilir && n.uid && mevcutKullanici && n.uid === mevcutKullanici.uid && n.id && n.id.indexOf('legacy-') !== 0;
       h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;background:var(--gri-acik);border-radius:7px;padding:8px 10px;margin-bottom:6px;">'
         +'<div style="min-width:0;"><div style="font-size:13px;white-space:pre-wrap;">'+_ekipEsc(n.m)+'</div><div style="font-size:10px;color:var(--gri);margin-top:3px;">'+ts+(n.kim?(' • '+_ekipEsc(n.kim)):'')+'</div></div>'
-        +(_notSorumlu ? '<button onclick="isletmeNotSil(\''+anEsc+'\','+ix+')" style="background:none;border:none;color:#c0392b;font-size:16px;cursor:pointer;flex-shrink:0;line-height:1;">×</button>' : '')+'</div>';
+        +(silebilir ? '<button onclick="isletmeNotSil(\''+anEsc+'\','+ix+')" style="background:none;border:none;color:#c0392b;font-size:16px;cursor:pointer;flex-shrink:0;line-height:1;">×</button>' : '')+'</div>';
     });
   } else {
     h+='<div style="font-size:12px;color:var(--gri);margin-bottom:8px;">Henüz not yok.</div>';
   }
-  if (_notSorumlu) {
+  if (_notYazabilir) {
     h+='<div style="display:flex;gap:6px;margin-top:6px;">'
       +'<input type="text" id="not-girdi-'+anEsc+'" placeholder="Not ekle (tarih otomatik)..." style="flex:1;padding:8px 10px;border:1.5px solid var(--sinir);border-radius:8px;font-size:13px;" onkeydown="if(event.key===\'Enter\'){isletmeNotEkle(\''+anEsc+'\');}">'
       +'<button class="btn btn-yesil btn-kucuk" onclick="isletmeNotEkle(\''+anEsc+'\')">Ekle</button></div>';
@@ -10046,27 +10083,46 @@ function isletmeNotBolumu(i){
   return h;
 }
 function isletmeNotEkle(an){
-  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde not eklenemez. Önce bir ekip seçin.', 'uyari'); return; }
+  if (typeof mevcutKullanici === 'undefined' || !mevcutKullanici) { bildirimGoster('Not eklemek için giriş yapılmalı.', 'uyari'); return; }
   var inp=document.getElementById('not-girdi-'+an);
   var v=inp?inp.value.trim():'';
   if(!v) return;
-  if(!isletmeNotlari[an]) isletmeNotlari[an]=[];
   var kim=(typeof mevcutKullaniciAdi!=='undefined'&&mevcutKullaniciAdi)?mevcutKullaniciAdi:'';
-  isletmeNotlari[an].unshift({t:new Date().toISOString(), m:v, kim:kim});
   var _ist=(typeof ISLETMELER!=='undefined'?ISLETMELER:[]).find(function(x){return (x.kayitNo||x.isletmeAdi)===an;});
-  if(typeof aktiviteKaydet==='function') aktiviteKaydet('not_ekle', (_ist?_ist.isletmeAdi:an)+' - not eklendi', {kayitNo:an});
-  isletmeNotKaydet();
-  _g7DetayTazele(an);
+  var yeni = {
+    isletmeKey: an,
+    kayitNo: (_ist && _ist.kayitNo) || an,
+    isletmeAdi: (_ist && _ist.isletmeAdi) || '',
+    mesaj: v,
+    kim: kim,
+    uid: mevcutKullanici.uid,
+    tarih: new Date().toISOString()
+  };
+  firebase.firestore().collection(ISLETME_NOT_KOLEKSIYON).add(yeni).then(function(doc) {
+    if(!isletmeNotlari[an]) isletmeNotlari[an]=[];
+    isletmeNotlari[an].unshift(isletmeNotObjesiOlustur(doc.id, yeni));
+    isletmeNotlariYerelKaydet();
+    if(typeof aktiviteKaydet==='function') aktiviteKaydet('not_ekle', (_ist?_ist.isletmeAdi:an)+' - not eklendi', {kayitNo:an});
+    _g7DetayTazele(an);
+  }).catch(function(e) {
+    bildirimGoster('Not kaydedilemedi: ' + (e.message || e), 'hata');
+  });
 }
 function isletmeNotSil(an, ix){
-  if (typeof tumEkipGoruntulemeModu === 'function' && tumEkipGoruntulemeModu()) { bildirimGoster('Tüm ekipler görünümünde not silinemez. Önce bir ekip seçin.', 'uyari'); return; }
   if(!isletmeNotlari[an]) return;
+  var not = isletmeNotlari[an][ix];
+  if (!not || !not.id || not.id.indexOf('legacy-') === 0) { bildirimGoster('Bu eski not silinemez; yeni notlarda silme yetkisi not sahibindedir.', 'uyari'); return; }
+  if (!mevcutKullanici || not.uid !== mevcutKullanici.uid) { bildirimGoster('Bu notu sadece kaydeden kişi silebilir.', 'uyari'); return; }
   var _ist=(typeof ISLETMELER!=='undefined'?ISLETMELER:[]).find(function(x){return (x.kayitNo||x.isletmeAdi)===an;});
-  isletmeNotlari[an].splice(ix,1);
-  if(!isletmeNotlari[an].length) delete isletmeNotlari[an];
-  if(typeof aktiviteKaydet==='function') aktiviteKaydet('not_sil', (_ist?_ist.isletmeAdi:an)+' - not silindi', {kayitNo:an});
-  isletmeNotKaydet();
-  _g7DetayTazele(an);
+  firebase.firestore().collection(ISLETME_NOT_KOLEKSIYON).doc(not.id).delete().then(function() {
+    isletmeNotlari[an].splice(ix,1);
+    if(!isletmeNotlari[an].length) delete isletmeNotlari[an];
+    isletmeNotlariYerelKaydet();
+    if(typeof aktiviteKaydet==='function') aktiviteKaydet('not_sil', (_ist?_ist.isletmeAdi:an)+' - not silindi', {kayitNo:an});
+    _g7DetayTazele(an);
+  }).catch(function(e) {
+    bildirimGoster('Not silinemedi: ' + (e.message || e), 'hata');
+  });
 }
 function _g7DetayTazele(an){
   var kaynak=(typeof ISLETMELER!=='undefined'?ISLETMELER:[]);

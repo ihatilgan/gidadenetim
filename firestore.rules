@@ -132,6 +132,26 @@ service cloud.firestore {
       allow write:  if adminMi();
     }
 
+    // ── İşletme hızlı notları ────────────────────────────────────────────
+    match /isletme_hizli_notlar/{docId} {
+      allow read: if aktifKullanici();
+      allow create: if aktifKullanici()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.isletmeKey is string
+        && request.resource.data.mesaj is string;
+      allow update: if false;
+      allow delete: if aktifKullanici() && resource.data.uid == request.auth.uid;
+    }
+    match /isletme_hizli_notlar_dev/{docId} {
+      allow read: if aktifKullanici();
+      allow create: if aktifKullanici()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.isletmeKey is string
+        && request.resource.data.mesaj is string;
+      allow update: if false;
+      allow delete: if aktifKullanici() && resource.data.uid == request.auth.uid;
+    }
+
     // ── Extra işletmeler ─────────────────────────────────────────────────
     match /extra_isletmeler/{docId} {
       allow read:   if aktifKullanici();
