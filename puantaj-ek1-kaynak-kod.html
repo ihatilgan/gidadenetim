@@ -1,26 +1,26 @@
 <!--
 ================================================================================
-  5996 KONTROL HİZMETLERİ PUANTAJI (EK-1) — KAYNAK KOD (güncel)
+  5996 KONTROL HIZMETLERI PUANTAJI (EK-1) - KAYNAK KOD (guncel)
 ================================================================================
-  Kendi kaynak app.html dosyana eklemek için iki parça:
-  PARÇA 1 (HTML kart): Raporlar sayfasının EN ÜSTÜNE,
-sayfa-raporlar kapanışından ÖNCE yapıştır.
-#sayfa-raporlar kapanışından ÖNCE yapıştır.
-  PARÇA 2 (script): </body> etiketinden hemen önce yapıştır.
+  Kendi kaynak app.html dosyana eklemek icin iki parca:
 
-  AYRICA (bu iki düzeltme ana koddadır, puantajdan bağımsız):
-  - Checkbox tikleri için CSS: genel "input{ -webkit-appearance:none }" kuralı
-    checkbox tikini gizliyor. Şu kuralı CSS'e ekle:
-sayfa-raporlar kapanışından ÖNCE yapıştır.
- input[type=checkbox], input[type=radio] { -webkit-appearance: auto; appearance: auto; }
-  - İşletme notları: isletmeNotlariFirestoreYukle() yalnızca fb-hazir'da çağrılıyor
-    (giriş öncesi → izin hatası). Giriş sonrası tekrar çağır:
-sayfa-raporlar kapanışından ÖNCE yapıştır.
- firebase.auth().onAuthStateChanged(function(u){ if(u) isletmeNotlariFirestoreYukle(); });
+  PARCA 1 (HTML kart): Raporlar sayfasinin EN USTUNE,
+     <div id="sayfa-raporlar" ...> acilisindan HEMEN SONRA yapistir.
+
+  PARCA 2 (script): </body> etiketinden hemen once yapistir.
+     (Excel icin xlsx-js-style CDN otomatik yuklenir.)
+
+  AYRICA - bu iki duzeltme ana koddadir, puantajdan bagimsiz:
+  1) Checkbox tikleri: genel  input { -webkit-appearance: none }  kurali
+     checkbox tikini gizliyor. CSS'e su kurali ekle:
+        input[type=checkbox], input[type=radio] { -webkit-appearance: auto; appearance: auto; }
+  2) Isletme notlari: isletmeNotlariFirestoreYukle() yalnizca fb-hazir'da
+     cagriliyor (giris oncesi -> izin hatasi). Giris sonrasi tekrar cagir:
+        firebase.auth().onAuthStateChanged(function(u){ if(u) isletmeNotlariFirestoreYukle(); });
 ================================================================================
 -->
 
-<!-- ============================ PARÇA 1: HTML KART ============================ -->
+<!-- ============================ PARCA 1: HTML KART ============================ -->
     <!-- 5996 KONTROL HİZMETLERİ PUANTAJ TABLOSU (EK-1) -->
     <div class="kart">
       <div class="kart-baslik">📋 5996 Kontrol Hizmetleri Puantajı (EK-1)</div>
@@ -69,7 +69,7 @@ sayfa-raporlar kapanışından ÖNCE yapıştır.
       <div id="puantaj-onizleme" style="overflow-x:auto;"></div>
     </div>
 
-<!-- ============================ PARÇA 2: SCRIPT ============================ -->
+<!-- ============================ PARCA 2: SCRIPT ============================ -->
 <script>
 // ===== 5996 KONTROL HİZMETLERİ PUANTAJ TABLOSU (EK-1) =====
 function _puantajEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
