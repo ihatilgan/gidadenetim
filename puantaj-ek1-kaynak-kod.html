@@ -1,15 +1,14 @@
 <!--
 ================================================================================
-  RAPORLAR FORMLARI - KAYNAK KOD (guncel)  [2 form]
+  RAPORLAR FORMLARI - KAYNAK KOD (guncel)  [3 form]
+  1) 5996 Kontrol Hizmetleri Puantaji (EK-1)
+  2) Ek Ozel Hizmet Tazminati - Aylik Calisma Cetveli
+  3) Sube Faaliyet Raporu
 ================================================================================
-  PARCA 1 (HTML kartlar): Raporlar sayfasinin ustune, 
-     <div id="sayfa-raporlar" ...> acilisindan sonra yapistir.
+  PARCA 1 (kartlar): <div id="sayfa-raporlar"...> acilisindan sonra yapistir.
   PARCA 2 (scriptler): </body> etiketinden hemen once yapistir.
      (Excel icin xlsx-js-style CDN otomatik yuklenir.)
-
-  AYRICA - ana koda (puantajdan bagimsiz):
-  1) input[type=checkbox], input[type=radio] { -webkit-appearance: auto; appearance: auto; }
-  2) firebase.auth().onAuthStateChanged(function(u){ if(u) isletmeNotlariFirestoreYukle(); });
+  Ana koda ek: input[type=checkbox],input[type=radio]{ -webkit-appearance:auto; appearance:auto; }
 ================================================================================
 -->
 
@@ -93,6 +92,41 @@
         <button class="btn btn-gri" onclick="cetvelYazdir()">🖨️ PDF / Yazdır</button>
       </div>
       <div id="cetvel-onizleme" style="overflow-x:auto;"></div>
+    </div>
+
+    <!-- ŞUBE FAALİYET RAPORU -->
+    <div class="kart">
+      <div class="kart-baslik">📋 Şube Faaliyet Raporu</div>
+      <div class="form-grid" style="margin-bottom:14px;">
+        <div class="alan"><label>Yıl</label><input type="number" id="faaliyet-yil" min="2020" max="2099" step="1"></div>
+        <div class="alan">
+          <label>Ay</label>
+          <select id="faaliyet-ay">
+            <option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option>
+            <option value="4">Nisan</option><option value="5">Mayıs</option><option value="6">Haziran</option>
+            <option value="7">Temmuz</option><option value="8">Ağustos</option><option value="9">Eylül</option>
+            <option value="10">Ekim</option><option value="11">Kasım</option><option value="12">Aralık</option>
+          </select>
+        </div>
+        <div class="alan"><label>Personelin Adı</label><input type="text" id="faaliyet-personel" placeholder="Kontrol görevini yürüten"></div>
+        <div class="alan"><label>Sicil No</label><input type="text" id="faaliyet-sicil"></div>
+        <div class="alan"><label>Şubesi</label><input type="text" id="faaliyet-sube" value="GIDA VE YEM ŞUBE MÜDÜRLÜĞÜ"></div>
+        <div class="alan"><label>Görevi</label><input type="text" id="faaliyet-gorev" value="Mühendis / Gıda Kontrol Görevlisi / İhracat"></div>
+        <div class="alan"><label>Unvanı (imza)</label><input type="text" id="faaliyet-unvan" value="Ziraat Mühendisi"></div>
+      </div>
+      <div class="form-grid" style="margin-bottom:10px;">
+        <div class="alan"><label>Sağlık Raporu Başlangıç</label><input type="date" id="faaliyet-rapor-bas"></div>
+        <div class="alan"><label>Sağlık Raporu Bitiş</label><input type="date" id="faaliyet-rapor-bit"></div>
+        <div class="alan"><label>Yıllık İzin Başlangıç</label><input type="date" id="faaliyet-izin-bas"></div>
+        <div class="alan"><label>Yıllık İzin Bitiş</label><input type="date" id="faaliyet-izin-bit"></div>
+      </div>
+      <label class="kontrol-item" id="faaliyet-sendika-wrap" style="font-size:13px;margin-bottom:14px;display:none;width:fit-content;"><input type="checkbox" id="faaliyet-sendika"> Pazartesi günleri Sendika İzni (yalnızca size özel)</label>
+      <div class="buton-satir" style="margin-bottom:16px;">
+        <button class="btn btn-yesil" onclick="faaliyetOlustur()">📋 Şube Faaliyet Raporu Oluştur</button>
+        <button class="btn btn-gri" onclick="faaliyetExcel()">📥 Excel İndir</button>
+        <button class="btn btn-gri" onclick="faaliyetYazdir()">🖨️ PDF / Yazdır</button>
+      </div>
+      <div id="faaliyet-onizleme" style="overflow-x:auto;"></div>
     </div>
 
 <!-- ===== PARCA 2: SCRIPTLER ===== -->
@@ -599,4 +633,186 @@ function cetvelYazdir(){
   setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){} }, 500);
 }
 window.cetvelOlustur=cetvelOlustur; window.cetvelExcel=cetvelExcel; window.cetvelYazdir=cetvelYazdir;
+</script>
+
+<script>
+// ===== ŞUBE FAALİYET RAPORU =====
+function faaliyetVarsayilan(){
+  var y=document.getElementById('faaliyet-yil'), a=document.getElementById('faaliyet-ay'), p=document.getElementById('faaliyet-personel');
+  var now=new Date();
+  if(y && !y.value) y.value=now.getFullYear();
+  if(a && !a.value) a.value=(now.getMonth()+1);
+  if(p && !p.value && typeof mevcutKullaniciAdi!=='undefined' && mevcutKullaniciAdi) p.value=mevcutKullaniciAdi;
+  var _sw=document.getElementById('faaliyet-sendika-wrap'), _sb=document.getElementById('faaliyet-sendika');
+  var _adm=(typeof isAdmin!=='undefined' && isAdmin);
+  if(_sw){ _sw.style.display=_adm?'inline-flex':'none'; }
+  if(_sb && _adm && !_sb.dataset.init){ _sb.dataset.init='1'; _sb.checked=true; }
+}
+document.addEventListener('DOMContentLoaded', faaliyetVarsayilan);
+
+function _faaliyetVeri(){
+  faaliyetVarsayilan();
+  var yilEl=document.getElementById('faaliyet-yil'), ayEl=document.getElementById('faaliyet-ay');
+  if(!yilEl||!ayEl) return null;
+  var yil=parseInt(yilEl.value,10), ay=parseInt(ayEl.value,10);
+  if(!yil||!ay) return null;
+  var personel=(document.getElementById('faaliyet-personel').value||'').trim();
+  var sicil=(document.getElementById('faaliyet-sicil').value||'').trim();
+  var sube=(document.getElementById('faaliyet-sube').value||'').trim();
+  var gorev=(document.getElementById('faaliyet-gorev').value||'').trim();
+  var unvan=(document.getElementById('faaliyet-unvan').value||'').trim();
+
+  function _gd(id){ var e=document.getElementById(id); return (e&&e.value)?e.value:''; }
+  var raporBas=_gd('faaliyet-rapor-bas'), raporBit=_gd('faaliyet-rapor-bit');
+  var izinBas=_gd('faaliyet-izin-bas'), izinBit=_gd('faaliyet-izin-bit');
+  var sendEl=document.getElementById('faaliyet-sendika');
+  var adminMi=(typeof isAdmin!=='undefined' && isAdmin);
+  var sendikaAktif=adminMi && sendEl && sendEl.checked;
+  function _araliktaMi(iso,bas,bit){ if(!bas && !bit) return false; var b=bas||bit, s=bit||bas; if(b>s){ var t=b; b=s; s=t; } return iso>=b && iso<=s; }
+
+  var pl=personel.toLocaleLowerCase('tr');
+  var _araTokens=[pl];
+  if(pl && (pl.indexOf('atılgan')>=0 || pl.indexOf('atilgan')>=0)) _araTokens.push('ihatilgan');
+  var myUid=(typeof mevcutKullanici!=='undefined' && mevcutKullanici)?mevcutKullanici.uid:null;
+  var benMi=!!pl && (typeof mevcutKullaniciAdi!=='undefined') && pl===(mevcutKullaniciAdi||'').toLocaleLowerCase('tr');
+  var ayStr=yil+'-'+('0'+ay).slice(-2);
+
+  var gunMap={};
+  (typeof denetimler!=='undefined'?denetimler:[]).forEach(function(d){
+    if(!d || !d.tarih || String(d.tarih).slice(0,7)!==ayStr) return;
+    var dc=(d.denetciler||[]).join(' ').toLocaleLowerCase('tr');
+    var nameMatch=pl?_araTokens.some(function(t){ return t && dc.indexOf(t)>=0; }):true;
+    var uidMatch=(benMi && myUid && d.kullaniciId===myUid);
+    if(!(nameMatch||uidMatch)) return;
+    var ad=(d.isletme||d.isletmeKayitNo||'').trim();
+    if(!ad) return;
+    var arr=(gunMap[d.tarih]=gunMap[d.tarih]||[]);
+    if(arr.indexOf(ad)<0) arr.push(ad);
+  });
+
+  var satirlar=[];
+  var dt=new Date(yil, ay-1, 1);
+  while(dt.getMonth()===ay-1){
+    var gg=('0'+dt.getDate()).slice(-2), aa=('0'+ay).slice(-2);
+    var iso=yil+'-'+aa+'-'+gg, trh=gg+'.'+aa+'.'+yil, wd=dt.getDay();
+    var tatilAdi=_puantajTatilAdi(dt);
+    var row={tarih:trh, faaliyet:'', kirmizi:false};
+    if(wd===0||wd===6){ row.faaliyet='Haftasonu'; row.kirmizi=true; }
+    else if(tatilAdi){ row.faaliyet=tatilAdi; row.kirmizi=true; }
+    else if(_araliktaMi(iso,raporBas,raporBit)){ row.faaliyet='Hastalık Raporu'; }
+    else if(_araliktaMi(iso,izinBas,izinBit)){ row.faaliyet='Yıllık İzin'; }
+    else if(sendikaAktif && wd===1){ row.faaliyet='Sendika izni'; }
+    else if(gunMap[iso] && gunMap[iso].length){
+      row.faaliyet=gunMap[iso].join(', ')+' işletmelerinin içi ve çevresinde resmi kontrol gerçekleştirilmiştir.';
+    } else {
+      row.faaliyet='İhracat Sağlık Sertifikası işlemleri yapıldı. GGBS veri giriş iş işlemleri yapıldı.';
+    }
+    satirlar.push(row);
+    dt.setDate(dt.getDate()+1);
+  }
+  var ayAdlari=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  return {yil:yil, ay:ay, ayAdi:ayAdlari[ay-1], personel:personel, sicil:sicil, sube:sube, gorev:gorev, unvan:unvan, satirlar:satirlar};
+}
+
+function faaliyetOlustur(){
+  var el=document.getElementById('faaliyet-onizleme');
+  var v=_faaliyetVeri();
+  if(!v){ if(el) el.innerHTML='<p style="color:var(--kirmizi);">Yıl ve ay seçin.</p>'; return; }
+  var h='<div style="font-size:13px;color:var(--gri);margin:10px 0 6px;">'+v.ayAdi+' '+v.yil+'</div>';
+  h+='<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:560px;">';
+  h+='<thead><tr style="background:var(--gri-acik);"><th style="border:1px solid #ccc;padding:5px;width:110px;">TARİH</th><th style="border:1px solid #ccc;padding:5px;">YAPILAN FAALİYETLER</th></tr></thead><tbody>';
+  v.satirlar.forEach(function(s){
+    var f=s.kirmizi?'<span style="color:#c0392b;font-weight:700;">'+_puantajEsc(s.faaliyet)+'</span>':_puantajEsc(s.faaliyet);
+    h+='<tr><td style="border:1px solid #ccc;padding:5px;white-space:nowrap;">'+_puantajEsc(s.tarih)+'</td><td style="border:1px solid #ccc;padding:5px;">'+f+'</td></tr>';
+  });
+  h+='</tbody></table>';
+  el.innerHTML=h;
+}
+
+function faaliyetExcel(){
+  var v=_faaliyetVeri();
+  if(!v){ bildirimGoster('Yıl ve ay seçin.','uyari'); return; }
+  if(!window._xlsxStyleLoaded || typeof XLSX==='undefined' || !XLSX.utils){
+    bildirimGoster('Excel kütüphanesi yükleniyor...','bilgi');
+    var sc=document.createElement('script');
+    sc.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
+    sc.onload=function(){ window._xlsxStyleLoaded=true; faaliyetExcel(); };
+    sc.onerror=function(){ bildirimGoster('Excel kütüphanesi yüklenemedi.','hata'); };
+    document.head.appendChild(sc); return;
+  }
+  var XL=window.XLSX;
+  var aoa=[];
+  aoa.push(['ŞUBE FAALİYET RAPORU','']);
+  aoa.push(['PERSONELİN ADI', (v.personel||'')]);
+  aoa.push(['SİCİL NO', (v.sicil||'')]);
+  aoa.push(['ŞUBESİ', (v.sube||'')]);
+  aoa.push(['GÖREVİ', (v.gorev||'')]);
+  var headRow=aoa.length;
+  aoa.push(['TARİH','YAPILAN FAALİYETLER']);
+  var dataStart=aoa.length;
+  v.satirlar.forEach(function(s){ aoa.push([s.tarih, s.faaliyet]); });
+  var lastData=aoa.length-1;
+  aoa.push(['','']);
+  aoa.push([(v.personel||''), ('Elif TOPALOĞLU')]);
+  aoa.push([(v.unvan||''), ('Gıda ve Yem Şube Müdürü')]);
+
+  var ws=XL.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:13},{wch:90}];
+  var B={style:'thin',color:{rgb:'000000'}};
+  var border={top:B,bottom:B,left:B,right:B};
+  function cell(r,c){ var a=XL.utils.encode_cell({r:r,c:c}); if(!ws[a]) ws[a]={t:'s',v:''}; return a; }
+  for(var r=0;r<=lastData;r++){ for(var c=0;c<=1;c++){ var a=cell(r,c); ws[a].s={border:border,alignment:{vertical:'center',wrapText:true}}; } }
+  ws[cell(0,0)].s={border:border,font:{bold:true,sz:12},alignment:{horizontal:'center',vertical:'center',wrapText:true}};
+  for(var ir=1;ir<=4;ir++){ ws[cell(ir,0)].s={border:border,font:{bold:true},alignment:{horizontal:'left',vertical:'center'}}; ws[cell(ir,1)].s={border:border,alignment:{horizontal:'left',vertical:'center',wrapText:true}}; }
+  for(var hc=0;hc<=1;hc++){ ws[cell(headRow,hc)].s={border:border,font:{bold:true,sz:10},alignment:{horizontal:'center',vertical:'center',wrapText:true},fill:{fgColor:{rgb:'E8E8E8'}}}; }
+  v.satirlar.forEach(function(s,i){ var rr=dataStart+i;
+    ws[cell(rr,0)].s={border:border,alignment:{horizontal:'center',vertical:'center',wrapText:true}};
+    ws[cell(rr,1)].s={border:border,alignment:{horizontal:'left',vertical:'center',wrapText:true},font:(s.kirmizi?{bold:true,color:{rgb:'C00000'}}:{sz:11})};
+  });
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:1}}];
+  ws['!rows']=[]; ws['!rows'][0]={hpt:22};
+
+  var wb=XL.utils.book_new();
+  XL.utils.book_append_sheet(wb, ws, 'Faaliyet');
+  XL.writeFile(wb, 'Sube_Faaliyet_Raporu_'+v.ayAdi+'_'+v.yil+'.xlsx');
+}
+
+function faaliyetYazdir(){
+  var v=_faaliyetVeri();
+  if(!v){ bildirimGoster('Yıl ve ay seçin.','uyari'); return; }
+  var rows='';
+  v.satirlar.forEach(function(s){
+    var fStyle=s.kirmizi?'color:#c00;font-weight:bold;':'';
+    rows+='<tr><td class="c">'+_puantajEsc(s.tarih)+'</td><td style="'+fStyle+'">'+_puantajEsc(s.faaliyet)+'</td></tr>';
+  });
+  var w=window.open('','_blank');
+  if(!w){ bildirimGoster('Açılır pencere engellendi. İzin verin.','uyari'); return; }
+  w.document.write('<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><title>Şube Faaliyet Raporu '+v.ayAdi+' '+v.yil+'</title><style>'
+    +'@page{size:A4 portrait;margin:12mm;}'
+    +'body{font-family:Arial,sans-serif;font-size:11px;color:#000;}'
+    +'table{width:100%;border-collapse:collapse;}'
+    +'th,td{border:1px solid #000;padding:3px 6px;vertical-align:top;}'
+    +'th{background:#e8e8e8;font-size:10px;text-align:center;}'
+    +'td.c{text-align:center;white-space:nowrap;}'
+    +'.baslik{text-align:center;font-weight:bold;font-size:13px;}'
+    +'.bilgi td.k{font-weight:bold;width:22%;}'
+    +'.imza{display:flex;justify-content:space-around;margin-top:30px;font-size:11px;text-align:center;}'
+    +'.imza div{width:44%;}'
+    +'</style></head><body>'
+    +'<table>'
+    +'<tr><td colspan="2" class="baslik">ŞUBE FAALİYET RAPORU</td></tr>'
+    +'<tr class="bilgi"><td class="k">PERSONELİN ADI</td><td>'+_puantajEsc(v.personel||'')+'</td></tr>'
+    +'<tr class="bilgi"><td class="k">SİCİL NO</td><td>'+_puantajEsc(v.sicil||'')+'</td></tr>'
+    +'<tr class="bilgi"><td class="k">ŞUBESİ</td><td>'+_puantajEsc(v.sube||'')+'</td></tr>'
+    +'<tr class="bilgi"><td class="k">GÖREVİ</td><td>'+_puantajEsc(v.gorev||'')+'</td></tr>'
+    +'<tr><th style="width:13%;">TARİH</th><th>YAPILAN FAALİYETLER</th></tr>'
+    +rows
+    +'</table>'
+    +'<div class="imza"><div><br><br><br><b>'+_puantajEsc(v.personel||'')+'</b><br>'+_puantajEsc(v.unvan||'')+'</div>'
+    +'<div>…/…/'+v.yil+'<br><br><br><b>Elif TOPALOĞLU</b><br>Gıda ve Yem Şube Müdürü</div></div>'
+    +'</body></html>');
+  w.document.close();
+  setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){} }, 500);
+}
+window.faaliyetOlustur=faaliyetOlustur; window.faaliyetExcel=faaliyetExcel; window.faaliyetYazdir=faaliyetYazdir;
 </script>
