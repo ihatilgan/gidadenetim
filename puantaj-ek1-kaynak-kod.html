@@ -51,6 +51,8 @@
         <div class="alan"><label>Sağlık Raporu Bitiş</label><input type="date" id="puantaj-rapor-bit"></div>
         <div class="alan"><label>Yıllık İzin Başlangıç</label><input type="date" id="puantaj-izin-bas"></div>
         <div class="alan"><label>Yıllık İzin Bitiş</label><input type="date" id="puantaj-izin-bit"></div>
+        <div class="alan"><label>İdari İzin Başlangıç</label><input type="date" id="puantaj-idari-bas"></div>
+        <div class="alan"><label>İdari İzin Bitiş</label><input type="date" id="puantaj-idari-bit"></div>
       </div>
       <label class="kontrol-item" id="puantaj-sendika-wrap" style="font-size:13px;margin-bottom:14px;display:none;width:fit-content;"><input type="checkbox" id="puantaj-sendika"> Pazartesi günleri Sendika İzni (yalnızca size özel)</label>
       <div class="buton-satir" style="margin-bottom:16px;">
@@ -84,6 +86,8 @@
         <div class="alan"><label>Sağlık Raporu Bitiş</label><input type="date" id="cetvel-rapor-bit"></div>
         <div class="alan"><label>Yıllık İzin Başlangıç</label><input type="date" id="cetvel-izin-bas"></div>
         <div class="alan"><label>Yıllık İzin Bitiş</label><input type="date" id="cetvel-izin-bit"></div>
+        <div class="alan"><label>İdari İzin Başlangıç</label><input type="date" id="cetvel-idari-bas"></div>
+        <div class="alan"><label>İdari İzin Bitiş</label><input type="date" id="cetvel-idari-bit"></div>
       </div>
       <label class="kontrol-item" id="cetvel-sendika-wrap" style="font-size:13px;margin-bottom:14px;display:none;width:fit-content;"><input type="checkbox" id="cetvel-sendika"> Pazartesi günleri Sendika İzni (yalnızca size özel)</label>
       <div class="buton-satir" style="margin-bottom:16px;">
@@ -119,6 +123,8 @@
         <div class="alan"><label>Sağlık Raporu Bitiş</label><input type="date" id="faaliyet-rapor-bit"></div>
         <div class="alan"><label>Yıllık İzin Başlangıç</label><input type="date" id="faaliyet-izin-bas"></div>
         <div class="alan"><label>Yıllık İzin Bitiş</label><input type="date" id="faaliyet-izin-bit"></div>
+        <div class="alan"><label>İdari İzin Başlangıç</label><input type="date" id="faaliyet-idari-bas"></div>
+        <div class="alan"><label>İdari İzin Bitiş</label><input type="date" id="faaliyet-idari-bit"></div>
       </div>
       <label class="kontrol-item" id="faaliyet-sendika-wrap" style="font-size:13px;margin-bottom:14px;display:none;width:fit-content;"><input type="checkbox" id="faaliyet-sendika"> Pazartesi günleri Sendika İzni (yalnızca size özel)</label>
       <div class="buton-satir" style="margin-bottom:16px;">
@@ -187,6 +193,7 @@ function _puantajVeri(){
   function _gd(id){ var e=document.getElementById(id); return (e&&e.value)?e.value:''; }
   var raporBas=_gd('puantaj-rapor-bas'), raporBit=_gd('puantaj-rapor-bit');
   var izinBas=_gd('puantaj-izin-bas'), izinBit=_gd('puantaj-izin-bit');
+  var idariBas=_gd('puantaj-idari-bas'), idariBit=_gd('puantaj-idari-bit');
   var sendikaEl=document.getElementById('puantaj-sendika');
   var adminMi=(typeof isAdmin!=='undefined' && isAdmin);
   var sendikaAktif = adminMi && sendikaEl && sendikaEl.checked;
@@ -225,6 +232,7 @@ function _puantajVeri(){
     else if(tatilAdi){ s.kontrolTuru='Resmi Tatil'; s.kirmizi=true; }
     else if(_araliktaMi(iso, raporBas, raporBit)){ s.kontrolTuru='Rapor'; }
     else if(_araliktaMi(iso, izinBas, izinBit)){ s.kontrolTuru='Yıllık İzin'; }
+    else if(_araliktaMi(iso, idariBas, idariBit)){ s.kontrolTuru='İdari İzin'; }
     else if(sendikaAktif && wd===1){ s.kontrolTuru='Sendika İzni'; }
     else if(gunMap[iso] && gunMap[iso].length){
       s.kontrolTuru=kontrolTuruDenetim;
@@ -356,11 +364,11 @@ function puantajYazdir(){
   var w=window.open('','_blank');
   if(!w){ bildirimGoster('Açılır pencere engellendi. İzin verin.','uyari'); return; }
   w.document.write('<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><title>Puantaj '+v.ayAdi+' '+v.yil+'</title><style>'
-    +'@page{size:A4 portrait;margin:12mm;}'
-    +'body{font-family:Arial,sans-serif;font-size:11px;color:#000;}'
+    +'@page{size:A4 portrait;margin:8mm;}'
+    +'body{font-family:Arial,sans-serif;font-size:9px;color:#000;}'
     +'table{width:100%;border-collapse:collapse;}'
-    +'th,td{border:1px solid #000;padding:3px 5px;vertical-align:top;}'
-    +'th{background:#e8e8e8;font-size:10px;text-align:center;}'
+    +'th,td{border:1px solid #000;padding:1.5px 4px;vertical-align:top;}'
+    +'th{background:#e8e8e8;font-size:9px;text-align:center;}'
     +'td.c{text-align:center;white-space:nowrap;}'
     +'.baslik{text-align:center;font-weight:bold;font-size:12px;}'
     +'.yilay{text-align:center;font-weight:bold;font-size:11px;}'
@@ -431,6 +439,7 @@ function _cetvelVeri(){
   function _gd(id){ var e=document.getElementById(id); return (e&&e.value)?e.value:''; }
   var raporBas=_gd('cetvel-rapor-bas'), raporBit=_gd('cetvel-rapor-bit');
   var izinBas=_gd('cetvel-izin-bas'), izinBit=_gd('cetvel-izin-bit');
+  var idariBas=_gd('cetvel-idari-bas'), idariBit=_gd('cetvel-idari-bit');
   var sendEl=document.getElementById('cetvel-sendika');
   var adminMi=(typeof isAdmin!=='undefined' && isAdmin);
   var sendikaAktif=adminMi && sendEl && sendEl.checked;
@@ -469,11 +478,12 @@ function _cetvelVeri(){
     else if(tatilAdi){ row.ozet='Resmi Tatil'; row.kirmizi=true; }
     else if(_araliktaMi(iso,raporBas,raporBit)){ row.ozet='Rapor'; }
     else if(_araliktaMi(iso,izinBas,izinBit)){ row.ozet='Yıllık İzin'; }
+    else if(_araliktaMi(iso,idariBas,idariBit)){ row.ozet='İdari İzin'; }
     else if(sendikaAktif && wd===1){ row.ozet='Sendika İzni'; }
     else if(gunMap[iso] && gunMap[iso].isimler.length){
       sno++; toplamGun++; row.sno=sno; row.gun=_CETVEL_GUNLER[wd];
       row.yer=gunMap[iso].yerler.join(', ');
-      row.ozet=gunMap[iso].isimler.join(', ')+' işletmelerinde resmi kontrol gerçekleştirilmiştir.';
+      row.ozet=gunMap[iso].isimler.join(', ');
     }
     // diğer iş günleri tamamen boş bırakılır ve toplama sayılmaz
     satirlar.push(row);
@@ -600,11 +610,11 @@ function cetvelYazdir(){
   var w=window.open('','_blank');
   if(!w){ bildirimGoster('Açılır pencere engellendi. İzin verin.','uyari'); return; }
   w.document.write('<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><title>Aylık Çalışma Cetveli '+v.ayAdi+' '+v.yil+'</title><style>'
-    +'@page{size:A4 portrait;margin:12mm;}'
-    +'body{font-family:Arial,sans-serif;font-size:11px;color:#000;}'
+    +'@page{size:A4 portrait;margin:8mm;}'
+    +'body{font-family:Arial,sans-serif;font-size:9px;color:#000;}'
     +'table{width:100%;border-collapse:collapse;}'
-    +'th,td{border:1px solid #000;padding:3px 5px;vertical-align:top;}'
-    +'th{background:#e8e8e8;font-size:10px;text-align:center;}'
+    +'th,td{border:1px solid #000;padding:1.5px 4px;vertical-align:top;}'
+    +'th{background:#e8e8e8;font-size:9px;text-align:center;}'
     +'td.c{text-align:center;white-space:nowrap;}'
     +'.baslik{text-align:center;font-weight:bold;font-size:12px;}'
     +'.bilgi td{font-weight:normal;}'
@@ -665,6 +675,7 @@ function _faaliyetVeri(){
   function _gd(id){ var e=document.getElementById(id); return (e&&e.value)?e.value:''; }
   var raporBas=_gd('faaliyet-rapor-bas'), raporBit=_gd('faaliyet-rapor-bit');
   var izinBas=_gd('faaliyet-izin-bas'), izinBit=_gd('faaliyet-izin-bit');
+  var idariBas=_gd('faaliyet-idari-bas'), idariBit=_gd('faaliyet-idari-bit');
   var sendEl=document.getElementById('faaliyet-sendika');
   var adminMi=(typeof isAdmin!=='undefined' && isAdmin);
   var sendikaAktif=adminMi && sendEl && sendEl.checked;
@@ -697,10 +708,11 @@ function _faaliyetVeri(){
     var iso=yil+'-'+aa+'-'+gg, trh=gg+'.'+aa+'.'+yil, wd=dt.getDay();
     var tatilAdi=_puantajTatilAdi(dt);
     var row={tarih:trh, faaliyet:'', kirmizi:false};
-    if(wd===0||wd===6){ row.faaliyet='Haftasonu'; row.kirmizi=true; }
+    if(wd===0||wd===6){ dt.setDate(dt.getDate()+1); continue; }
     else if(tatilAdi){ row.faaliyet=tatilAdi; row.kirmizi=true; }
     else if(_araliktaMi(iso,raporBas,raporBit)){ row.faaliyet='Hastalık Raporu'; }
     else if(_araliktaMi(iso,izinBas,izinBit)){ row.faaliyet='Yıllık İzin'; }
+    else if(_araliktaMi(iso,idariBas,idariBit)){ row.faaliyet='İdari İzin'; }
     else if(sendikaAktif && wd===1){ row.faaliyet='Sendika izni'; }
     else if(gunMap[iso] && gunMap[iso].length){
       row.faaliyet=gunMap[iso].join(', ')+' işletmelerinin içi ve çevresinde resmi kontrol gerçekleştirilmiştir.';
@@ -788,11 +800,11 @@ function faaliyetYazdir(){
   var w=window.open('','_blank');
   if(!w){ bildirimGoster('Açılır pencere engellendi. İzin verin.','uyari'); return; }
   w.document.write('<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><title>Şube Faaliyet Raporu '+v.ayAdi+' '+v.yil+'</title><style>'
-    +'@page{size:A4 portrait;margin:12mm;}'
-    +'body{font-family:Arial,sans-serif;font-size:11px;color:#000;}'
+    +'@page{size:A4 portrait;margin:8mm;}'
+    +'body{font-family:Arial,sans-serif;font-size:9px;color:#000;}'
     +'table{width:100%;border-collapse:collapse;}'
-    +'th,td{border:1px solid #000;padding:3px 6px;vertical-align:top;}'
-    +'th{background:#e8e8e8;font-size:10px;text-align:center;}'
+    +'th,td{border:1px solid #000;padding:1.5px 4px;vertical-align:top;}'
+    +'th{background:#e8e8e8;font-size:9px;text-align:center;}'
     +'td.c{text-align:center;white-space:nowrap;}'
     +'.baslik{text-align:center;font-weight:bold;font-size:13px;}'
     +'.bilgi td.k{font-weight:bold;width:22%;}'
