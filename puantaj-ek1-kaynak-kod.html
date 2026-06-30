@@ -167,7 +167,7 @@ function puantajVarsayilan(){
   var y=document.getElementById('puantaj-yil'), a=document.getElementById('puantaj-ay'), p=document.getElementById('puantaj-personel');
   var now=new Date();
   if(y && !y.value) y.value=now.getFullYear();
-  if(a && !a.value) a.value=(now.getMonth()+1);
+  if(a && !a.dataset.vinit){ a.dataset.vinit='1'; a.value=String(now.getMonth()+1); }
   if(p && !p.value && typeof mevcutKullaniciAdi!=='undefined' && mevcutKullaniciAdi) p.value=mevcutKullaniciAdi;
   var _sw=document.getElementById('puantaj-sendika-wrap'), _sb=document.getElementById('puantaj-sendika');
   var _adm=(typeof isAdmin!=='undefined' && isAdmin);
@@ -403,9 +403,10 @@ function cetvelVarsayilan(){
   var y=document.getElementById('cetvel-yil'), a=document.getElementById('cetvel-ay'), p=document.getElementById('cetvel-personel');
   var now=new Date();
   if(y && !y.value) y.value=now.getFullYear();
-  if(a && !a.value) a.value=(now.getMonth()+1);
+  if(a && !a.dataset.vinit){ a.dataset.vinit='1'; a.value=String(now.getMonth()+1); }
   if(p && !p.value && typeof mevcutKullaniciAdi!=='undefined' && mevcutKullaniciAdi) p.value=mevcutKullaniciAdi;
   var _sw=document.getElementById('cetvel-sendika-wrap'), _sb=document.getElementById('cetvel-sendika');
+  var _sn=document.getElementById('cetvel-sicil'); if(_sn && !_sn.value && (typeof isAdmin!=='undefined' && isAdmin)) _sn.value='2023-02348';
   var _adm=(typeof isAdmin!=='undefined' && isAdmin);
   if(_sw){ _sw.style.display=_adm?'inline-flex':'none'; }
   if(_sb && _adm && !_sb.dataset.init){ _sb.dataset.init='1'; _sb.checked=true; }
@@ -651,9 +652,10 @@ function faaliyetVarsayilan(){
   var y=document.getElementById('faaliyet-yil'), a=document.getElementById('faaliyet-ay'), p=document.getElementById('faaliyet-personel');
   var now=new Date();
   if(y && !y.value) y.value=now.getFullYear();
-  if(a && !a.value) a.value=(now.getMonth()+1);
+  if(a && !a.dataset.vinit){ a.dataset.vinit='1'; a.value=String(now.getMonth()+1); }
   if(p && !p.value && typeof mevcutKullaniciAdi!=='undefined' && mevcutKullaniciAdi) p.value=mevcutKullaniciAdi;
   var _sw=document.getElementById('faaliyet-sendika-wrap'), _sb=document.getElementById('faaliyet-sendika');
+  var _sn=document.getElementById('faaliyet-sicil'); if(_sn && !_sn.value && (typeof isAdmin!=='undefined' && isAdmin)) _sn.value='2023-02348';
   var _adm=(typeof isAdmin!=='undefined' && isAdmin);
   if(_sw){ _sw.style.display=_adm?'inline-flex':'none'; }
   if(_sb && _adm && !_sb.dataset.init){ _sb.dataset.init='1'; _sb.checked=true; }
