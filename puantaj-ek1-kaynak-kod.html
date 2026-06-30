@@ -440,10 +440,8 @@ function _cetvelVeri(){
       sno++; toplamGun++; row.sno=sno; row.gun=_CETVEL_GUNLER[wd];
       row.yer=gunMap[iso].yerler.join(', ');
       row.ozet=gunMap[iso].isimler.join(', ')+' işletmelerinde resmi kontrol gerçekleştirilmiştir.';
-    } else {
-      sno++; toplamGun++; row.sno=sno; row.gun=_CETVEL_GUNLER[wd];
-      row.ozet='Gözetim- İzleme';
     }
+    // diğer iş günleri tamamen boş bırakılır ve toplama sayılmaz
     satirlar.push(row);
     dt.setDate(dt.getDate()+1);
   }
