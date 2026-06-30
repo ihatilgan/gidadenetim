@@ -3,17 +3,20 @@
   5996 KONTROL HİZMETLERİ PUANTAJI (EK-1) — KAYNAK KOD (güncel)
 ================================================================================
   Kendi kaynak app.html dosyana eklemek için iki parça:
-  PARÇA 1 (HTML kart): Raporlar sayfasında, mevcut rapor kartı kapandıktan sonra,
-     #sayfa-raporlar kapanışından ÖNCE yapıştır.
+  PARÇA 1 (HTML kart): Raporlar sayfasının EN ÜSTÜNE,
+sayfa-raporlar kapanışından ÖNCE yapıştır.
+#sayfa-raporlar kapanışından ÖNCE yapıştır.
   PARÇA 2 (script): </body> etiketinden hemen önce yapıştır.
 
   AYRICA (bu iki düzeltme ana koddadır, puantajdan bağımsız):
   - Checkbox tikleri için CSS: genel "input{ -webkit-appearance:none }" kuralı
     checkbox tikini gizliyor. Şu kuralı CSS'e ekle:
-      input[type=checkbox], input[type=radio] { -webkit-appearance: auto; appearance: auto; }
+sayfa-raporlar kapanışından ÖNCE yapıştır.
+ input[type=checkbox], input[type=radio] { -webkit-appearance: auto; appearance: auto; }
   - İşletme notları: isletmeNotlariFirestoreYukle() yalnızca fb-hazir'da çağrılıyor
     (giriş öncesi → izin hatası). Giriş sonrası tekrar çağır:
-      firebase.auth().onAuthStateChanged(function(u){ if(u) isletmeNotlariFirestoreYukle(); });
+sayfa-raporlar kapanışından ÖNCE yapıştır.
+ firebase.auth().onAuthStateChanged(function(u){ if(u) isletmeNotlariFirestoreYukle(); });
 ================================================================================
 -->
 
@@ -132,6 +135,9 @@ function _puantajVeri(){
   // HER DENETÇİ KENDİ PUANTAJINI ALIR: personel adı denetçiler listesinde geçen
   // VEYA (kendi puantajıysa) kullanıcının oluşturduğu denetimler alınır.
   var pl=personel.toLocaleLowerCase('tr');
+  // Takma ad: denetimlerde 'ihatilgan' geçenler İsmail Hakkı ATILGAN sayılır
+  var _araTokens=[pl];
+  if(pl && (pl.indexOf('atılgan')>=0 || pl.indexOf('atilgan')>=0)) _araTokens.push('ihatilgan');
   var myUid=(typeof mevcutKullanici!=='undefined' && mevcutKullanici)?mevcutKullanici.uid:null;
   var benMi = !!pl && (typeof mevcutKullaniciAdi!=='undefined') && pl===(mevcutKullaniciAdi||'').toLocaleLowerCase('tr');
   var ayStr=yil+'-'+('0'+ay).slice(-2);
@@ -139,7 +145,7 @@ function _puantajVeri(){
   (typeof denetimler!=='undefined'?denetimler:[]).forEach(function(d){
     if(!d || !d.tarih || String(d.tarih).slice(0,7)!==ayStr) return;
     var dc=(d.denetciler||[]).join(' ').toLocaleLowerCase('tr');
-    var nameMatch = pl ? dc.indexOf(pl)>=0 : true;
+    var nameMatch = pl ? _araTokens.some(function(t){ return t && dc.indexOf(t)>=0; }) : true;
     var uidMatch = (benMi && myUid && d.kullaniciId===myUid);
     if(!(nameMatch||uidMatch)) return;
     var ad=(d.isletme||d.isletmeKayitNo||'').trim();
