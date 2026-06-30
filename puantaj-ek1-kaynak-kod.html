@@ -1,19 +1,19 @@
 <!--
 ================================================================================
-  5996 KONTROL HİZMETLERİ PUANTAJI (EK-1) — KAYNAK KOD
+  5996 KONTROL HİZMETLERİ PUANTAJI (EK-1) — KAYNAK KOD (güncel)
 ================================================================================
-  Bu özelliği KENDİ kaynak app.html dosyana eklemek için aşağıdaki iki parçayı
-  yapıştır. (Repodaki bundle'a zaten gömüldü; ama bir dahaki kendi yüklemende
-  kaybolmaması için kaynağına da eklemelisin.)
+  Kendi kaynak app.html dosyana eklemek için iki parça:
+  PARÇA 1 (HTML kart): Raporlar sayfasında, mevcut rapor kartı kapandıktan sonra,
+     #sayfa-raporlar kapanışından ÖNCE yapıştır.
+  PARÇA 2 (script): </body> etiketinden hemen önce yapıştır.
 
-  PARÇA 1 (HTML kart): Raporlar sayfasının içine, mevcut rapor kartı
-     kapandıktan HEMEN SONRA yapıştır. Yani şu satırı bul:
-         <div id="rapor-liste"></div>
-       </div>            <-- bu rapor kartını kapatır
-     ve bu kapanıştan sonra, #sayfa-raporlar'ın kapanış </div>'inden ÖNCE
-     PARÇA 1'i yapıştır.
-
-  PARÇA 2 (script): Dosyanın sonundaki </body> etiketinden HEMEN ÖNCE yapıştır.
+  AYRICA (bu iki düzeltme ana koddadır, puantajdan bağımsız):
+  - Checkbox tikleri için CSS: genel "input{ -webkit-appearance:none }" kuralı
+    checkbox tikini gizliyor. Şu kuralı CSS'e ekle:
+      input[type=checkbox], input[type=radio] { -webkit-appearance: auto; appearance: auto; }
+  - İşletme notları: isletmeNotlariFirestoreYukle() yalnızca fb-hazir'da çağrılıyor
+    (giriş öncesi → izin hatası). Giriş sonrası tekrar çağır:
+      firebase.auth().onAuthStateChanged(function(u){ if(u) isletmeNotlariFirestoreYukle(); });
 ================================================================================
 -->
 
@@ -51,6 +51,13 @@
         <label class="kontrol-item" style="font-size:13px;"><input type="checkbox" class="puantaj-ktur" value="İşletme Kayıt Belgesi"> İşletme Kayıt Belgesi</label>
         <label class="kontrol-item" style="font-size:13px;"><input type="checkbox" class="puantaj-ktur" value="İhracat Denetimi"> İhracat Denetimi</label>
       </div>
+      <div class="form-grid" style="margin-bottom:10px;">
+        <div class="alan"><label>Sağlık Raporu Başlangıç</label><input type="date" id="puantaj-rapor-bas"></div>
+        <div class="alan"><label>Sağlık Raporu Bitiş</label><input type="date" id="puantaj-rapor-bit"></div>
+        <div class="alan"><label>Yıllık İzin Başlangıç</label><input type="date" id="puantaj-izin-bas"></div>
+        <div class="alan"><label>Yıllık İzin Bitiş</label><input type="date" id="puantaj-izin-bit"></div>
+      </div>
+      <label class="kontrol-item" id="puantaj-sendika-wrap" style="font-size:13px;margin-bottom:14px;display:none;width:fit-content;"><input type="checkbox" id="puantaj-sendika"> Pazartesi günleri Sendika İzni (yalnızca size özel)</label>
       <div class="buton-satir" style="margin-bottom:16px;">
         <button class="btn btn-yesil" onclick="puantajOlustur()">📋 5996 Kontrol Hizmetleri Oluştur</button>
         <button class="btn btn-gri" onclick="puantajExcel()">📥 Excel İndir</button>
@@ -93,7 +100,12 @@ function puantajVarsayilan(){
   if(y && !y.value) y.value=now.getFullYear();
   if(a && !a.value) a.value=(now.getMonth()+1);
   if(p && !p.value && typeof mevcutKullaniciAdi!=='undefined' && mevcutKullaniciAdi) p.value=mevcutKullaniciAdi;
+  var _sw=document.getElementById('puantaj-sendika-wrap'), _sb=document.getElementById('puantaj-sendika');
+  var _adm=(typeof isAdmin!=='undefined' && isAdmin);
+  if(_sw){ _sw.style.display=_adm?'inline-flex':'none'; }
+  if(_sb && _adm && !_sb.dataset.init){ _sb.dataset.init='1'; _sb.checked=true; }
 }
+
 document.addEventListener('DOMContentLoaded', puantajVarsayilan);
 
 // Seçilen ay için tüm günleri tipine göre doldur
@@ -108,13 +120,28 @@ function _puantajVeri(){
   var turler=[]; document.querySelectorAll('.puantaj-ktur:checked').forEach(function(c){ turler.push(c.value); });
   var kontrolTuruDenetim = turler.length ? turler.join(' / ') : 'Riske Dayalı Denetim';
 
-  // Seçilen aydaki denetimleri tarih -> (benzersiz) işletme adları olarak eşle
-  // Denetimleri ekip kapsamına göre al (admin=tümü, denetçi=kendi ekibi). Personel adı yalnızca imza içindir.
-  var ayStr = yil+'-'+('0'+ay).slice(-2);
-  var _pkaynak = (typeof ekipDenetimleri==='function') ? ekipDenetimleri() : (typeof denetimler!=='undefined'?denetimler:[]);
+  // İzin / rapor tarih aralıkları + Sendika İzni (yalnızca admin)
+  function _gd(id){ var e=document.getElementById(id); return (e&&e.value)?e.value:''; }
+  var raporBas=_gd('puantaj-rapor-bas'), raporBit=_gd('puantaj-rapor-bit');
+  var izinBas=_gd('puantaj-izin-bas'), izinBit=_gd('puantaj-izin-bit');
+  var sendikaEl=document.getElementById('puantaj-sendika');
+  var adminMi=(typeof isAdmin!=='undefined' && isAdmin);
+  var sendikaAktif = adminMi && sendikaEl && sendikaEl.checked;
+  function _araliktaMi(iso, bas, bit){ if(!bas && !bit) return false; var b=bas||bit, s=bit||bas; if(b>s){ var t=b; b=s; s=t; } return iso>=b && iso<=s; }
+
+  // HER DENETÇİ KENDİ PUANTAJINI ALIR: personel adı denetçiler listesinde geçen
+  // VEYA (kendi puantajıysa) kullanıcının oluşturduğu denetimler alınır.
+  var pl=personel.toLocaleLowerCase('tr');
+  var myUid=(typeof mevcutKullanici!=='undefined' && mevcutKullanici)?mevcutKullanici.uid:null;
+  var benMi = !!pl && (typeof mevcutKullaniciAdi!=='undefined') && pl===(mevcutKullaniciAdi||'').toLocaleLowerCase('tr');
+  var ayStr=yil+'-'+('0'+ay).slice(-2);
   var gunMap={};
-  (_pkaynak||[]).forEach(function(d){
+  (typeof denetimler!=='undefined'?denetimler:[]).forEach(function(d){
     if(!d || !d.tarih || String(d.tarih).slice(0,7)!==ayStr) return;
+    var dc=(d.denetciler||[]).join(' ').toLocaleLowerCase('tr');
+    var nameMatch = pl ? dc.indexOf(pl)>=0 : true;
+    var uidMatch = (benMi && myUid && d.kullaniciId===myUid);
+    if(!(nameMatch||uidMatch)) return;
     var ad=(d.isletme||d.isletmeKayitNo||'').trim();
     if(!ad) return;
     var arr=(gunMap[d.tarih]=gunMap[d.tarih]||[]);
@@ -130,6 +157,9 @@ function _puantajVeri(){
     var s={tarih:trh, kontrolTuru:'', mevzuat:'', aciklama:'', saat:'', kirmizi:false};
     if(wd===0||wd===6){ s.kontrolTuru='Haftasonu'; s.kirmizi=true; }
     else if(tatilAdi){ s.kontrolTuru='Resmi Tatil'; s.kirmizi=true; }
+    else if(_araliktaMi(iso, raporBas, raporBit)){ s.kontrolTuru='Rapor'; }
+    else if(_araliktaMi(iso, izinBas, izinBit)){ s.kontrolTuru='Yıllık İzin'; }
+    else if(sendikaAktif && wd===1){ s.kontrolTuru='Sendika İzni'; }
     else if(gunMap[iso] && gunMap[iso].length){
       s.kontrolTuru=kontrolTuruDenetim;
       s.mevzuat='5996 Sayılı Kanun';
