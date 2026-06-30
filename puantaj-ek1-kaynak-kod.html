@@ -214,28 +214,70 @@ function puantajOlustur(){
 function puantajExcel(){
   var v=_puantajVeri();
   if(!v){ bildirimGoster('Yıl ve ay seçin.','uyari'); return; }
-  if(typeof XLSX==='undefined'){
+  // Kenarlık/birleştirme/ortalama için stil destekli xlsx-js-style gerekir
+  if(!window._xlsxStyleLoaded || typeof XLSX==='undefined' || !XLSX.utils){
     bildirimGoster('Excel kütüphanesi yükleniyor...','bilgi');
-    var sc=document.createElement('script'); sc.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
-    sc.onload=function(){ puantajExcel(); }; document.head.appendChild(sc); return;
+    var sc=document.createElement('script');
+    sc.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
+    sc.onload=function(){ window._xlsxStyleLoaded=true; puantajExcel(); };
+    sc.onerror=function(){ bildirimGoster('Excel kütüphanesi yüklenemedi.','hata'); };
+    document.head.appendChild(sc);
+    return;
   }
+  var XL=window.XLSX;
+  var baslik='Kontrol Hizmetlerine İlişkin Puantaj Tablosu ( EK-1) ( Değişik :1/2/2024 tarihli ve 12843329 Sayılı Olur/6. Md )';
+  var yilAy='Ait Olduğu Yıl: '+v.yil+'   Ay: '+v.ayAdi;
+  var notMetni=_PUANTAJ_NOT+'   …../…../'+v.yil;
+
   var aoa=[];
-  aoa.push(['Kontrol Hizmetlerine İlişkin Puantaj Tablosu ( EK-1) ( Değişik :1/2/2024 tarihli ve 12843329 Sayılı Olur/6. Md )']);
-  aoa.push(['Ait Olduğu Yıl :', v.yil, 'Ay:', v.ayAdi]);
+  aoa.push([baslik,'','','','']);
+  aoa.push([yilAy,'','','','']);
   aoa.push(['Tarih','Kontrol Türü (1)','Kontrol Türünün Dayanağı Mevzuat (2)','Açıklama (3)','Saat Aralığı (4)']);
-  v.satirlar.forEach(function(s){ aoa.push([s.tarih, s.kontrolTuru, s.mevzuat, s.aciklama, s.saat]); });
-  aoa.push(['Toplam Gün', v.toplamGun]);
-  aoa.push([]);
-  aoa.push([_PUANTAJ_NOT]);
-  aoa.push([]);
-  aoa.push(['Kontrol Görevi Yürüten Personelin','','','Onaylayan Birim Amiri']);
-  aoa.push([v.personel||'', '', '', 'Elif TOPALOĞLU']);
-  aoa.push([(v.unvan||''), '', '', 'Şube Müdürü']);
-  var ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[{wch:12},{wch:24},{wch:32},{wch:55},{wch:14}];
-  var wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Puantaj');
-  XLSX.writeFile(wb, 'Puantaj_'+v.ayAdi+'_'+v.yil+'.xlsx');
+  var dataStart=aoa.length;
+  v.satirlar.forEach(function(s){ aoa.push([s.tarih,s.kontrolTuru,s.mevzuat,s.aciklama,s.saat]); });
+  var toplamRow=aoa.length;
+  aoa.push(['Toplam Gün','','','',String(v.toplamGun)]);
+  aoa.push(['','','','','']);
+  var notRow=aoa.length;
+  aoa.push([notMetni,'','','','']);
+  aoa.push(['','','','','']);
+  aoa.push(['Kontrol Görevi Yürüten Personelin','','','Onaylayan Birim Amiri','']);
+  aoa.push([(v.personel||''),'','',('Elif TOPALOĞLU'),'']);
+  aoa.push([(v.unvan||''),'','',('Şube Müdürü'),'']);
+
+  var ws=XL.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:11},{wch:22},{wch:30},{wch:48},{wch:13}];
+
+  var B={style:'thin',color:{rgb:'000000'}};
+  var border={top:B,bottom:B,left:B,right:B};
+  function cell(r,c){ var a=XL.utils.encode_cell({r:r,c:c}); if(!ws[a]) ws[a]={t:'s',v:''}; return a; }
+  // 1. satırdan Toplam Gün satırına kadar TÜM A-E hücrelerine kenarlık
+  for(var r=0;r<=toplamRow;r++){ for(var c=0;c<=4;c++){ var a=cell(r,c); ws[a].s={border:border,alignment:{vertical:'center',wrapText:true}}; } }
+  ws[cell(0,0)].s={border:border,font:{bold:true,sz:12},alignment:{horizontal:'center',vertical:'center',wrapText:true}};
+  ws[cell(1,0)].s={border:border,font:{bold:true,sz:11},alignment:{horizontal:'center',vertical:'center',wrapText:true}};
+  for(var hc=0;hc<=4;hc++){ ws[cell(2,hc)].s={border:border,font:{bold:true,sz:10},alignment:{horizontal:'center',vertical:'center',wrapText:true},fill:{fgColor:{rgb:'E8E8E8'}}}; }
+  v.satirlar.forEach(function(s,i){ var rr=dataStart+i;
+    ws[cell(rr,0)].s={border:border,alignment:{horizontal:'center',vertical:'center',wrapText:true}};
+    ws[cell(rr,1)].s={border:border,alignment:{horizontal:(s.kirmizi?'center':'left'),vertical:'center',wrapText:true},font:(s.kirmizi?{bold:true,color:{rgb:'C00000'}}:{sz:11})};
+    ws[cell(rr,2)].s={border:border,alignment:{horizontal:'left',vertical:'center',wrapText:true}};
+    ws[cell(rr,3)].s={border:border,alignment:{horizontal:'left',vertical:'center',wrapText:true}};
+    ws[cell(rr,4)].s={border:border,alignment:{horizontal:'center',vertical:'center',wrapText:true}};
+  });
+  ws[cell(toplamRow,0)].s={border:border,font:{bold:true},alignment:{horizontal:'center',vertical:'center'}};
+  ws[cell(toplamRow,4)].s={border:border,font:{bold:true},alignment:{horizontal:'center',vertical:'center'}};
+  ws[cell(notRow,0)].s={alignment:{horizontal:'center',vertical:'top',wrapText:true},font:{sz:9}};
+
+  ws['!merges']=[
+    {s:{r:0,c:0},e:{r:0,c:4}},
+    {s:{r:1,c:0},e:{r:1,c:4}},
+    {s:{r:toplamRow,c:0},e:{r:toplamRow,c:3}},
+    {s:{r:notRow,c:0},e:{r:notRow,c:4}}
+  ];
+  ws['!rows']=[]; ws['!rows'][0]={hpt:34}; ws['!rows'][1]={hpt:18}; ws['!rows'][notRow]={hpt:95};
+
+  var wb=XL.utils.book_new();
+  XL.utils.book_append_sheet(wb, ws, 'Puantaj');
+  XL.writeFile(wb, 'Puantaj_'+v.ayAdi+'_'+v.yil+'.xlsx');
 }
 
 function puantajYazdir(){
@@ -256,24 +298,27 @@ function puantajYazdir(){
   w.document.write('<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><title>Puantaj '+v.ayAdi+' '+v.yil+'</title><style>'
     +'@page{size:A4 portrait;margin:12mm;}'
     +'body{font-family:Arial,sans-serif;font-size:11px;color:#000;}'
-    +'h2{text-align:center;font-size:13px;margin:0 0 3px;}'
-    +'.alt{text-align:center;font-size:10px;margin-bottom:10px;}'
     +'table{width:100%;border-collapse:collapse;}'
     +'th,td{border:1px solid #000;padding:3px 5px;vertical-align:top;}'
-    +'th{background:#eee;font-size:10px;text-align:center;}'
+    +'th{background:#e8e8e8;font-size:10px;text-align:center;}'
     +'td.c{text-align:center;white-space:nowrap;}'
-    +'.not{font-size:9px;margin-top:10px;text-align:justify;line-height:1.45;}'
+    +'.baslik{text-align:center;font-weight:bold;font-size:12px;}'
+    +'.yilay{text-align:center;font-weight:bold;font-size:11px;}'
+    +'.toplam td{font-weight:bold;}'
+    +'.not{font-size:9px;margin-top:12px;text-align:center;line-height:1.5;}'
     +'.imza{display:flex;justify-content:space-around;margin-top:26px;font-size:11px;text-align:center;}'
     +'.imza div{width:44%;}'
     +'</style></head><body>'
-    +'<h2>Kontrol Hizmetlerine İlişkin Puantaj Tablosu (EK-1)</h2>'
-    +'<div class="alt">( Değişik :1/2/2024 tarihli ve 12843329 Sayılı Olur/6. Md )<br>Ait Olduğu Yıl : <b>'+v.yil+'</b> &nbsp; Ay: <b>'+_puantajEsc(v.ayAdi)+'</b></div>'
-    +'<table><thead><tr><th style="width:9%;">Tarih</th><th style="width:20%;">Kontrol Türü (1)</th><th style="width:18%;">Kontrol Türünün Dayanağı Mevzuat (2)</th><th>Açıklama (3)</th><th style="width:12%;">Saat Aralığı (4)</th></tr></thead>'
-    +'<tbody>'+rows+'</tbody>'
-    +'<tfoot><tr><td class="c" style="font-weight:bold;">Toplam Gün</td><td colspan="4" style="font-weight:bold;">'+v.toplamGun+'</td></tr></tfoot></table>'
-    +'<div class="not">'+_puantajEsc(_PUANTAJ_NOT)+'</div>'
-    +'<div class="imza"><div>Kontrol Görevi Yürüten Personelin<br>……/……/'+v.yil+'<br><br><br><b>'+_puantajEsc(v.personel||'')+'</b><br>'+_puantajEsc(v.unvan||'')+'</div>'
-    +'<div>Onaylayan Birim Amiri<br>……/……/'+v.yil+'<br><br><br><b>Elif TOPALOĞLU</b><br>Şube Müdürü</div></div>'
+    +'<table>'
+    +'<tr><td colspan="5" class="baslik">Kontrol Hizmetlerine İlişkin Puantaj Tablosu ( EK-1) ( Değişik :1/2/2024 tarihli ve 12843329 Sayılı Olur/6. Md )</td></tr>'
+    +'<tr><td colspan="5" class="yilay">Ait Olduğu Yıl: '+v.yil+' &nbsp; Ay: '+_puantajEsc(v.ayAdi)+'</td></tr>'
+    +'<tr><th style="width:9%;">Tarih</th><th style="width:20%;">Kontrol Türü (1)</th><th style="width:18%;">Kontrol Türünün Dayanağı Mevzuat (2)</th><th>Açıklama (3)</th><th style="width:12%;">Saat Aralığı (4)</th></tr>'
+    +rows
+    +'<tr class="toplam"><td colspan="4" style="text-align:center;">Toplam Gün</td><td class="c">'+v.toplamGun+'</td></tr>'
+    +'</table>'
+    +'<div class="not">'+_puantajEsc(_PUANTAJ_NOT)+'   …../…../'+v.yil+'</div>'
+    +'<div class="imza"><div>Kontrol Görevi Yürüten Personelin<br><br><br><b>'+_puantajEsc(v.personel||'')+'</b><br>'+_puantajEsc(v.unvan||'')+'</div>'
+    +'<div>Onaylayan Birim Amiri<br><br><br><b>Elif TOPALOĞLU</b><br>Şube Müdürü</div></div>'
     +'</body></html>');
   w.document.close();
   setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){} }, 500);
