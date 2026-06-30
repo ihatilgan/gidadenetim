@@ -109,12 +109,12 @@ function _puantajVeri(){
   var kontrolTuruDenetim = turler.length ? turler.join(' / ') : 'Riske Dayalı Denetim';
 
   // Seçilen aydaki denetimleri tarih -> (benzersiz) işletme adları olarak eşle
-  var pl = personel.toLocaleLowerCase('tr');
+  // Denetimleri ekip kapsamına göre al (admin=tümü, denetçi=kendi ekibi). Personel adı yalnızca imza içindir.
   var ayStr = yil+'-'+('0'+ay).slice(-2);
+  var _pkaynak = (typeof ekipDenetimleri==='function') ? ekipDenetimleri() : (typeof denetimler!=='undefined'?denetimler:[]);
   var gunMap={};
-  (typeof denetimler!=='undefined'?denetimler:[]).forEach(function(d){
-    if(!d || !d.tarih || d.tarih.slice(0,7)!==ayStr) return;
-    if(pl){ var dc=(d.denetciler||[]).join(' ').toLocaleLowerCase('tr'); if(dc.indexOf(pl)<0) return; }
+  (_pkaynak||[]).forEach(function(d){
+    if(!d || !d.tarih || String(d.tarih).slice(0,7)!==ayStr) return;
     var ad=(d.isletme||d.isletmeKayitNo||'').trim();
     if(!ad) return;
     var arr=(gunMap[d.tarih]=gunMap[d.tarih]||[]);
