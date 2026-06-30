@@ -1,26 +1,19 @@
 <!--
 ================================================================================
-  5996 KONTROL HIZMETLERI PUANTAJI (EK-1) - KAYNAK KOD (guncel)
+  RAPORLAR FORMLARI - KAYNAK KOD (guncel)  [2 form]
 ================================================================================
-  Kendi kaynak app.html dosyana eklemek icin iki parca:
-
-  PARCA 1 (HTML kart): Raporlar sayfasinin EN USTUNE,
-     <div id="sayfa-raporlar" ...> acilisindan HEMEN SONRA yapistir.
-
-  PARCA 2 (script): </body> etiketinden hemen once yapistir.
+  PARCA 1 (HTML kartlar): Raporlar sayfasinin ustune, 
+     <div id="sayfa-raporlar" ...> acilisindan sonra yapistir.
+  PARCA 2 (scriptler): </body> etiketinden hemen once yapistir.
      (Excel icin xlsx-js-style CDN otomatik yuklenir.)
 
-  AYRICA - bu iki duzeltme ana koddadir, puantajdan bagimsiz:
-  1) Checkbox tikleri: genel  input { -webkit-appearance: none }  kurali
-     checkbox tikini gizliyor. CSS'e su kurali ekle:
-        input[type=checkbox], input[type=radio] { -webkit-appearance: auto; appearance: auto; }
-  2) Isletme notlari: isletmeNotlariFirestoreYukle() yalnizca fb-hazir'da
-     cagriliyor (giris oncesi -> izin hatasi). Giris sonrasi tekrar cagir:
-        firebase.auth().onAuthStateChanged(function(u){ if(u) isletmeNotlariFirestoreYukle(); });
+  AYRICA - ana koda (puantajdan bagimsiz):
+  1) input[type=checkbox], input[type=radio] { -webkit-appearance: auto; appearance: auto; }
+  2) firebase.auth().onAuthStateChanged(function(u){ if(u) isletmeNotlariFirestoreYukle(); });
 ================================================================================
 -->
 
-<!-- ============================ PARCA 1: HTML KART ============================ -->
+<!-- ===== PARCA 1: HTML KARTLAR ===== -->
     <!-- 5996 KONTROL HİZMETLERİ PUANTAJ TABLOSU (EK-1) -->
     <div class="kart">
       <div class="kart-baslik">📋 5996 Kontrol Hizmetleri Puantajı (EK-1)</div>
@@ -69,7 +62,40 @@
       <div id="puantaj-onizleme" style="overflow-x:auto;"></div>
     </div>
 
-<!-- ============================ PARCA 2: SCRIPT ============================ -->
+    <!-- EK ÖZEL HİZMET TAZMİNATI — AYLIK ÇALIŞMA CETVELİ -->
+    <div class="kart">
+      <div class="kart-baslik">📋 Ek Özel Hizmet Tazminatı — Aylık Çalışma Cetveli</div>
+      <div class="form-grid" style="margin-bottom:14px;">
+        <div class="alan"><label>Yıl</label><input type="number" id="cetvel-yil" min="2020" max="2099" step="1"></div>
+        <div class="alan">
+          <label>Ay</label>
+          <select id="cetvel-ay">
+            <option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option>
+            <option value="4">Nisan</option><option value="5">Mayıs</option><option value="6">Haziran</option>
+            <option value="7">Temmuz</option><option value="8">Ağustos</option><option value="9">Eylül</option>
+            <option value="10">Ekim</option><option value="11">Kasım</option><option value="12">Aralık</option>
+          </select>
+        </div>
+        <div class="alan"><label>Adı Soyadı</label><input type="text" id="cetvel-personel" placeholder="Kontrol görevini yürüten"></div>
+        <div class="alan"><label>Unvanı</label><input type="text" id="cetvel-unvan" value="Mühendis"></div>
+        <div class="alan"><label>Sicil No</label><input type="text" id="cetvel-sicil"></div>
+      </div>
+      <div class="form-grid" style="margin-bottom:10px;">
+        <div class="alan"><label>Sağlık Raporu Başlangıç</label><input type="date" id="cetvel-rapor-bas"></div>
+        <div class="alan"><label>Sağlık Raporu Bitiş</label><input type="date" id="cetvel-rapor-bit"></div>
+        <div class="alan"><label>Yıllık İzin Başlangıç</label><input type="date" id="cetvel-izin-bas"></div>
+        <div class="alan"><label>Yıllık İzin Bitiş</label><input type="date" id="cetvel-izin-bit"></div>
+      </div>
+      <label class="kontrol-item" id="cetvel-sendika-wrap" style="font-size:13px;margin-bottom:14px;display:none;width:fit-content;"><input type="checkbox" id="cetvel-sendika"> Pazartesi günleri Sendika İzni (yalnızca size özel)</label>
+      <div class="buton-satir" style="margin-bottom:16px;">
+        <button class="btn btn-yesil" onclick="cetvelOlustur()">📋 Çalışma Cetveli Oluştur</button>
+        <button class="btn btn-gri" onclick="cetvelExcel()">📥 Excel İndir</button>
+        <button class="btn btn-gri" onclick="cetvelYazdir()">🖨️ PDF / Yazdır</button>
+      </div>
+      <div id="cetvel-onizleme" style="overflow-x:auto;"></div>
+    </div>
+
+<!-- ===== PARCA 2: SCRIPTLER ===== -->
 <script>
 // ===== 5996 KONTROL HİZMETLERİ PUANTAJ TABLOSU (EK-1) =====
 function _puantajEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -324,4 +350,255 @@ function puantajYazdir(){
   setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){} }, 500);
 }
 window.puantajOlustur=puantajOlustur; window.puantajExcel=puantajExcel; window.puantajYazdir=puantajYazdir;
+</script>
+
+<script>
+// ===== EK ÖZEL HİZMET TAZMİNATI — AYLIK ÇALIŞMA CETVELİ =====
+var _CETVEL_GUNLER=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+var _CETVEL_NOT='Yukarıda dökümü gösterilen Aylık Çalışma Cetvelinin 2006/10344 sayılı Bakanlar Kurulu Kararının (E) Teknik Hizmet Bölümünün 6. maddesine göre Ek Özel Hizmet Tazminatı ödemesine esas olmak üzere hazırlandığını, hatalı bir kayıt olduğu takdirde maddi ve idari olarak sorumlu olacağımızı beyan ve taahhüt ederiz.';
+
+function cetvelVarsayilan(){
+  var y=document.getElementById('cetvel-yil'), a=document.getElementById('cetvel-ay'), p=document.getElementById('cetvel-personel');
+  var now=new Date();
+  if(y && !y.value) y.value=now.getFullYear();
+  if(a && !a.value) a.value=(now.getMonth()+1);
+  if(p && !p.value && typeof mevcutKullaniciAdi!=='undefined' && mevcutKullaniciAdi) p.value=mevcutKullaniciAdi;
+  var _sw=document.getElementById('cetvel-sendika-wrap'), _sb=document.getElementById('cetvel-sendika');
+  var _adm=(typeof isAdmin!=='undefined' && isAdmin);
+  if(_sw){ _sw.style.display=_adm?'inline-flex':'none'; }
+  if(_sb && _adm && !_sb.dataset.init){ _sb.dataset.init='1'; _sb.checked=true; }
+}
+document.addEventListener('DOMContentLoaded', cetvelVarsayilan);
+
+// Bir denetimin gidilen yeri: köy/kasaba adı veya "Merkez"
+function _cetvelYer(d){
+  var ist=null;
+  if(typeof ISLETMELER!=='undefined' && ISLETMELER && ISLETMELER.find) ist=ISLETMELER.find(function(i){ return (d.isletmeKayitNo && i.kayitNo===d.isletmeKayitNo) || (d.isletme && i.isletmeAdi===d.isletme); });
+  if(ist && typeof isletmeBaslikBelirle==='function'){
+    var b=isletmeBaslikBelirle(ist);
+    if(b && b.tip==='koy' && b.key) return b.key;
+    return 'Merkez';
+  }
+  var ilce=(d.isletmeIlce||'').toString().trim();
+  if(!ilce || ilce.toLocaleLowerCase('tr')==='merkez') return 'Merkez';
+  return ilce;
+}
+
+function _cetvelVeri(){
+  cetvelVarsayilan();
+  var yilEl=document.getElementById('cetvel-yil'), ayEl=document.getElementById('cetvel-ay');
+  if(!yilEl||!ayEl) return null;
+  var yil=parseInt(yilEl.value,10), ay=parseInt(ayEl.value,10);
+  if(!yil||!ay) return null;
+  var personel=(document.getElementById('cetvel-personel').value||'').trim();
+  var unvan=(document.getElementById('cetvel-unvan').value||'').trim();
+  var sicil=(document.getElementById('cetvel-sicil').value||'').trim();
+
+  function _gd(id){ var e=document.getElementById(id); return (e&&e.value)?e.value:''; }
+  var raporBas=_gd('cetvel-rapor-bas'), raporBit=_gd('cetvel-rapor-bit');
+  var izinBas=_gd('cetvel-izin-bas'), izinBit=_gd('cetvel-izin-bit');
+  var sendEl=document.getElementById('cetvel-sendika');
+  var adminMi=(typeof isAdmin!=='undefined' && isAdmin);
+  var sendikaAktif=adminMi && sendEl && sendEl.checked;
+  function _araliktaMi(iso,bas,bit){ if(!bas && !bit) return false; var b=bas||bit, s=bit||bas; if(b>s){ var t=b; b=s; s=t; } return iso>=b && iso<=s; }
+
+  var pl=personel.toLocaleLowerCase('tr');
+  var _araTokens=[pl];
+  if(pl && (pl.indexOf('atılgan')>=0 || pl.indexOf('atilgan')>=0)) _araTokens.push('ihatilgan');
+  var myUid=(typeof mevcutKullanici!=='undefined' && mevcutKullanici)?mevcutKullanici.uid:null;
+  var benMi=!!pl && (typeof mevcutKullaniciAdi!=='undefined') && pl===(mevcutKullaniciAdi||'').toLocaleLowerCase('tr');
+  var ayStr=yil+'-'+('0'+ay).slice(-2);
+
+  var gunMap={};
+  (typeof denetimler!=='undefined'?denetimler:[]).forEach(function(d){
+    if(!d || !d.tarih || String(d.tarih).slice(0,7)!==ayStr) return;
+    var dc=(d.denetciler||[]).join(' ').toLocaleLowerCase('tr');
+    var nameMatch=pl?_araTokens.some(function(t){ return t && dc.indexOf(t)>=0; }):true;
+    var uidMatch=(benMi && myUid && d.kullaniciId===myUid);
+    if(!(nameMatch||uidMatch)) return;
+    var ad=(d.isletme||d.isletmeKayitNo||'').trim();
+    if(!ad) return;
+    var g=gunMap[d.tarih]||(gunMap[d.tarih]={isimler:[],yerler:[]});
+    if(g.isimler.indexOf(ad)<0) g.isimler.push(ad);
+    var yer=_cetvelYer(d);
+    if(yer && g.yerler.indexOf(yer)<0) g.yerler.push(yer);
+  });
+
+  var satirlar=[], toplamGun=0, sno=0;
+  var dt=new Date(yil, ay-1, 1);
+  while(dt.getMonth()===ay-1){
+    var gg=('0'+dt.getDate()).slice(-2), aa=('0'+ay).slice(-2);
+    var iso=yil+'-'+aa+'-'+gg, trh=gg+'.'+aa+'.'+yil, wd=dt.getDay();
+    var tatilAdi=_puantajTatilAdi(dt);
+    var row={sno:'', tarih:trh, gun:'', yer:'', ozet:'', kirmizi:false};
+    if(wd===0||wd===6){ row.ozet='Haftasonu'; row.kirmizi=true; }
+    else if(tatilAdi){ row.ozet='Resmi Tatil'; row.kirmizi=true; }
+    else if(_araliktaMi(iso,raporBas,raporBit)){ row.ozet='Rapor'; }
+    else if(_araliktaMi(iso,izinBas,izinBit)){ row.ozet='Yıllık İzin'; }
+    else if(sendikaAktif && wd===1){ row.ozet='Sendika İzni'; }
+    else if(gunMap[iso] && gunMap[iso].isimler.length){
+      sno++; toplamGun++; row.sno=sno; row.gun=_CETVEL_GUNLER[wd];
+      row.yer=gunMap[iso].yerler.join(', ');
+      row.ozet=gunMap[iso].isimler.join(', ')+' işletmelerinde resmi kontrol gerçekleştirilmiştir.';
+    } else {
+      sno++; toplamGun++; row.sno=sno; row.gun=_CETVEL_GUNLER[wd];
+      row.ozet='Gözetim- İzleme';
+    }
+    satirlar.push(row);
+    dt.setDate(dt.getDate()+1);
+  }
+  var ayAdlari=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  return {yil:yil, ay:ay, ayAdi:ayAdlari[ay-1], personel:personel, unvan:unvan, sicil:sicil, satirlar:satirlar, toplamGun:toplamGun};
+}
+
+function cetvelOlustur(){
+  var el=document.getElementById('cetvel-onizleme');
+  var v=_cetvelVeri();
+  if(!v){ if(el) el.innerHTML='<p style="color:var(--kirmizi);">Yıl ve ay seçin.</p>'; return; }
+  var h='<div style="font-size:13px;color:var(--gri);margin:10px 0 6px;">'+v.ayAdi+' '+v.yil+' · Toplam Gün: <b>'+v.toplamGun+'</b></div>';
+  h+='<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:680px;">';
+  h+='<thead><tr style="background:var(--gri-acik);">'
+    +'<th style="border:1px solid #ccc;padding:5px;">S.NO</th>'
+    +'<th style="border:1px solid #ccc;padding:5px;">TARİH</th>'
+    +'<th style="border:1px solid #ccc;padding:5px;">GÜNLER</th>'
+    +'<th style="border:1px solid #ccc;padding:5px;">GİDİLEN YER</th>'
+    +'<th style="border:1px solid #ccc;padding:5px;">YAPILAN İŞLERİN ÖZETİ</th></tr></thead><tbody>';
+  v.satirlar.forEach(function(s){
+    var oz = s.kirmizi ? '<span style="color:#c0392b;font-weight:700;">'+_puantajEsc(s.ozet)+'</span>' : _puantajEsc(s.ozet);
+    h+='<tr>'
+      +'<td style="border:1px solid #ccc;padding:5px;text-align:center;">'+(s.sno||'')+'</td>'
+      +'<td style="border:1px solid #ccc;padding:5px;white-space:nowrap;">'+_puantajEsc(s.tarih)+'</td>'
+      +'<td style="border:1px solid #ccc;padding:5px;text-align:center;">'+_puantajEsc(s.gun)+'</td>'
+      +'<td style="border:1px solid #ccc;padding:5px;">'+_puantajEsc(s.yer)+'</td>'
+      +'<td style="border:1px solid #ccc;padding:5px;'+(s.kirmizi?'text-align:center;':'')+'">'+oz+'</td></tr>';
+  });
+  h+='</tbody></table>';
+  el.innerHTML=h;
+}
+
+function cetvelExcel(){
+  var v=_cetvelVeri();
+  if(!v){ bildirimGoster('Yıl ve ay seçin.','uyari'); return; }
+  if(!window._xlsxStyleLoaded || typeof XLSX==='undefined' || !XLSX.utils){
+    bildirimGoster('Excel kütüphanesi yükleniyor...','bilgi');
+    var sc=document.createElement('script');
+    sc.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
+    sc.onload=function(){ window._xlsxStyleLoaded=true; cetvelExcel(); };
+    sc.onerror=function(){ bildirimGoster('Excel kütüphanesi yüklenemedi.','hata'); };
+    document.head.appendChild(sc); return;
+  }
+  var XL=window.XLSX;
+  var notMetni=_CETVEL_NOT+'   …/…/'+v.yil;
+  var aoa=[];
+  aoa.push(['EK ÖZEL HİZMET TAZMİNATINA ESAS','','','','']);
+  aoa.push(['AYLIK ÇALIŞMA CETVELİ','','','','']);
+  aoa.push(['Adı ve Soyadı', (v.personel||''),'','','']);
+  aoa.push(['Unvanı', (v.unvan||''),'','','']);
+  aoa.push(['Sicil No', (v.sicil||''),'','','']);
+  aoa.push(['Ait Olduğu Ay', (v.ayAdi||''),'','','']);
+  var headRow=aoa.length;
+  aoa.push(['S.NO','TARİH','GÜNLER','GİDİLEN YER','YAPILAN İŞLERİN ÖZETİ']);
+  var dataStart=aoa.length;
+  v.satirlar.forEach(function(s){ aoa.push([(s.sno||''), s.tarih, s.gun, s.yer, s.ozet]); });
+  var toplamRow=aoa.length;
+  aoa.push(['Toplam Gün','','','',String(v.toplamGun)]);
+  aoa.push(['','','','','']);
+  var notRow=aoa.length;
+  aoa.push([notMetni,'','','','']);
+  var isbuRow=aoa.length;
+  aoa.push(['İşbu cetvel tarafımdan düzenlenmiştir.   …/…/'+v.yil,'','','','']);
+  aoa.push(['','','','','']);
+  aoa.push(['Düzenleyen','','','TETKİK EDİLDİ / ONAYLAYAN','']);
+  aoa.push([(v.personel||''),'','',('Elif TOPALOĞLU'),'']);
+  aoa.push([(v.unvan||''),'','',('Şube Müdürü'),'']);
+
+  var ws=XL.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:6},{wch:12},{wch:12},{wch:22},{wch:50}];
+  var B={style:'thin',color:{rgb:'000000'}};
+  var border={top:B,bottom:B,left:B,right:B};
+  function cell(r,c){ var a=XL.utils.encode_cell({r:r,c:c}); if(!ws[a]) ws[a]={t:'s',v:''}; return a; }
+  for(var r=0;r<=toplamRow;r++){ for(var c=0;c<=4;c++){ var a=cell(r,c); ws[a].s={border:border,alignment:{vertical:'center',wrapText:true}}; } }
+  ws[cell(0,0)].s={border:border,font:{bold:true,sz:12},alignment:{horizontal:'center',vertical:'center',wrapText:true}};
+  ws[cell(1,0)].s={border:border,font:{bold:true,sz:12},alignment:{horizontal:'center',vertical:'center',wrapText:true}};
+  for(var ir=2;ir<=5;ir++){ ws[cell(ir,0)].s={border:border,font:{bold:true},alignment:{horizontal:'left',vertical:'center'}}; ws[cell(ir,1)].s={border:border,alignment:{horizontal:'left',vertical:'center',wrapText:true}}; }
+  for(var hc=0;hc<=4;hc++){ ws[cell(headRow,hc)].s={border:border,font:{bold:true,sz:10},alignment:{horizontal:'center',vertical:'center',wrapText:true},fill:{fgColor:{rgb:'E8E8E8'}}}; }
+  v.satirlar.forEach(function(s,i){ var rr=dataStart+i;
+    ws[cell(rr,0)].s={border:border,alignment:{horizontal:'center',vertical:'center'}};
+    ws[cell(rr,1)].s={border:border,alignment:{horizontal:'center',vertical:'center',wrapText:true}};
+    ws[cell(rr,2)].s={border:border,alignment:{horizontal:'center',vertical:'center',wrapText:true}};
+    ws[cell(rr,3)].s={border:border,alignment:{horizontal:'left',vertical:'center',wrapText:true}};
+    ws[cell(rr,4)].s={border:border,alignment:{horizontal:(s.kirmizi?'center':'left'),vertical:'center',wrapText:true},font:(s.kirmizi?{bold:true,color:{rgb:'C00000'}}:{sz:11})};
+  });
+  ws[cell(toplamRow,0)].s={border:border,font:{bold:true},alignment:{horizontal:'center',vertical:'center'}};
+  ws[cell(toplamRow,4)].s={border:border,font:{bold:true},alignment:{horizontal:'center',vertical:'center'}};
+  ws[cell(notRow,0)].s={alignment:{horizontal:'center',vertical:'top',wrapText:true},font:{sz:9}};
+  ws[cell(isbuRow,0)].s={alignment:{horizontal:'center',vertical:'center'},font:{sz:10}};
+
+  ws['!merges']=[
+    {s:{r:0,c:0},e:{r:0,c:4}},
+    {s:{r:1,c:0},e:{r:1,c:4}},
+    {s:{r:2,c:1},e:{r:2,c:4}},
+    {s:{r:3,c:1},e:{r:3,c:4}},
+    {s:{r:4,c:1},e:{r:4,c:4}},
+    {s:{r:5,c:1},e:{r:5,c:4}},
+    {s:{r:toplamRow,c:0},e:{r:toplamRow,c:3}},
+    {s:{r:notRow,c:0},e:{r:notRow,c:4}},
+    {s:{r:isbuRow,c:0},e:{r:isbuRow,c:4}}
+  ];
+  ws['!rows']=[]; ws['!rows'][0]={hpt:20}; ws['!rows'][1]={hpt:20}; ws['!rows'][notRow]={hpt:80};
+
+  var wb=XL.utils.book_new();
+  XL.utils.book_append_sheet(wb, ws, 'Cetvel');
+  XL.writeFile(wb, 'Aylik_Calisma_Cetveli_'+v.ayAdi+'_'+v.yil+'.xlsx');
+}
+
+function cetvelYazdir(){
+  var v=_cetvelVeri();
+  if(!v){ bildirimGoster('Yıl ve ay seçin.','uyari'); return; }
+  var rows='';
+  v.satirlar.forEach(function(s){
+    var ozStyle=s.kirmizi?'color:#c00;font-weight:bold;text-align:center;':'';
+    rows+='<tr>'
+      +'<td class="c">'+(s.sno||'')+'</td>'
+      +'<td class="c">'+_puantajEsc(s.tarih)+'</td>'
+      +'<td class="c">'+_puantajEsc(s.gun)+'</td>'
+      +'<td>'+_puantajEsc(s.yer)+'</td>'
+      +'<td style="'+ozStyle+'">'+_puantajEsc(s.ozet)+'</td></tr>';
+  });
+  var w=window.open('','_blank');
+  if(!w){ bildirimGoster('Açılır pencere engellendi. İzin verin.','uyari'); return; }
+  w.document.write('<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><title>Aylık Çalışma Cetveli '+v.ayAdi+' '+v.yil+'</title><style>'
+    +'@page{size:A4 portrait;margin:12mm;}'
+    +'body{font-family:Arial,sans-serif;font-size:11px;color:#000;}'
+    +'table{width:100%;border-collapse:collapse;}'
+    +'th,td{border:1px solid #000;padding:3px 5px;vertical-align:top;}'
+    +'th{background:#e8e8e8;font-size:10px;text-align:center;}'
+    +'td.c{text-align:center;white-space:nowrap;}'
+    +'.baslik{text-align:center;font-weight:bold;font-size:12px;}'
+    +'.bilgi td{font-weight:normal;}'
+    +'.bilgi td.k{font-weight:bold;width:18%;}'
+    +'.toplam td{font-weight:bold;}'
+    +'.not{font-size:9px;margin-top:12px;text-align:center;line-height:1.5;}'
+    +'.imza{display:flex;justify-content:space-around;margin-top:26px;font-size:11px;text-align:center;}'
+    +'.imza div{width:44%;}'
+    +'</style></head><body>'
+    +'<table>'
+    +'<tr><td colspan="5" class="baslik">EK ÖZEL HİZMET TAZMİNATINA ESAS</td></tr>'
+    +'<tr><td colspan="5" class="baslik">AYLIK ÇALIŞMA CETVELİ</td></tr>'
+    +'<tr class="bilgi"><td class="k">Adı ve Soyadı</td><td colspan="4">'+_puantajEsc(v.personel||'')+'</td></tr>'
+    +'<tr class="bilgi"><td class="k">Unvanı</td><td colspan="4">'+_puantajEsc(v.unvan||'')+'</td></tr>'
+    +'<tr class="bilgi"><td class="k">Sicil No</td><td colspan="4">'+_puantajEsc(v.sicil||'')+'</td></tr>'
+    +'<tr class="bilgi"><td class="k">Ait Olduğu Ay</td><td colspan="4">'+_puantajEsc(v.ayAdi)+'</td></tr>'
+    +'<tr><th style="width:6%;">S.NO</th><th style="width:12%;">TARİH</th><th style="width:12%;">GÜNLER</th><th style="width:22%;">GİDİLEN YER</th><th>YAPILAN İŞLERİN ÖZETİ</th></tr>'
+    +rows
+    +'<tr class="toplam"><td colspan="4" style="text-align:center;">Toplam Gün</td><td class="c">'+v.toplamGun+'</td></tr>'
+    +'</table>'
+    +'<div class="not">'+_puantajEsc(_CETVEL_NOT)+'   …/…/'+v.yil+'<br>İşbu cetvel tarafımdan düzenlenmiştir.   …/…/'+v.yil+'</div>'
+    +'<div class="imza"><div>Düzenleyen<br><br><br><b>'+_puantajEsc(v.personel||'')+'</b><br>'+_puantajEsc(v.unvan||'')+'</div>'
+    +'<div>TETKİK EDİLDİ / ONAYLAYAN<br><br><br><b>Elif TOPALOĞLU</b><br>Şube Müdürü</div></div>'
+    +'</body></html>');
+  w.document.close();
+  setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){} }, 500);
+}
+window.cetvelOlustur=cetvelOlustur; window.cetvelExcel=cetvelExcel; window.cetvelYazdir=cetvelYazdir;
 </script>
