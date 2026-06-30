@@ -417,14 +417,17 @@ document.addEventListener('DOMContentLoaded', cetvelVarsayilan);
 function _cetvelYer(d){
   var ist=null;
   if(typeof ISLETMELER!=='undefined' && ISLETMELER && ISLETMELER.find) ist=ISLETMELER.find(function(i){ return (d.isletmeKayitNo && i.kayitNo===d.isletmeKayitNo) || (d.isletme && i.isletmeAdi===d.isletme); });
-  if(ist && typeof isletmeBaslikBelirle==='function'){
-    var b=isletmeBaslikBelirle(ist);
-    if(b && b.tip==='koy' && b.key) return b.key;
-    return 'Merkez';
+  var adres = ist ? ((ist.adres||'')+' '+(ist.ilce||'')) : (((d&&d.isletmeIlce)||'')+'');
+  // Yeri BAŞLIK TÜRÜNDEN DEĞİL ADRESTEN belirle: üretim işletmeleri de köy/kasabada olabilir.
+  if(typeof KOY_MASTER!=='undefined' && typeof koyAdreseUyuyorMu==='function'){
+    for(var k=0;k<KOY_MASTER.length;k++){ if(koyAdreseUyuyorMu(adres, KOY_MASTER[k])) return KOY_MASTER[k]; }
   }
-  var ilce=(d.isletmeIlce||'').toString().trim();
-  if(!ilce || ilce.toLocaleLowerCase('tr')==='merkez') return 'Merkez';
-  return ilce;
+  if(ist && typeof merkezDisindaMi==='function' && merkezDisindaMi(ist)){
+    var il=(ist.ilce||'').toString().trim(); if(il && il.toLocaleLowerCase('tr')!=='merkez') return il;
+  }
+  var il2=((ist&&ist.ilce)||(d&&d.isletmeIlce)||'').toString().trim();
+  if(il2 && il2.toLocaleLowerCase('tr')!=='merkez') return il2;
+  return 'Merkez';
 }
 
 function _cetvelVeri(){
