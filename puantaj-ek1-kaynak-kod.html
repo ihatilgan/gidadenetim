@@ -66,6 +66,7 @@
             <div style="font-weight:700;font-size:14px;">📋 5996 Kontrol Hizmetleri Puantajı (EK-1)</div>
             <div class="buton-satir" style="margin:0;">
               <button class="btn btn-yesil btn-kucuk" onclick="puantajOlustur()">Oluştur</button>
+              <button class="btn btn-gri btn-kucuk" onclick="raporOnizlemeKapat('puantaj-onizleme')">Kapat</button>
               <button class="btn btn-gri btn-kucuk" onclick="puantajExcel()">📥 Excel</button>
               <button class="btn btn-gri btn-kucuk" onclick="puantajYazdir()">🖨️ PDF</button>
             </div>
@@ -77,6 +78,7 @@
             <div style="font-weight:700;font-size:14px;">📋 Ek Özel Hizmet Tazminatı — Aylık Çalışma Cetveli</div>
             <div class="buton-satir" style="margin:0;">
               <button class="btn btn-yesil btn-kucuk" onclick="cetvelOlustur()">Oluştur</button>
+              <button class="btn btn-gri btn-kucuk" onclick="raporOnizlemeKapat('cetvel-onizleme')">Kapat</button>
               <button class="btn btn-gri btn-kucuk" onclick="cetvelExcel()">📥 Excel</button>
               <button class="btn btn-gri btn-kucuk" onclick="cetvelYazdir()">🖨️ PDF</button>
             </div>
@@ -88,6 +90,7 @@
             <div style="font-weight:700;font-size:14px;">📋 Şube Faaliyet Raporu</div>
             <div class="buton-satir" style="margin:0;">
               <button class="btn btn-yesil btn-kucuk" onclick="faaliyetOlustur()">Oluştur</button>
+              <button class="btn btn-gri btn-kucuk" onclick="raporOnizlemeKapat('faaliyet-onizleme')">Kapat</button>
               <button class="btn btn-gri btn-kucuk" onclick="faaliyetExcel()">📥 Excel</button>
               <button class="btn btn-gri btn-kucuk" onclick="faaliyetYazdir()">🖨️ PDF</button>
             </div>
@@ -100,6 +103,8 @@
 <!-- ===== PARCA 2: SCRIPTLER (sirayla) ===== -->
 <script>
 // ===== 5996 KONTROL HİZMETLERİ PUANTAJ TABLOSU (EK-1) =====
+function raporOnizlemeKapat(id){ var el=document.getElementById(id); if(el) el.innerHTML=''; }
+window.raporOnizlemeKapat=raporOnizlemeKapat;
 function _puantajEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // Sabit (her yıl aynı) resmi tatiller — 'AA-GG'
