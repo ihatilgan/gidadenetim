@@ -241,6 +241,7 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
+  html, body { max-width: 100%; overflow-x: hidden; }
   body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
     background: #f3f6f1;
@@ -408,24 +409,29 @@
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     backdrop-filter: saturate(180%) blur(20px);
     border-top: 0.5px solid rgba(60,60,67,0.18);
-    display: flex !important;
-    justify-content: space-around;
-    padding: 6px 0 env(safe-area-inset-bottom, 6px);
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    justify-content: stretch;
+    padding: 5px 2px env(safe-area-inset-bottom, 6px);
     z-index: 998;
+    overflow-x: hidden;
   }
   #alt-nav button {
-    flex: 1;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-start;
     gap: 2px;
     background: none;
     border: none;
-    padding: 6px 4px;
+    padding: 5px 1px;
     cursor: pointer;
     color: var(--gri);
     font-size: 10px;
-    min-width: 0;
+    overflow: hidden;
   }
   #alt-nav button.aktif {
     border-bottom: none;
@@ -447,7 +453,26 @@
   }
   #yeni-denetim-btn .nav-label { color: var(--yesil); font-weight: 700; }
   #yeni-denetim-btn.aktif .nav-ekle { background: #236b41; }
-  #alt-nav .nav-label { font-size: 10px; font-weight: 500; white-space: nowrap; }
+  #alt-nav .nav-label {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    display: block;
+    font-size: 9.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.15;
+    text-align: center;
+  }
+  #alt-nav .nav-ikon svg { width: 24px; height: 24px; }
+  #alt-nav .nav-ekle svg { width: 34px; height: 34px; }
+  @media(max-width:360px) {
+    #alt-nav .nav-label { font-size: 8.8px; }
+    #alt-nav .nav-ikon svg { width: 22px; height: 22px; }
+    #alt-nav .nav-ekle svg { width: 32px; height: 32px; }
+  }
   .menu-item {
     display: block;
     width: 100%;
@@ -1641,7 +1666,7 @@ DEVRE_DISI_BITIS */
         <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
       </svg>
     </span>
-    <span class="nav-label">Denetimler</span>
+    <span class="nav-label">Kayıtlar</span>
   </button>
   <button onclick="sohbetNavTikla(this)" id="sohbet-nav-btn" style="position:relative;">
     <span class="nav-ikon" style="position:relative;display:inline-block;">
@@ -1661,7 +1686,7 @@ DEVRE_DISI_BITIS */
       </svg>
       <span id="nav-sorun-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e74c3c;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;line-height:16px;text-align:center;font-weight:700;"></span>
     </span>
-    <span class="nav-label">Daha Fazla</span>
+    <span class="nav-label">Menü</span>
   </button>
 </nav>
 
