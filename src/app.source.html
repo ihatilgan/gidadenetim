@@ -293,6 +293,53 @@
   header #kullanici-bilgi > #yenile-btn:active { transform: scale(0.93); }
   header #kullanici-ad-btn { padding: 5px 8px 5px 5px !important; gap: 7px !important; height: 38px; }
   header #header-ekip-adi { color: var(--yesil) !important; background: var(--yesil-acik) !important; font-weight: 700; }
+  .hdr-actions { display:flex; align-items:center; gap:8px; flex:1 1 0; min-width:0; justify-content:flex-end; }
+  .hdr-user-avatar { width:28px; height:28px; border-radius:9px; background:linear-gradient(150deg,#236b41,#143f26); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+  @media(max-width:640px) {
+    header {
+      height: auto;
+      min-height: 58px;
+      padding: 7px 10px;
+      display: grid;
+      grid-template-columns: minmax(0,1fr) auto;
+      grid-template-areas: "title actions" "team team";
+      align-items: center;
+      gap: 5px 8px;
+    }
+    .hdr-title-wrap { grid-area: title; gap: 8px; }
+    .hdr-logo { width: 34px; height: 34px; border-radius: 11px; }
+    .hdr-title-wrap h1 { font-size: 14px !important; }
+    .hdr-title-wrap > div > div { font-size: 9px !important; }
+    .hdr-actions { grid-area: actions; flex:0 0 auto; gap:5px; justify-content:flex-end; }
+    header #kullanici-bilgi { gap: 4px !important; }
+    header #kullanici-bilgi > #mesaj-btn,
+    header #kullanici-bilgi > #yenile-btn { width:34px; height:34px; border-radius:11px !important; }
+    header #kullanici-ad-btn { max-width: 88px !important; height:34px; padding:4px 6px 4px 4px !important; gap:5px !important; border-radius:11px !important; }
+    .hdr-user-avatar { width:25px; height:25px; border-radius:8px; }
+    header #kullanici-ad { max-width:42px; font-size:11px !important; }
+    header #header-ekip-adi {
+      grid-area: team;
+      justify-self: stretch;
+      max-width: none !important;
+      width: 100%;
+      text-align: center;
+      font-size: 11px !important;
+      padding: 3px 8px !important;
+      line-height: 1.25;
+    }
+    header #ekip-personel-balon { left: 10px !important; right: 10px !important; transform:none !important; text-align:center; white-space:normal !important; }
+  }
+
+  @media(max-width:380px) {
+    header { padding-left: 8px; padding-right: 8px; }
+    .hdr-logo { width:32px; height:32px; }
+    .hdr-title-wrap h1 { font-size: 13px !important; }
+    header #kullanici-bilgi > #mesaj-btn,
+    header #kullanici-bilgi > #yenile-btn { width:32px; height:32px; }
+    header #kullanici-ad-btn { max-width: 72px !important; }
+    header #kullanici-ad { display:none; }
+  }
 
   /* NAV */
   nav {
@@ -1525,7 +1572,7 @@ DEVRE_DISI_BITIS */
 
 
 <header style="display:none;position:relative;">
-  <div onclick="sayfaGoster('ozet',document.querySelector('[data-sayfa=ozet]'))" class="hdr-title-wrap" style="cursor:pointer;flex:1;overflow:hidden;" title="Ana sayfaya dön">
+  <div onclick="sayfaGoster('ozet',document.querySelector('[data-sayfa=ozet]'))" class="hdr-title-wrap" style="cursor:pointer;flex:1 1 0;overflow:hidden;" title="Ana sayfaya dön">
     <span class="hdr-logo" aria-hidden="true">
       <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M12 3c-2 3.5-6 5-6 9.5A6 6 0 0 0 12 18.5a6 6 0 0 0 6-6C18 8 14 6.5 12 3Z" fill="rgba(255,255,255,0.94)"></path><path d="M12 8.5v7.5" stroke="#143f26" stroke-width="1.5" stroke-linecap="round"></path></svg>
     </span>
@@ -1534,13 +1581,13 @@ DEVRE_DISI_BITIS */
       <div style="font-size:10px;color:var(--gri);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;">İ.H.A. · <span id="bugun-tarih"></span> <span id="sync-durum" style="font-size:11px;"></span></div>
     </div>
   </div>
-  <div id="header-ekip-adi" onclick="ekipPersonelBalonAc()" style="display:none;flex:0 1 auto;min-width:0;max-width:50%;text-align:center;color:#1c1c1e;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;font-weight:700;padding:2px 10px;border-radius:8px;background:rgba(120,120,128,0.14);"></div>
+  <div id="header-ekip-adi" onclick="ekipPersonelBalonAc()" style="display:none;flex:0 1 auto;min-width:0;max-width:42%;text-align:center;color:#1c1c1e;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;font-weight:700;padding:2px 10px;border-radius:8px;background:rgba(120,120,128,0.14);"></div>
   <div id="ekip-personel-balon" style="display:none;position:absolute;top:100%;left:50%;transform:translateX(-50%);background:rgba(20,40,20,0.93);color:#fff;border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.7;z-index:10001;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.3);margin-top:4px;pointer-events:none;"></div>
-  <div style="display:flex;align-items:center;gap:8px;flex:1 1 0;min-width:0;justify-content:flex-end;">
+  <div class="hdr-actions">
     <div id="kullanici-bilgi" style="display:none;align-items:center;gap:6px;position:relative;">
       <button id="mesaj-btn" onclick="sohbetPanelAc()" style="cursor:pointer;position:relative;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.6 9.6 0 0 1-3-.5L3 21l1.5-4a8.3 8.3 0 0 1-1-4 8.4 8.4 0 0 1 9-8.5 8.4 8.4 0 0 1 8.5 7Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path></svg><span id="mesaj-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e74c3c;color:#fff;border-radius:50%;width:15px;height:15px;font-size:10px;line-height:15px;text-align:center;"></span></button>
       <button id="yenile-btn" onclick="location.reload()" title="Yenile" style="cursor:pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20 11a8 8 0 1 0-1.6 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M20 5v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
-      <button id="kullanici-ad-btn" onclick="kullaniciMenuToggle(event)" style="cursor:pointer;display:flex;align-items:center;max-width:160px;"><span style="width:28px;height:28px;border-radius:9px;background:linear-gradient(150deg,#236b41,#143f26);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8.4" r="3.6" fill="#fff"></circle><path d="M5.5 19a6.5 6.5 0 0 1 13 0Z" fill="#fff"></path></svg></span><span id="kullanici-ad" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;"></span><span style="opacity:0.45;font-size:11px;">▾</span></button>
+      <button id="kullanici-ad-btn" onclick="kullaniciMenuToggle(event)" style="cursor:pointer;display:flex;align-items:center;max-width:140px;min-width:0;"><span class="hdr-user-avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8.4" r="3.6" fill="#fff"></circle><path d="M5.5 19a6.5 6.5 0 0 1 13 0Z" fill="#fff"></path></svg></span><span id="kullanici-ad" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;"></span><span style="opacity:0.45;font-size:11px;">▾</span></button>
       <div id="kullanici-menu" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:#fff;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.22);min-width:190px;z-index:10000;overflow:hidden;">
         <button id="admin-panel-btn" onclick="kullaniciMenuKapat();sayfaGoster('adminpanel', null)" style="display:none;width:100%;text-align:left;padding:12px 15px;border:none;background:none;font-size:14px;color:#0d7a4e;font-weight:600;cursor:pointer;">🛡️ Admin Panel<span id="bekleyen-menu-badge" style="display:none;background:#e74c3c;color:#fff;border-radius:10px;font-size:11px;font-weight:700;padding:1px 7px;margin-left:7px;">0</span></button>
         <button onclick="kullaniciMenuKapat();kullaniciAyarlariAc()" style="display:block;width:100%;text-align:left;padding:12px 15px;border:none;background:none;font-size:14px;color:#333;cursor:pointer;">⚙️ Kullanıcı ayarları</button>
