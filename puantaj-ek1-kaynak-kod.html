@@ -138,7 +138,6 @@ function ortakVarsayilan(){
   var _sn=document.getElementById('ortak-sicil'); if(_sn && !_sn.value && _adm) _sn.value='2023-02348';
 }
 function puantajVarsayilan(){ return ortakVarsayilan(); }
-document.addEventListener('DOMContentLoaded', puantajVarsayilan);
 
 // Seçilen ay için tüm günleri tipine göre doldur
 function _puantajVeri(){
@@ -363,7 +362,6 @@ var _CETVEL_GUNLER=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma',
 var _CETVEL_NOT='Yukarıda dökümü gösterilen Aylık Çalışma Cetvelinin 2006/10344 sayılı Bakanlar Kurulu Kararının (E) Teknik Hizmet Bölümünün 6. maddesine göre Ek Özel Hizmet Tazminatı ödemesine esas olmak üzere hazırlandığını, hatalı bir kayıt olduğu takdirde maddi ve idari olarak sorumlu olacağımızı beyan ve taahhüt ederiz.';
 
 function cetvelVarsayilan(){ return ortakVarsayilan(); }
-document.addEventListener('DOMContentLoaded', cetvelVarsayilan);
 
 // Bir denetimin gidilen yeri: köy/kasaba adı veya "Merkez"
 function _cetvelYer(d){
@@ -604,7 +602,6 @@ window.cetvelOlustur=cetvelOlustur; window.cetvelExcel=cetvelExcel; window.cetve
 <script>
 // ===== ŞUBE FAALİYET RAPORU =====
 function faaliyetVarsayilan(){ return ortakVarsayilan(); }
-document.addEventListener('DOMContentLoaded', faaliyetVarsayilan);
 
 function _faaliyetVeri(){
   faaliyetVarsayilan();
@@ -781,11 +778,13 @@ window.faaliyetOlustur=faaliyetOlustur; window.faaliyetExcel=faaliyetExcel; wind
   // Tablolar artık OTOMATİK açılmıyor — her form kendi "Oluştur" butonuna
   // basılınca aşağıda görünür.
   function _ap(){ try{ if(typeof ortakVarsayilan==='function') ortakVarsayilan(); }catch(e){} }
-  function _yenile(){
-    try{ if(typeof puantajOlustur==='function') puantajOlustur(); }catch(e){}
-    try{ if(typeof cetvelOlustur==='function') cetvelOlustur(); }catch(e){}
-    try{ if(typeof faaliyetOlustur==='function') faaliyetOlustur(); }catch(e){}
+  function _onizlemeleriTemizle(){
+    ['puantaj-onizleme','cetvel-onizleme','faaliyet-onizleme'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el && el.innerHTML) el.innerHTML='';
+    });
   }
+  function _yenile(){ _ap(); _onizlemeleriTemizle(); }
   window._ortakYenile=_yenile;
   var n=0;
   var t=setInterval(function(){ n++; _ap(); var p=document.getElementById('ortak-personel'); if((p&&p.value)||n>60){ clearInterval(t); } }, 500);
@@ -798,12 +797,7 @@ window.faaliyetOlustur=faaliyetOlustur; window.faaliyetExcel=faaliyetExcel; wind
   var panel=document.getElementById('ortak-bilgiler-panel');
   if(panel){
     var _t=null;
-    function _sch(){ if(_t) clearTimeout(_t); _t=setTimeout(function(){
-      ['puantaj-onizleme','cetvel-onizleme','faaliyet-onizleme'].forEach(function(id){
-        var el=document.getElementById(id);
-        if(el && el.innerHTML) el.innerHTML='';
-      });
-    },250); }
+    function _sch(){ if(_t) clearTimeout(_t); _t=setTimeout(_yenile,250); }
     panel.addEventListener('input', _sch);
     panel.addEventListener('change', _sch);
   }
