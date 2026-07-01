@@ -1,141 +1,99 @@
 <!--
 ================================================================================
-  RAPORLAR FORMLARI - KAYNAK KOD (guncel)  [3 form]
+  RAPORLAR FORMLARI - KAYNAK KOD (guncel)  [3 form + Ortak Bilgiler paneli]
   1) 5996 Kontrol Hizmetleri Puantaji (EK-1)
   2) Ek Ozel Hizmet Tazminati - Aylik Calisma Cetveli
   3) Sube Faaliyet Raporu
+  Ortak Bilgiler: Yil/Ay/Personel/Sicil/izin tarihleri TEK YERDE, 3 form da
+  bunlari otomatik kullanir (ortak-* id'leri). Herhangi bir ortak alan
+  degisince 3 form da otomatik yenilenir (window._ortakYenile).
 ================================================================================
   PARCA 1 (kartlar): <div id="sayfa-raporlar"...> acilisindan sonra yapistir.
-  PARCA 2 (scriptler): </body> etiketinden hemen once yapistir.
-     (Excel icin xlsx-js-style CDN otomatik yuklenir.)
+  PARCA 2 (scriptler): </body> etiketinden hemen once, TAM SIRAYLA yapistir
+     (4. blok en sonda olmali, digerlerine bagimli).
   Ana koda ek: input[type=checkbox],input[type=radio]{ -webkit-appearance:auto; appearance:auto; }
 ================================================================================
 -->
 
-<!-- ===== PARCA 1: HTML KARTLAR ===== -->
-    <!-- 5996 KONTROL HİZMETLERİ PUANTAJ TABLOSU (EK-1) -->
-    <div class="kart">
-      <div class="kart-baslik">📋 5996 Kontrol Hizmetleri Puantajı (EK-1)</div>
-      <div class="form-grid" style="margin-bottom:14px;">
-        <div class="alan">
-          <label>Yıl</label>
-          <input type="number" id="puantaj-yil" min="2020" max="2099" step="1">
+<!-- ===== PARCA 1: HTML (Ortak Bilgiler + 3 kompakt form satiri) ===== -->
+    <div class="kart" id="ortak-bilgiler-panel">
+      <details open>
+        <summary style="cursor:pointer;font-weight:700;font-size:15px;">⚙️ Ortak Bilgiler <span style="font-size:12px;font-weight:400;color:var(--gri);">(3 form için tek sefer doldurun — Yıl/Ay/izinler hepsinde aynı kullanılır)</span></summary>
+        <div style="margin-top:12px;">
+          <div class="form-grid" style="margin-bottom:12px;">
+            <div class="alan"><label>Yıl</label><input type="number" id="ortak-yil" min="2020" max="2099" step="1"></div>
+            <div class="alan">
+              <label>Ay</label>
+              <select id="ortak-ay">
+                <option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option>
+                <option value="4">Nisan</option><option value="5">Mayıs</option><option value="6">Haziran</option>
+                <option value="7">Temmuz</option><option value="8">Ağustos</option><option value="9">Eylül</option>
+                <option value="10">Ekim</option><option value="11">Kasım</option><option value="12">Aralık</option>
+              </select>
+            </div>
+            <div class="alan"><label>Personel Adı</label><input type="text" id="ortak-personel" placeholder="Kontrol görevini yürüten"></div>
+            <div class="alan"><label>Personel Unvanı</label><input type="text" id="ortak-unvan" value="Mühendis"></div>
+            <div class="alan"><label>Sicil No</label><input type="text" id="ortak-sicil"></div>
+            <div class="alan"><label>Şubesi</label><input type="text" id="ortak-sube" value="GIDA VE YEM ŞUBE MÜDÜRLÜĞÜ"></div>
+            <div class="alan"><label>Görevi</label><input type="text" id="ortak-gorev" value="Mühendis / Gıda Kontrol Görevlisi / İhracat"></div>
+          </div>
+          <div style="font-size:13px;font-weight:600;color:var(--gri-koyu);margin-bottom:6px;">Denetim olan günler için Kontrol Türü (bir veya birden fazla):</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+            <label class="kontrol-item" style="font-size:13px;"><input type="checkbox" class="ortak-ktur" value="Riske Dayalı Denetim" checked> Riske Dayalı Denetim</label>
+            <label class="kontrol-item" style="font-size:13px;"><input type="checkbox" class="ortak-ktur" value="Gıda Numune Alma Planı"> Gıda Numune Alma Planı</label>
+            <label class="kontrol-item" style="font-size:13px;"><input type="checkbox" class="ortak-ktur" value="İşletme Kayıt Belgesi"> İşletme Kayıt Belgesi</label>
+            <label class="kontrol-item" style="font-size:13px;"><input type="checkbox" class="ortak-ktur" value="İhracat Denetimi"> İhracat Denetimi</label>
+          </div>
+          <div class="form-grid" style="margin-bottom:10px;">
+            <div class="alan"><label>Sağlık Raporu Başlangıç</label><input type="date" id="ortak-rapor-bas"></div>
+            <div class="alan"><label>Sağlık Raporu Bitiş</label><input type="date" id="ortak-rapor-bit"></div>
+            <div class="alan"><label>Yıllık İzin Başlangıç</label><input type="date" id="ortak-izin-bas"></div>
+            <div class="alan"><label>Yıllık İzin Bitiş</label><input type="date" id="ortak-izin-bit"></div>
+            <div class="alan"><label>İdari İzin Başlangıç</label><input type="date" id="ortak-idari-bas"></div>
+            <div class="alan"><label>İdari İzin Bitiş</label><input type="date" id="ortak-idari-bit"></div>
+          </div>
+          <label class="kontrol-item" id="ortak-sendika-wrap" style="font-size:13px;margin-bottom:2px;display:none;width:fit-content;"><input type="checkbox" id="ortak-sendika"> Pazartesi günleri Sendika İzni (yalnızca size özel)</label>
         </div>
-        <div class="alan">
-          <label>Ay</label>
-          <select id="puantaj-ay">
-            <option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option>
-            <option value="4">Nisan</option><option value="5">Mayıs</option><option value="6">Haziran</option>
-            <option value="7">Temmuz</option><option value="8">Ağustos</option><option value="9">Eylül</option>
-            <option value="10">Ekim</option><option value="11">Kasım</option><option value="12">Aralık</option>
-          </select>
-        </div>
-        <div class="alan">
-          <label>Personel Adı</label>
-          <input type="text" id="puantaj-personel" placeholder="Kontrol görevini yürüten">
-        </div>
-        <div class="alan">
-          <label>Personel Unvanı</label>
-          <input type="text" id="puantaj-unvan" value="Mühendis">
-        </div>
-      </div>
-      <div style="font-size:13px;font-weight:600;color:var(--gri-koyu);margin-bottom:6px;">Denetim olan günler için Kontrol Türü (bir veya birden fazla):</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
-        <label class="kontrol-item" style="font-size:13px;"><input type="checkbox" class="puantaj-ktur" value="Riske Dayalı Denetim" checked> Riske Dayalı Denetim</label>
-        <label class="kontrol-item" style="font-size:13px;"><input type="checkbox" class="puantaj-ktur" value="Gıda Numune Alma Planı"> Gıda Numune Alma Planı</label>
-        <label class="kontrol-item" style="font-size:13px;"><input type="checkbox" class="puantaj-ktur" value="İşletme Kayıt Belgesi"> İşletme Kayıt Belgesi</label>
-        <label class="kontrol-item" style="font-size:13px;"><input type="checkbox" class="puantaj-ktur" value="İhracat Denetimi"> İhracat Denetimi</label>
-      </div>
-      <div class="form-grid" style="margin-bottom:10px;">
-        <div class="alan"><label>Sağlık Raporu Başlangıç</label><input type="date" id="puantaj-rapor-bas"></div>
-        <div class="alan"><label>Sağlık Raporu Bitiş</label><input type="date" id="puantaj-rapor-bit"></div>
-        <div class="alan"><label>Yıllık İzin Başlangıç</label><input type="date" id="puantaj-izin-bas"></div>
-        <div class="alan"><label>Yıllık İzin Bitiş</label><input type="date" id="puantaj-izin-bit"></div>
-        <div class="alan"><label>İdari İzin Başlangıç</label><input type="date" id="puantaj-idari-bas"></div>
-        <div class="alan"><label>İdari İzin Bitiş</label><input type="date" id="puantaj-idari-bit"></div>
-      </div>
-      <label class="kontrol-item" id="puantaj-sendika-wrap" style="font-size:13px;margin-bottom:14px;display:none;width:fit-content;"><input type="checkbox" id="puantaj-sendika"> Pazartesi günleri Sendika İzni (yalnızca size özel)</label>
-      <div class="buton-satir" style="margin-bottom:16px;">
-        <button class="btn btn-yesil" onclick="puantajOlustur()">📋 5996 Kontrol Hizmetleri Oluştur</button>
-        <button class="btn btn-gri" onclick="puantajExcel()">📥 Excel İndir</button>
-        <button class="btn btn-gri" onclick="puantajYazdir()">🖨️ PDF / Yazdır</button>
-      </div>
-      <div id="puantaj-onizleme" style="overflow-x:auto;"></div>
+      </details>
     </div>
 
-    <!-- EK ÖZEL HİZMET TAZMİNATI — AYLIK ÇALIŞMA CETVELİ -->
-    <div class="kart">
-      <div class="kart-baslik">📋 Ek Özel Hizmet Tazminatı — Aylık Çalışma Cetveli</div>
-      <div class="form-grid" style="margin-bottom:14px;">
-        <div class="alan"><label>Yıl</label><input type="number" id="cetvel-yil" min="2020" max="2099" step="1"></div>
-        <div class="alan">
-          <label>Ay</label>
-          <select id="cetvel-ay">
-            <option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option>
-            <option value="4">Nisan</option><option value="5">Mayıs</option><option value="6">Haziran</option>
-            <option value="7">Temmuz</option><option value="8">Ağustos</option><option value="9">Eylül</option>
-            <option value="10">Ekim</option><option value="11">Kasım</option><option value="12">Aralık</option>
-          </select>
+    <div class="kart" style="padding:14px 16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div style="font-weight:700;font-size:14px;">📋 5996 Kontrol Hizmetleri Puantajı (EK-1)</div>
+        <div class="buton-satir" style="margin:0;">
+          <button class="btn btn-yesil btn-kucuk" onclick="puantajOlustur()">Oluştur</button>
+          <button class="btn btn-gri btn-kucuk" onclick="puantajExcel()">📥 Excel</button>
+          <button class="btn btn-gri btn-kucuk" onclick="puantajYazdir()">🖨️ PDF</button>
         </div>
-        <div class="alan"><label>Adı Soyadı</label><input type="text" id="cetvel-personel" placeholder="Kontrol görevini yürüten"></div>
-        <div class="alan"><label>Unvanı</label><input type="text" id="cetvel-unvan" value="Mühendis"></div>
-        <div class="alan"><label>Sicil No</label><input type="text" id="cetvel-sicil"></div>
       </div>
-      <div class="form-grid" style="margin-bottom:10px;">
-        <div class="alan"><label>Sağlık Raporu Başlangıç</label><input type="date" id="cetvel-rapor-bas"></div>
-        <div class="alan"><label>Sağlık Raporu Bitiş</label><input type="date" id="cetvel-rapor-bit"></div>
-        <div class="alan"><label>Yıllık İzin Başlangıç</label><input type="date" id="cetvel-izin-bas"></div>
-        <div class="alan"><label>Yıllık İzin Bitiş</label><input type="date" id="cetvel-izin-bit"></div>
-        <div class="alan"><label>İdari İzin Başlangıç</label><input type="date" id="cetvel-idari-bas"></div>
-        <div class="alan"><label>İdari İzin Bitiş</label><input type="date" id="cetvel-idari-bit"></div>
-      </div>
-      <label class="kontrol-item" id="cetvel-sendika-wrap" style="font-size:13px;margin-bottom:14px;display:none;width:fit-content;"><input type="checkbox" id="cetvel-sendika"> Pazartesi günleri Sendika İzni (yalnızca size özel)</label>
-      <div class="buton-satir" style="margin-bottom:16px;">
-        <button class="btn btn-yesil" onclick="cetvelOlustur()">📋 Çalışma Cetveli Oluştur</button>
-        <button class="btn btn-gri" onclick="cetvelExcel()">📥 Excel İndir</button>
-        <button class="btn btn-gri" onclick="cetvelYazdir()">🖨️ PDF / Yazdır</button>
-      </div>
-      <div id="cetvel-onizleme" style="overflow-x:auto;"></div>
+      <div id="puantaj-onizleme" style="overflow-x:auto;margin-top:10px;"></div>
     </div>
 
-    <!-- ŞUBE FAALİYET RAPORU -->
-    <div class="kart">
-      <div class="kart-baslik">📋 Şube Faaliyet Raporu</div>
-      <div class="form-grid" style="margin-bottom:14px;">
-        <div class="alan"><label>Yıl</label><input type="number" id="faaliyet-yil" min="2020" max="2099" step="1"></div>
-        <div class="alan">
-          <label>Ay</label>
-          <select id="faaliyet-ay">
-            <option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option>
-            <option value="4">Nisan</option><option value="5">Mayıs</option><option value="6">Haziran</option>
-            <option value="7">Temmuz</option><option value="8">Ağustos</option><option value="9">Eylül</option>
-            <option value="10">Ekim</option><option value="11">Kasım</option><option value="12">Aralık</option>
-          </select>
+    <div class="kart" style="padding:14px 16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div style="font-weight:700;font-size:14px;">📋 Ek Özel Hizmet Tazminatı — Aylık Çalışma Cetveli</div>
+        <div class="buton-satir" style="margin:0;">
+          <button class="btn btn-yesil btn-kucuk" onclick="cetvelOlustur()">Oluştur</button>
+          <button class="btn btn-gri btn-kucuk" onclick="cetvelExcel()">📥 Excel</button>
+          <button class="btn btn-gri btn-kucuk" onclick="cetvelYazdir()">🖨️ PDF</button>
         </div>
-        <div class="alan"><label>Personelin Adı</label><input type="text" id="faaliyet-personel" placeholder="Kontrol görevini yürüten"></div>
-        <div class="alan"><label>Sicil No</label><input type="text" id="faaliyet-sicil"></div>
-        <div class="alan"><label>Şubesi</label><input type="text" id="faaliyet-sube" value="GIDA VE YEM ŞUBE MÜDÜRLÜĞÜ"></div>
-        <div class="alan"><label>Görevi</label><input type="text" id="faaliyet-gorev" value="Mühendis / Gıda Kontrol Görevlisi / İhracat"></div>
-        <div class="alan"><label>Unvanı (imza)</label><input type="text" id="faaliyet-unvan" value="Ziraat Mühendisi"></div>
       </div>
-      <div class="form-grid" style="margin-bottom:10px;">
-        <div class="alan"><label>Sağlık Raporu Başlangıç</label><input type="date" id="faaliyet-rapor-bas"></div>
-        <div class="alan"><label>Sağlık Raporu Bitiş</label><input type="date" id="faaliyet-rapor-bit"></div>
-        <div class="alan"><label>Yıllık İzin Başlangıç</label><input type="date" id="faaliyet-izin-bas"></div>
-        <div class="alan"><label>Yıllık İzin Bitiş</label><input type="date" id="faaliyet-izin-bit"></div>
-        <div class="alan"><label>İdari İzin Başlangıç</label><input type="date" id="faaliyet-idari-bas"></div>
-        <div class="alan"><label>İdari İzin Bitiş</label><input type="date" id="faaliyet-idari-bit"></div>
-      </div>
-      <label class="kontrol-item" id="faaliyet-sendika-wrap" style="font-size:13px;margin-bottom:14px;display:none;width:fit-content;"><input type="checkbox" id="faaliyet-sendika"> Pazartesi günleri Sendika İzni (yalnızca size özel)</label>
-      <div class="buton-satir" style="margin-bottom:16px;">
-        <button class="btn btn-yesil" onclick="faaliyetOlustur()">📋 Şube Faaliyet Raporu Oluştur</button>
-        <button class="btn btn-gri" onclick="faaliyetExcel()">📥 Excel İndir</button>
-        <button class="btn btn-gri" onclick="faaliyetYazdir()">🖨️ PDF / Yazdır</button>
-      </div>
-      <div id="faaliyet-onizleme" style="overflow-x:auto;"></div>
+      <div id="cetvel-onizleme" style="overflow-x:auto;margin-top:10px;"></div>
     </div>
 
-<!-- ===== PARCA 2: SCRIPTLER ===== -->
+    <div class="kart" style="padding:14px 16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div style="font-weight:700;font-size:14px;">📋 Şube Faaliyet Raporu</div>
+        <div class="buton-satir" style="margin:0;">
+          <button class="btn btn-yesil btn-kucuk" onclick="faaliyetOlustur()">Oluştur</button>
+          <button class="btn btn-gri btn-kucuk" onclick="faaliyetExcel()">📥 Excel</button>
+          <button class="btn btn-gri btn-kucuk" onclick="faaliyetYazdir()">🖨️ PDF</button>
+        </div>
+      </div>
+      <div id="faaliyet-onizleme" style="overflow-x:auto;margin-top:10px;"></div>
+    </div>
+
+<!-- ===== PARCA 2: SCRIPTLER (sirayla) ===== -->
 <script>
 // ===== 5996 KONTROL HİZMETLERİ PUANTAJ TABLOSU (EK-1) =====
 function _puantajEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -163,38 +121,39 @@ function _puantajTatilAdi(d){
 
 var _PUANTAJ_NOT = 'Not: Yukarıda dökümü gösterilen aylık cetvelin Tarım ve Orman Bakanlığının 27/12/2021 tarih ve 91630868-020(010.04)-1221 sayılı Oluru ile yürürlüğe giren Kontrol Hizmetlerinde İlave Ödeme Kapsamının Belirlenmesi ve Uygulama Birlikteliğinin Sağlanmasına İlişkin Usul ve Esaslar Hakkında Yönergeye esas olmak üzere hazırladığımı, hatalı ve gerçeğe aykırı bildirimden doğabilecek olan hukuki, idari ve maddi tüm sorumluluğu, kontrol görevini yürüten personel olarak kabul ettiğimi beyan ve taahhüt ederim.';
 
-function puantajVarsayilan(){
-  var y=document.getElementById('puantaj-yil'), a=document.getElementById('puantaj-ay'), p=document.getElementById('puantaj-personel');
+function ortakVarsayilan(){
+  var y=document.getElementById('ortak-yil'), a=document.getElementById('ortak-ay'), p=document.getElementById('ortak-personel');
   var now=new Date();
   if(y && !y.value) y.value=now.getFullYear();
   if(a && !a.dataset.vinit){ a.dataset.vinit='1'; a.value=String(now.getMonth()+1); }
   if(p && !p.value && typeof mevcutKullaniciAdi!=='undefined' && mevcutKullaniciAdi) p.value=mevcutKullaniciAdi;
-  var _sw=document.getElementById('puantaj-sendika-wrap'), _sb=document.getElementById('puantaj-sendika');
+  var _sw=document.getElementById('ortak-sendika-wrap'), _sb=document.getElementById('ortak-sendika');
   var _adm=(typeof isAdmin!=='undefined' && isAdmin);
   if(_sw){ _sw.style.display=_adm?'inline-flex':'none'; }
   if(_sb && _adm && !_sb.dataset.init){ _sb.dataset.init='1'; _sb.checked=true; }
+  var _sn=document.getElementById('ortak-sicil'); if(_sn && !_sn.value && _adm) _sn.value='2023-02348';
 }
-
+function puantajVarsayilan(){ return ortakVarsayilan(); }
 document.addEventListener('DOMContentLoaded', puantajVarsayilan);
 
 // Seçilen ay için tüm günleri tipine göre doldur
 function _puantajVeri(){
   puantajVarsayilan();
-  var yilEl=document.getElementById('puantaj-yil'), ayEl=document.getElementById('puantaj-ay');
+  var yilEl=document.getElementById('ortak-yil'), ayEl=document.getElementById('ortak-ay');
   if(!yilEl||!ayEl) return null;
   var yil=parseInt(yilEl.value,10), ay=parseInt(ayEl.value,10);
   if(!yil||!ay) return null;
-  var personel=(document.getElementById('puantaj-personel').value||'').trim();
-  var unvan=(document.getElementById('puantaj-unvan').value||'').trim();
-  var turler=[]; document.querySelectorAll('.puantaj-ktur:checked').forEach(function(c){ turler.push(c.value); });
+  var personel=(document.getElementById('ortak-personel').value||'').trim();
+  var unvan=(document.getElementById('ortak-unvan').value||'').trim();
+  var turler=[]; document.querySelectorAll('.ortak-ktur:checked').forEach(function(c){ turler.push(c.value); });
   var kontrolTuruDenetim = turler.length ? turler.join(' / ') : 'Riske Dayalı Denetim';
 
   // İzin / rapor tarih aralıkları + Sendika İzni (yalnızca admin)
   function _gd(id){ var e=document.getElementById(id); return (e&&e.value)?e.value:''; }
-  var raporBas=_gd('puantaj-rapor-bas'), raporBit=_gd('puantaj-rapor-bit');
-  var izinBas=_gd('puantaj-izin-bas'), izinBit=_gd('puantaj-izin-bit');
-  var idariBas=_gd('puantaj-idari-bas'), idariBit=_gd('puantaj-idari-bit');
-  var sendikaEl=document.getElementById('puantaj-sendika');
+  var raporBas=_gd('ortak-rapor-bas'), raporBit=_gd('ortak-rapor-bit');
+  var izinBas=_gd('ortak-izin-bas'), izinBit=_gd('ortak-izin-bit');
+  var idariBas=_gd('ortak-idari-bas'), idariBit=_gd('ortak-idari-bit');
+  var sendikaEl=document.getElementById('ortak-sendika');
   var adminMi=(typeof isAdmin!=='undefined' && isAdmin);
   var sendikaAktif = adminMi && sendikaEl && sendikaEl.checked;
   function _araliktaMi(iso, bas, bit){ if(!bas && !bit) return false; var b=bas||bit, s=bit||bas; if(b>s){ var t=b; b=s; s=t; } return iso>=b && iso<=s; }
@@ -399,18 +358,7 @@ window.puantajOlustur=puantajOlustur; window.puantajExcel=puantajExcel; window.p
 var _CETVEL_GUNLER=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
 var _CETVEL_NOT='Yukarıda dökümü gösterilen Aylık Çalışma Cetvelinin 2006/10344 sayılı Bakanlar Kurulu Kararının (E) Teknik Hizmet Bölümünün 6. maddesine göre Ek Özel Hizmet Tazminatı ödemesine esas olmak üzere hazırlandığını, hatalı bir kayıt olduğu takdirde maddi ve idari olarak sorumlu olacağımızı beyan ve taahhüt ederiz.';
 
-function cetvelVarsayilan(){
-  var y=document.getElementById('cetvel-yil'), a=document.getElementById('cetvel-ay'), p=document.getElementById('cetvel-personel');
-  var now=new Date();
-  if(y && !y.value) y.value=now.getFullYear();
-  if(a && !a.dataset.vinit){ a.dataset.vinit='1'; a.value=String(now.getMonth()+1); }
-  if(p && !p.value && typeof mevcutKullaniciAdi!=='undefined' && mevcutKullaniciAdi) p.value=mevcutKullaniciAdi;
-  var _sw=document.getElementById('cetvel-sendika-wrap'), _sb=document.getElementById('cetvel-sendika');
-  var _sn=document.getElementById('cetvel-sicil'); if(_sn && !_sn.value && (typeof isAdmin!=='undefined' && isAdmin)) _sn.value='2023-02348';
-  var _adm=(typeof isAdmin!=='undefined' && isAdmin);
-  if(_sw){ _sw.style.display=_adm?'inline-flex':'none'; }
-  if(_sb && _adm && !_sb.dataset.init){ _sb.dataset.init='1'; _sb.checked=true; }
-}
+function cetvelVarsayilan(){ return ortakVarsayilan(); }
 document.addEventListener('DOMContentLoaded', cetvelVarsayilan);
 
 // Bir denetimin gidilen yeri: köy/kasaba adı veya "Merkez"
@@ -432,19 +380,19 @@ function _cetvelYer(d){
 
 function _cetvelVeri(){
   cetvelVarsayilan();
-  var yilEl=document.getElementById('cetvel-yil'), ayEl=document.getElementById('cetvel-ay');
+  var yilEl=document.getElementById('ortak-yil'), ayEl=document.getElementById('ortak-ay');
   if(!yilEl||!ayEl) return null;
   var yil=parseInt(yilEl.value,10), ay=parseInt(ayEl.value,10);
   if(!yil||!ay) return null;
-  var personel=(document.getElementById('cetvel-personel').value||'').trim();
-  var unvan=(document.getElementById('cetvel-unvan').value||'').trim();
-  var sicil=(document.getElementById('cetvel-sicil').value||'').trim();
+  var personel=(document.getElementById('ortak-personel').value||'').trim();
+  var unvan=(document.getElementById('ortak-unvan').value||'').trim();
+  var sicil=(document.getElementById('ortak-sicil').value||'').trim();
 
   function _gd(id){ var e=document.getElementById(id); return (e&&e.value)?e.value:''; }
-  var raporBas=_gd('cetvel-rapor-bas'), raporBit=_gd('cetvel-rapor-bit');
-  var izinBas=_gd('cetvel-izin-bas'), izinBit=_gd('cetvel-izin-bit');
-  var idariBas=_gd('cetvel-idari-bas'), idariBit=_gd('cetvel-idari-bit');
-  var sendEl=document.getElementById('cetvel-sendika');
+  var raporBas=_gd('ortak-rapor-bas'), raporBit=_gd('ortak-rapor-bit');
+  var izinBas=_gd('ortak-izin-bas'), izinBit=_gd('ortak-izin-bit');
+  var idariBas=_gd('ortak-idari-bas'), idariBit=_gd('ortak-idari-bit');
+  var sendEl=document.getElementById('ortak-sendika');
   var adminMi=(typeof isAdmin!=='undefined' && isAdmin);
   var sendikaAktif=adminMi && sendEl && sendEl.checked;
   function _araliktaMi(iso,bas,bit){ if(!bas && !bit) return false; var b=bas||bit, s=bit||bas; if(b>s){ var t=b; b=s; s=t; } return iso>=b && iso<=s; }
@@ -651,37 +599,26 @@ window.cetvelOlustur=cetvelOlustur; window.cetvelExcel=cetvelExcel; window.cetve
 
 <script>
 // ===== ŞUBE FAALİYET RAPORU =====
-function faaliyetVarsayilan(){
-  var y=document.getElementById('faaliyet-yil'), a=document.getElementById('faaliyet-ay'), p=document.getElementById('faaliyet-personel');
-  var now=new Date();
-  if(y && !y.value) y.value=now.getFullYear();
-  if(a && !a.dataset.vinit){ a.dataset.vinit='1'; a.value=String(now.getMonth()+1); }
-  if(p && !p.value && typeof mevcutKullaniciAdi!=='undefined' && mevcutKullaniciAdi) p.value=mevcutKullaniciAdi;
-  var _sw=document.getElementById('faaliyet-sendika-wrap'), _sb=document.getElementById('faaliyet-sendika');
-  var _sn=document.getElementById('faaliyet-sicil'); if(_sn && !_sn.value && (typeof isAdmin!=='undefined' && isAdmin)) _sn.value='2023-02348';
-  var _adm=(typeof isAdmin!=='undefined' && isAdmin);
-  if(_sw){ _sw.style.display=_adm?'inline-flex':'none'; }
-  if(_sb && _adm && !_sb.dataset.init){ _sb.dataset.init='1'; _sb.checked=true; }
-}
+function faaliyetVarsayilan(){ return ortakVarsayilan(); }
 document.addEventListener('DOMContentLoaded', faaliyetVarsayilan);
 
 function _faaliyetVeri(){
   faaliyetVarsayilan();
-  var yilEl=document.getElementById('faaliyet-yil'), ayEl=document.getElementById('faaliyet-ay');
+  var yilEl=document.getElementById('ortak-yil'), ayEl=document.getElementById('ortak-ay');
   if(!yilEl||!ayEl) return null;
   var yil=parseInt(yilEl.value,10), ay=parseInt(ayEl.value,10);
   if(!yil||!ay) return null;
-  var personel=(document.getElementById('faaliyet-personel').value||'').trim();
-  var sicil=(document.getElementById('faaliyet-sicil').value||'').trim();
-  var sube=(document.getElementById('faaliyet-sube').value||'').trim();
-  var gorev=(document.getElementById('faaliyet-gorev').value||'').trim();
-  var unvan=(document.getElementById('faaliyet-unvan').value||'').trim();
+  var personel=(document.getElementById('ortak-personel').value||'').trim();
+  var sicil=(document.getElementById('ortak-sicil').value||'').trim();
+  var sube=(document.getElementById('ortak-sube').value||'').trim();
+  var gorev=(document.getElementById('ortak-gorev').value||'').trim();
+  var unvan=(document.getElementById('ortak-unvan').value||'').trim();
 
   function _gd(id){ var e=document.getElementById(id); return (e&&e.value)?e.value:''; }
-  var raporBas=_gd('faaliyet-rapor-bas'), raporBit=_gd('faaliyet-rapor-bit');
-  var izinBas=_gd('faaliyet-izin-bas'), izinBit=_gd('faaliyet-izin-bit');
-  var idariBas=_gd('faaliyet-idari-bas'), idariBit=_gd('faaliyet-idari-bit');
-  var sendEl=document.getElementById('faaliyet-sendika');
+  var raporBas=_gd('ortak-rapor-bas'), raporBit=_gd('ortak-rapor-bit');
+  var izinBas=_gd('ortak-izin-bas'), izinBit=_gd('ortak-izin-bit');
+  var idariBas=_gd('ortak-idari-bas'), idariBit=_gd('ortak-idari-bit');
+  var sendEl=document.getElementById('ortak-sendika');
   var adminMi=(typeof isAdmin!=='undefined' && isAdmin);
   var sendikaAktif=adminMi && sendEl && sendEl.checked;
   function _araliktaMi(iso,bas,bit){ if(!bas && !bit) return false; var b=bas||bit, s=bit||bas; if(b>s){ var t=b; b=s; s=t; } return iso>=b && iso<=s; }
@@ -832,4 +769,27 @@ function faaliyetYazdir(){
   setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){} }, 500);
 }
 window.faaliyetOlustur=faaliyetOlustur; window.faaliyetExcel=faaliyetExcel; window.faaliyetYazdir=faaliyetYazdir;
+</script>
+
+<script>
+(function(){
+  function _ap(){ try{ if(typeof ortakVarsayilan==='function') ortakVarsayilan(); }catch(e){} }
+  function _yenile(){
+    try{ if(typeof puantajOlustur==='function') puantajOlustur(); }catch(e){}
+    try{ if(typeof cetvelOlustur==='function') cetvelOlustur(); }catch(e){}
+    try{ if(typeof faaliyetOlustur==='function') faaliyetOlustur(); }catch(e){}
+  }
+  window._ortakYenile=_yenile;
+  var n=0;
+  var t=setInterval(function(){ n++; _ap(); var p=document.getElementById('ortak-personel'); if((p&&p.value)||n>60){ clearInterval(t); _yenile(); } }, 500);
+  _ap();
+  document.addEventListener('DOMContentLoaded', function(){
+    var panel=document.getElementById('ortak-bilgiler-panel');
+    if(!panel) return;
+    var _t=null;
+    function _sch(){ if(_t) clearTimeout(_t); _t=setTimeout(_yenile,250); }
+    panel.addEventListener('input', _sch);
+    panel.addEventListener('change', _sch);
+  });
+})();
 </script>
