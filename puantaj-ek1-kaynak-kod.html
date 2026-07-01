@@ -5,8 +5,9 @@
   2) Ek Ozel Hizmet Tazminati - Aylik Calisma Cetveli
   3) Sube Faaliyet Raporu
   Ortak Bilgiler: Yil/Ay/Personel/Sicil/izin tarihleri TEK YERDE, 3 form da
-  bunlari otomatik kullanir (ortak-* id'leri). Herhangi bir ortak alan
-  degisince 3 form da otomatik yenilenir (window._ortakYenile).
+  bunlari otomatik kullanir (ortak-* id'leri). Tablolar OTOMATIK acilmaz —
+  her form kendi "Olustur" butonuna basilinca gorunur. Ortak alan
+  degisince (varsa) eski onizleme temizlenir, yeniden Olustur'a basmak gerekir.
 ================================================================================
   PARCA 1 (kartlar): <div id="sayfa-raporlar"...> acilisindan sonra yapistir.
   PARCA 2 (scriptler): </body> etiketinden hemen once, TAM SIRAYLA yapistir
@@ -776,6 +777,9 @@ window.faaliyetOlustur=faaliyetOlustur; window.faaliyetExcel=faaliyetExcel; wind
 
 <script>
 (function(){
+  // Ortak Bilgiler alanları sadece varsayılan değerlerle dolduruluyor.
+  // Tablolar artık OTOMATİK açılmıyor — her form kendi "Oluştur" butonuna
+  // basılınca aşağıda görünür.
   function _ap(){ try{ if(typeof ortakVarsayilan==='function') ortakVarsayilan(); }catch(e){} }
   function _yenile(){
     try{ if(typeof puantajOlustur==='function') puantajOlustur(); }catch(e){}
@@ -784,15 +788,24 @@ window.faaliyetOlustur=faaliyetOlustur; window.faaliyetExcel=faaliyetExcel; wind
   }
   window._ortakYenile=_yenile;
   var n=0;
-  var t=setInterval(function(){ n++; _ap(); var p=document.getElementById('ortak-personel'); if((p&&p.value)||n>60){ clearInterval(t); _yenile(); } }, 500);
+  var t=setInterval(function(){ n++; _ap(); var p=document.getElementById('ortak-personel'); if((p&&p.value)||n>60){ clearInterval(t); } }, 500);
   _ap();
-  document.addEventListener('DOMContentLoaded', function(){
-    var panel=document.getElementById('ortak-bilgiler-panel');
-    if(!panel) return;
+  // NOT: Ana uygulamanın bundler'ı sayfayı DOMParser+replaceWith ile enjekte
+  // ediyor; gerçek DOMContentLoaded olayı bu script çalışmadan ÖNCE, eski
+  // kabuk belge için ateşleniyor ve bir daha tetiklenmiyor. Bu yüzden event
+  // beklemek yerine panel doğrudan (script çalıştığı an zaten DOM'da mevcut)
+  // aranıp dinleyici hemen bağlanıyor.
+  var panel=document.getElementById('ortak-bilgiler-panel');
+  if(panel){
     var _t=null;
-    function _sch(){ if(_t) clearTimeout(_t); _t=setTimeout(_yenile,250); }
+    function _sch(){ if(_t) clearTimeout(_t); _t=setTimeout(function(){
+      ['puantaj-onizleme','cetvel-onizleme','faaliyet-onizleme'].forEach(function(id){
+        var el=document.getElementById(id);
+        if(el && el.innerHTML) el.innerHTML='';
+      });
+    },250); }
     panel.addEventListener('input', _sch);
     panel.addEventListener('change', _sch);
-  });
+  }
 })();
 </script>
