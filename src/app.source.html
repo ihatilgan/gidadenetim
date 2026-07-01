@@ -284,12 +284,10 @@
     background: #f1f4ef !important; color: var(--gri-koyu) !important;
     border-radius: 12px !important; border: 1px solid rgba(20,50,30,0.05) !important;
   }
-  header #kullanici-bilgi > #mesaj-btn,
   header #kullanici-bilgi > #yenile-btn {
     width: 38px; height: 38px; padding: 0 !important;
     display: inline-flex; align-items: center; justify-content: center;
   }
-  header #kullanici-bilgi > #mesaj-btn:active,
   header #kullanici-bilgi > #yenile-btn:active { transform: scale(0.93); }
   header #kullanici-ad-btn { padding: 5px 8px 5px 5px !important; gap: 7px !important; height: 38px; }
   header #header-ekip-adi { color: var(--yesil) !important; background: var(--yesil-acik) !important; font-weight: 700; }
@@ -313,7 +311,6 @@
     .hdr-title-wrap > div > div { font-size: 9px !important; }
     .hdr-actions { grid-area: actions; flex:0 0 auto; gap:5px; justify-content:flex-end; }
     header #kullanici-bilgi { gap: 4px !important; }
-    header #kullanici-bilgi > #mesaj-btn,
     header #kullanici-bilgi > #yenile-btn { width:34px; height:34px; border-radius:11px !important; }
     header #kullanici-ad-btn { max-width: 88px !important; height:34px; padding:4px 6px 4px 4px !important; gap:5px !important; border-radius:11px !important; }
     .hdr-user-avatar { width:25px; height:25px; border-radius:8px; }
@@ -335,7 +332,6 @@
     header { padding-left: 8px; padding-right: 8px; }
     .hdr-logo { width:32px; height:32px; }
     .hdr-title-wrap h1 { font-size: 13px !important; }
-    header #kullanici-bilgi > #mesaj-btn,
     header #kullanici-bilgi > #yenile-btn { width:32px; height:32px; }
     header #kullanici-ad-btn { max-width: 72px !important; }
     header #kullanici-ad { display:none; }
@@ -1585,7 +1581,6 @@ DEVRE_DISI_BITIS */
   <div id="ekip-personel-balon" style="display:none;position:absolute;top:100%;left:50%;transform:translateX(-50%);background:rgba(20,40,20,0.93);color:#fff;border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.7;z-index:10001;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.3);margin-top:4px;pointer-events:none;"></div>
   <div class="hdr-actions">
     <div id="kullanici-bilgi" style="display:none;align-items:center;gap:6px;position:relative;">
-      <button id="mesaj-btn" onclick="sohbetPanelAc()" style="cursor:pointer;position:relative;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.6 9.6 0 0 1-3-.5L3 21l1.5-4a8.3 8.3 0 0 1-1-4 8.4 8.4 0 0 1 9-8.5 8.4 8.4 0 0 1 8.5 7Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path></svg><span id="mesaj-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e74c3c;color:#fff;border-radius:50%;width:15px;height:15px;font-size:10px;line-height:15px;text-align:center;"></span></button>
       <button id="yenile-btn" onclick="location.reload()" title="Yenile" style="cursor:pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20 11a8 8 0 1 0-1.6 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M20 5v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
       <button id="kullanici-ad-btn" onclick="kullaniciMenuToggle(event)" style="cursor:pointer;display:flex;align-items:center;max-width:140px;min-width:0;"><span class="hdr-user-avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8.4" r="3.6" fill="#fff"></circle><path d="M5.5 19a6.5 6.5 0 0 1 13 0Z" fill="#fff"></path></svg></span><span id="kullanici-ad" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;"></span><span style="opacity:0.45;font-size:11px;">▾</span></button>
       <div id="kullanici-menu" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:#fff;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.22);min-width:190px;z-index:10000;overflow:hidden;">
@@ -9753,12 +9748,9 @@ function sohbetNavTikla(btn) {
   }
 }
 
-// Nav badge güncelle (hem header hem nav badge'i)
+// Mesaj badge güncelle
 function sohbetBadgeGuncelle(sayi) {
-  // Header badge (denetçi için)
-  var hBadge = document.getElementById('mesaj-badge');
-  if (hBadge) { hBadge.style.display = sayi > 0 ? '' : 'none'; hBadge.textContent = sayi; }
-  // Nav badge
+  // Alt nav badge
   var nBadge = document.getElementById('nav-mesaj-badge');
   if (nBadge) { nBadge.style.display = sayi > 0 ? '' : 'none'; nBadge.textContent = sayi; }
   // Admin sohbet tab badge
