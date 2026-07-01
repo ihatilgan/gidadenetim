@@ -7675,6 +7675,20 @@ function girisYap() {
 
 
 
+function ozetListeBaslikToggleHazirla(baslikEl, listeEl) {
+  if (!baslikEl || !listeEl) return;
+  listeEl.style.display = 'block';
+  baslikEl.style.cursor = 'pointer';
+  baslikEl.title = 'Listeyi göster/gizle';
+  baslikEl.setAttribute('data-liste-kapali', '0');
+  baslikEl.onclick = function(e) {
+    if (e && e.target && e.target.tagName === 'BUTTON') return;
+    var acik = listeEl.style.display !== 'none';
+    listeEl.style.display = acik ? 'none' : 'block';
+    baslikEl.setAttribute('data-liste-kapali', acik ? '1' : '0');
+  };
+}
+
 function ozetSonListeGoster(baslik, filtreFn) {
   var temel = ekipDenetimleri();
   var filtered = filtreFn ? temel.filter(filtreFn) : temel.slice();
@@ -7694,6 +7708,7 @@ function ozetSonListeGoster(baslik, filtreFn) {
     temBtn.onclick = function() { kart.style.display = 'none'; };
     baslikEl.appendChild(temBtn);
   }
+  ozetListeBaslikToggleHazirla(baslikEl, el);
   el.innerHTML = '';
   if (!filtered.length) {
     el.innerHTML = '<div class="bos-durum"><div class="ikon">📋</div><p>Bu kategoride denetim bulunamadı.</p></div>';
@@ -7763,8 +7778,13 @@ function _ozetRiskKutuOlustur(id){
 function _ozetRiskKutu(id, baslik, liste, grupTipi){
   var k=_ozetRiskKutuOlustur(id); if(!k) return;
   if(k.getAttribute('data-acik')==='1'){ k.style.display='none'; k.setAttribute('data-acik','0'); return; }
-  k.innerHTML='<div style="font-weight:700;font-size:14px;margin-bottom:10px;">'+baslik+' ('+liste.length+')</div>';
+  k.innerHTML='';
+  var baslikDiv=document.createElement('div');
+  baslikDiv.style.cssText='font-weight:700;font-size:14px;margin-bottom:10px;cursor:pointer;user-select:none;';
+  baslikDiv.textContent=baslik+' ('+liste.length+')';
+  k.appendChild(baslikDiv);
   var icer=document.createElement('div'); k.appendChild(icer);
+  ozetListeBaslikToggleHazirla(baslikDiv, icer);
   _ozetRiskRender(icer, liste, grupTipi);
   k.style.display='block'; k.setAttribute('data-acik','1');
 }
@@ -7788,8 +7808,13 @@ function ozetYaklasanGit(){
   var uretim=uretimTumRiskYaklasanListesiGetir();
   var satiskoy=satisKoyRiskYaklasanListesiGetir();
   var toplam=uretim.length+satiskoy.length;
-  k.innerHTML='<div style="font-weight:700;font-size:14px;margin-bottom:10px;">🟡 Bu Hafta Riski Geçecek ('+toplam+')</div>';
+  k.innerHTML='';
+  var baslikDiv=document.createElement('div');
+  baslikDiv.style.cssText='font-weight:700;font-size:14px;margin-bottom:10px;cursor:pointer;user-select:none;';
+  baslikDiv.textContent='🟡 Bu Hafta Riski Geçecek ('+toplam+')';
+  k.appendChild(baslikDiv);
   var icer=document.createElement('div'); k.appendChild(icer);
+  ozetListeBaslikToggleHazirla(baslikDiv, icer);
   var bugun=bugunTarih();
   if(!toplam){ icer.innerHTML='<div class="bos-durum"><div class="ikon">✅</div><p>Bu hafta riski geçecek işletme yok.</p></div>'; }
   else {
@@ -7837,6 +7862,7 @@ function ozetNotluIsletmelerGoster() {
   temBtn.textContent = '✕ Kapat';
   temBtn.onclick = function() { kart.style.display = 'none'; };
   baslikEl.appendChild(temBtn);
+  ozetListeBaslikToggleHazirla(baslikEl, el);
   el.innerHTML = '';
   if (!satirlar.length) {
     el.innerHTML = '<div class="bos-durum"><div class="ikon">📝</div><p>Bu ekipte notlu işletme yok.</p></div>';
@@ -7881,6 +7907,7 @@ function ozetIsletmeListeGoster(baslik, isletmeListe, grupTipi) {
   temBtn.textContent = '✕ Kapat';
   temBtn.onclick = function() { kart.style.display = 'none'; };
   baslikEl.appendChild(temBtn);
+  ozetListeBaslikToggleHazirla(baslikEl, el);
   el.innerHTML = '';
   if (!isletmeListe.length) {
     el.innerHTML = '<div class="bos-durum"><div class="ikon">✅</div><p>Risk tarihi geçen işletme yok.</p></div>';
