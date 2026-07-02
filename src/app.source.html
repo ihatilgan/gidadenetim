@@ -9504,6 +9504,53 @@ function ortakVarsayilan(){
   if(_sb && _adm && !_sb.dataset.init){ _sb.dataset.init='1'; _sb.checked=true; }
   var _sn=document.getElementById('ortak-sicil'); if(_sn && !_sn.value && _adm) _sn.value='2023-02348';
 }
+
+function _raporKisiNorm(s){
+  return String(s||'')
+    .toLocaleLowerCase('tr')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/ı/g,'i')
+    .replace(/[^a-z0-9]+/g,' ')
+    .trim();
+}
+
+function _raporKisiTokens(s){
+  var n=_raporKisiNorm(s);
+  if(!n) return [];
+  var tokens=[n, n.replace(/\s+/g,'')];
+  if(n.indexOf('atilgan')>=0 || n.indexOf('atılgan')>=0) tokens.push('ihatilgan');
+  return tokens.filter(function(t,i,a){ return t && a.indexOf(t)===i; });
+}
+
+function _raporMetinKisiUyarMi(metin, tokens){
+  var n=_raporKisiNorm(metin);
+  if(!n) return false;
+  var kompakt=n.replace(/\s+/g,'');
+  return tokens.some(function(t){
+    return n.indexOf(t)>=0 || kompakt.indexOf(t)>=0 || t.indexOf(n)>=0 || t.indexOf(kompakt)>=0;
+  });
+}
+
+function _raporDenetimPersoneleAitMi(d, personel){
+  if(!d) return false;
+  var tokens=_raporKisiTokens(personel);
+  if(!tokens.length) return true;
+  var isimAlanlari=[];
+  if(Array.isArray(d.denetciler)) isimAlanlari=isimAlanlari.concat(d.denetciler);
+  ['kullaniciAd','ekleyenAd','olusturanAd','guncelleyenAd'].forEach(function(k){
+    if(d[k]) isimAlanlari.push(d[k]);
+  });
+  if(isimAlanlari.some(function(ad){ return _raporMetinKisiUyarMi(ad, tokens); })) return true;
+
+  var mevcutAd=(typeof mevcutKullaniciAdi!=='undefined') ? mevcutKullaniciAdi : '';
+  var myUid=(typeof mevcutKullanici!=='undefined' && mevcutKullanici) ? mevcutKullanici.uid : '';
+  var personelBenimAdim=_raporMetinKisiUyarMi(mevcutAd, tokens);
+  if(personelBenimAdim && myUid) {
+    var uidAlanlari=[d.kullaniciId,d.uid,d.userId,d.ekleyenUid,d.olusturanUid];
+    if(uidAlanlari.some(function(uid){ return uid && uid===myUid; })) return true;
+  }
+  return false;
+}
 function puantajVarsayilan(){ return ortakVarsayilan(); }
 
 // Seçilen ay için tüm günleri tipine göre doldur
@@ -9530,20 +9577,11 @@ function _puantajVeri(){
 
   // HER DENETÇİ KENDİ PUANTAJINI ALIR: personel adı denetçiler listesinde geçen
   // VEYA (kendi puantajıysa) kullanıcının oluşturduğu denetimler alınır.
-  var pl=personel.toLocaleLowerCase('tr');
-  // Takma ad: denetimlerde 'ihatilgan' geçenler İsmail Hakkı ATILGAN sayılır
-  var _araTokens=[pl];
-  if(pl && (pl.indexOf('atılgan')>=0 || pl.indexOf('atilgan')>=0)) _araTokens.push('ihatilgan');
-  var myUid=(typeof mevcutKullanici!=='undefined' && mevcutKullanici)?mevcutKullanici.uid:null;
-  var benMi = !!pl && (typeof mevcutKullaniciAdi!=='undefined') && pl===(mevcutKullaniciAdi||'').toLocaleLowerCase('tr');
   var ayStr=yil+'-'+('0'+ay).slice(-2);
   var gunMap={};
   (typeof denetimler!=='undefined'?denetimler:[]).forEach(function(d){
     if(!d || !d.tarih || String(d.tarih).slice(0,7)!==ayStr) return;
-    var dc=(d.denetciler||[]).join(' ').toLocaleLowerCase('tr');
-    var nameMatch = pl ? _araTokens.some(function(t){ return t && dc.indexOf(t)>=0; }) : true;
-    var uidMatch = (benMi && myUid && d.kullaniciId===myUid);
-    if(!(nameMatch||uidMatch)) return;
+    if(!_raporDenetimPersoneleAitMi(d, personel)) return;
     var ad=(d.isletme||d.isletmeKayitNo||'').trim();
     if(!ad) return;
     var arr=(gunMap[d.tarih]=gunMap[d.tarih]||[]);
@@ -9766,20 +9804,12 @@ function _cetvelVeri(){
   var sendikaAktif=adminMi && sendEl && sendEl.checked;
   function _araliktaMi(iso,bas,bit){ if(!bas && !bit) return false; var b=bas||bit, s=bit||bas; if(b>s){ var t=b; b=s; s=t; } return iso>=b && iso<=s; }
 
-  var pl=personel.toLocaleLowerCase('tr');
-  var _araTokens=[pl];
-  if(pl && (pl.indexOf('atılgan')>=0 || pl.indexOf('atilgan')>=0)) _araTokens.push('ihatilgan');
-  var myUid=(typeof mevcutKullanici!=='undefined' && mevcutKullanici)?mevcutKullanici.uid:null;
-  var benMi=!!pl && (typeof mevcutKullaniciAdi!=='undefined') && pl===(mevcutKullaniciAdi||'').toLocaleLowerCase('tr');
   var ayStr=yil+'-'+('0'+ay).slice(-2);
 
   var gunMap={};
   (typeof denetimler!=='undefined'?denetimler:[]).forEach(function(d){
     if(!d || !d.tarih || String(d.tarih).slice(0,7)!==ayStr) return;
-    var dc=(d.denetciler||[]).join(' ').toLocaleLowerCase('tr');
-    var nameMatch=pl?_araTokens.some(function(t){ return t && dc.indexOf(t)>=0; }):true;
-    var uidMatch=(benMi && myUid && d.kullaniciId===myUid);
-    if(!(nameMatch||uidMatch)) return;
+    if(!_raporDenetimPersoneleAitMi(d, personel)) return;
     var ad=(d.isletme||d.isletmeKayitNo||'').trim();
     if(!ad) return;
     var g=gunMap[d.tarih]||(gunMap[d.tarih]={isimler:[],yerler:[]});
@@ -9991,20 +10021,12 @@ function _faaliyetVeri(){
   var sendikaAktif=adminMi && sendEl && sendEl.checked;
   function _araliktaMi(iso,bas,bit){ if(!bas && !bit) return false; var b=bas||bit, s=bit||bas; if(b>s){ var t=b; b=s; s=t; } return iso>=b && iso<=s; }
 
-  var pl=personel.toLocaleLowerCase('tr');
-  var _araTokens=[pl];
-  if(pl && (pl.indexOf('atılgan')>=0 || pl.indexOf('atilgan')>=0)) _araTokens.push('ihatilgan');
-  var myUid=(typeof mevcutKullanici!=='undefined' && mevcutKullanici)?mevcutKullanici.uid:null;
-  var benMi=!!pl && (typeof mevcutKullaniciAdi!=='undefined') && pl===(mevcutKullaniciAdi||'').toLocaleLowerCase('tr');
   var ayStr=yil+'-'+('0'+ay).slice(-2);
 
   var gunMap={};
   (typeof denetimler!=='undefined'?denetimler:[]).forEach(function(d){
     if(!d || !d.tarih || String(d.tarih).slice(0,7)!==ayStr) return;
-    var dc=(d.denetciler||[]).join(' ').toLocaleLowerCase('tr');
-    var nameMatch=pl?_araTokens.some(function(t){ return t && dc.indexOf(t)>=0; }):true;
-    var uidMatch=(benMi && myUid && d.kullaniciId===myUid);
-    if(!(nameMatch||uidMatch)) return;
+    if(!_raporDenetimPersoneleAitMi(d, personel)) return;
     var ad=(d.isletme||d.isletmeKayitNo||'').trim();
     if(!ad) return;
     var arr=(gunMap[d.tarih]=gunMap[d.tarih]||[]);
