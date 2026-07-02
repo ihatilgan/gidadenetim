@@ -5554,7 +5554,7 @@ function isletmeTumListeGetir() {
   var gorulen = {};
   function ekle(i) {
     if (!i || !i.isletmeAdi) return;
-    var key = i.kayitNo || i.isletmeAdi;
+    var key = (typeof isletmeKarsilastirmaAnahtari === 'function' ? isletmeKarsilastirmaAnahtari(i) : '') || i.kayitNo || i.isletmeAdi;
     if (gorulen[key]) return;
     gorulen[key] = true;
     tumListe.push(i);
@@ -5832,13 +5832,17 @@ function isletmeListesiGuncelle() {
     row.addEventListener('mouseleave', function(){ this.style.background=''; });
     row.addEventListener('click', (function(i) {
       return function() {
-        var idx2 = ISLETMELER.findIndex(function(x){ return x.kayitNo===i.kayitNo; });
+        var anahtar = (typeof isletmeKarsilastirmaAnahtari === 'function') ? isletmeKarsilastirmaAnahtari(i) : '';
+        var idx2 = ISLETMELER.findIndex(function(x){
+          if (anahtar) return isletmeKarsilastirmaAnahtari(x) === anahtar;
+          return x.kayitNo && x.kayitNo === i.kayitNo;
+        });
         if (idx2 >= 0) isletmeDetayModal(idx2);
       };
     })(isletme));
     row.innerHTML = '<div style="font-weight:600;font-size:14px;">'+isletme.isletmeAdi+'</div>' +
       '<div style="font-size:12px;color:var(--gri);display:flex;gap:12px;flex-wrap:wrap;margin-top:2px;">' +
-      '<span>📋 '+isletme.kayitNo+'</span>' +
+      '<span>📋 '+(isletme.kayitNo || '-')+'</span>' +
       '<span>📍 '+(isletme.ilce||'-')+'</span>' +
       '<span>🍽️ '+(isletme.faaliyetAlani||'-')+'</span>' +
       (isletme.telefon ? '<span>📞 '+isletme.telefon+'</span>' : '') +
