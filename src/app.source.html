@@ -5832,12 +5832,7 @@ function isletmeListesiGuncelle() {
     row.addEventListener('mouseleave', function(){ this.style.background=''; });
     row.addEventListener('click', (function(i) {
       return function() {
-        var anahtar = (typeof isletmeKarsilastirmaAnahtari === 'function') ? isletmeKarsilastirmaAnahtari(i) : '';
-        var idx2 = ISLETMELER.findIndex(function(x){
-          if (anahtar) return isletmeKarsilastirmaAnahtari(x) === anahtar;
-          return x.kayitNo && x.kayitNo === i.kayitNo;
-        });
-        if (idx2 >= 0) isletmeDetayModal(idx2);
+        isletmeDetayModal(i);
       };
     })(isletme));
     row.innerHTML = '<div style="font-weight:600;font-size:14px;">'+isletme.isletmeAdi+'</div>' +
@@ -6048,8 +6043,9 @@ window.isletmeTelefonDuzenlePrompt = isletmeTelefonDuzenlePrompt;
 window.isletmeTelefonSil = isletmeTelefonSil;
 
 function isletmeDetayModal(idx) {
-  // idx sayı ise index, string ise kayıt no
-  const i = (typeof idx === 'number') ? ISLETMELER[idx] : ISLETMELER.find(function(x){ return x.kayitNo === idx; });
+  // idx sayı ise index, string ise kayıt no, nesne ise doğrudan işletme kaydıdır.
+  const i = (idx && typeof idx === 'object') ? idx : ((typeof idx === 'number') ? ISLETMELER[idx] : ISLETMELER.find(function(x){ return x.kayitNo === idx; }));
+  if (!i) { bildirimGoster('İşletme detayı bulunamadı.', 'hata'); return; }
   isletmeVergiTcDoldur(i);
   // Denetim sayısı
   const denetimSayisi = denetimler.filter(d => d.isletmeKayitNo === i.kayitNo || d.isletme === i.isletmeAdi).length;
