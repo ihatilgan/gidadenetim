@@ -6493,6 +6493,45 @@ function isletmeKarsilastirmaAnahtari(i) {
   return 'FB:' + [no, ad, adres, faaliyet].join('|');
 }
 
+function isletmeYeniBildirimAnahtari(i) {
+  i = i || {};
+  var kn = String(i.kayitNo || i['(5996 Sayılı Kanun) Kayıt Numarası'] || '').trim();
+  if (kn) return 'KN:' + kn.toLocaleUpperCase('tr');
+  var ad = String(i.isletmeAdi || i['İşletme Adı'] || '').trim();
+  if (ad && typeof _normTR === 'function') return 'AD:' + _normTR(ad);
+  return isletmeKarsilastirmaAnahtari(i);
+}
+
+function oncekiYeniIsletmeBildirimMap() {
+  var map = {};
+  try {
+    var liste = JSON.parse(localStorage.getItem('yeni_isletmeler') || '[]');
+    if (Array.isArray(liste)) {
+      liste.forEach(function(i) {
+        var key = isletmeYeniBildirimAnahtari(i);
+        if (key) map[key] = true;
+      });
+    }
+  } catch(e) {}
+  try {
+    var bildirilen = JSON.parse(localStorage.getItem('excel_yeni_sorumlu_bildirilen_v1') || '[]');
+    if (Array.isArray(bildirilen)) {
+      bildirilen.forEach(function(key) { if (key) map[key] = true; });
+    }
+  } catch(e) {}
+  return map;
+}
+
+function yeniIsletmeBildirimleriniKaydet(liste, mevcutMap) {
+  if (!Array.isArray(liste) || !liste.length) return;
+  var map = mevcutMap || oncekiYeniIsletmeBildirimMap();
+  liste.forEach(function(i) {
+    var key = isletmeYeniBildirimAnahtari(i);
+    if (key) map[key] = true;
+  });
+  try { localStorage.setItem('excel_yeni_sorumlu_bildirilen_v1', JSON.stringify(Object.keys(map).slice(-1000))); } catch(e) {}
+}
+
 function isletmeNormalize(i) {
   i = i || {};
   function telefonListeNormalize(v) {
@@ -7110,6 +7149,7 @@ function excelYukle(file) {
         var anahtar = isletmeKarsilastirmaAnahtari(i);
         if (anahtar) eskiKayitlar[anahtar] = i;
       });
+      var oncekiYeniBildirimler = oncekiYeniIsletmeBildirimMap();
       var eklenen = 0, silinen = 0, tarihGuncellenen = 0;
       var eklenenListe = [], tarihListe = [], silinenListe = [], degisenListe = [];
       Object.keys(eskiKayitlar).forEach(function(k){ if (!yeniKayitlar[k]) { silinen++; var _e=eskiKayitlar[k]; silinenListe.push({ad:(_e&&_e.isletmeAdi)||k, kayitNo:(_e&&_e.kayitNo)||''}); } });
@@ -7287,7 +7327,8 @@ function excelYukle(file) {
       // Sorumluluğa giren yeni işletmeleri bildir (kategori bilgisiyle)
       var yeniSorumlu = birlesikIsletmeler.filter(function(i) {
         var anahtar = isletmeKarsilastirmaAnahtari(i);
-        return anahtar && !eskiKayitlar[anahtar] && isletmeSorumluMu(i);
+        var bildirimKey = isletmeYeniBildirimAnahtari(i);
+        return anahtar && !eskiKayitlar[anahtar] && !oncekiYeniBildirimler[bildirimKey] && isletmeSorumluMu(i);
       });
       if (yeniSorumlu.length > 0) {
         var uyariDiv = document.createElement('div');
@@ -7314,6 +7355,7 @@ function excelYukle(file) {
         uyariHtml += '</ul><div style="font-size:12px;color:#7f8c8d;margin-top:6px;">Kategoriyi değiştirmek için işletme detayına girin → Kategori kutusuna tıklayın.</div></div>';
         uyariDiv.innerHTML = uyariHtml;
         durumEl.appendChild(uyariDiv);
+        yeniIsletmeBildirimleriniKaydet(yeniSorumlu, oncekiYeniBildirimler);
         bildirimGoster('🆕 ' + yeniSorumlu.length + ' yeni işletme eklendi! Kategori kontrolü yapın.', 'bilgi');
       }
 
