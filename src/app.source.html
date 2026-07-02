@@ -3056,11 +3056,15 @@ var orijinalRiskTarihleri = JSON.parse(localStorage.getItem('orijinalRiskTarihle
     var kayitliYeniIsletmeler = JSON.parse(localStorage.getItem('yeni_isletmeler') || '[]');
     if (kayitliYeniIsletmeler.length > 0 && typeof ISLETMELER !== 'undefined') {
       var mevcutKayitlar = {};
-      ISLETMELER.forEach(function(i) { if (i.kayitNo) mevcutKayitlar[i.kayitNo] = true; });
+      ISLETMELER.forEach(function(i) {
+        var anahtar = (typeof isletmeKarsilastirmaAnahtari === 'function') ? isletmeKarsilastirmaAnahtari(i) : (i.kayitNo || '');
+        if (anahtar) mevcutKayitlar[anahtar] = true;
+      });
       kayitliYeniIsletmeler.forEach(function(i) {
-        if (i.kayitNo && !mevcutKayitlar[i.kayitNo]) {
+        var anahtar = (typeof isletmeKarsilastirmaAnahtari === 'function') ? isletmeKarsilastirmaAnahtari(i) : (i.kayitNo || '');
+        if (anahtar && !mevcutKayitlar[anahtar]) {
           ISLETMELER.push(i);
-          mevcutKayitlar[i.kayitNo] = true;
+          mevcutKayitlar[anahtar] = true;
         }
       });
     }
@@ -6350,6 +6354,21 @@ function isletmeDocId(i) {
   return raw.slice(0, 500);
 }
 
+function isletmeKarsilastirmaAnahtari(i) {
+  i = i || {};
+  function temiz(v) {
+    return String(v || '').trim().replace(/\s+/g, ' ').toLocaleUpperCase('tr');
+  }
+  var kayitNo = temiz(i.kayitNo || i['(5996 Sayılı Kanun) Kayıt Numarası']);
+  if (kayitNo) return 'KN:' + kayitNo;
+  var no = temiz(i.no || i.No);
+  var ad = temiz(i.isletmeAdi || i['İşletme Adı']);
+  var adres = temiz(i.adres || i['Adres']);
+  var faaliyet = temiz(i.faaliyetAlani || i['Faaliyet Alanı']);
+  if (!no && !ad) return '';
+  return 'FB:' + [no, ad, adres, faaliyet].join('|');
+}
+
 function isletmeNormalize(i) {
   i = i || {};
   function telefonListeNormalize(v) {
@@ -6715,7 +6734,7 @@ function isletmelerMasterFirestoreYukle(liste, durumEl) {
 
   var db = firebase.firestore();
   var version = new Date().toISOString();
-  var temiz = liste.map(isletmeNormalize).filter(function(i){ return i.isletmeAdi && i.kayitNo; });
+  var temiz = liste.map(isletmeNormalize).filter(function(i){ return i.isletmeAdi; });
   var yeniMap = {};
   temiz.forEach(function(i){ i.aktif = true; i.updatedAtClient = version; yeniMap[isletmeDocId(i)] = i; });
   var toplam = temiz.length;
@@ -6953,18 +6972,25 @@ function excelYukle(file) {
         return;
       }
 
-      // Yeni liste indeksi - kayıt no ile hızlı erişim
+      // Yeni liste indeksi - kayıt no yoksa Excel sıra/ad/adres/faaliyet yedek anahtarıyla hızlı erişim
       var yeniKayitlar = {};
-      yeniIsletmeler.forEach(function(i){ yeniKayitlar[i.kayitNo] = i; });
+      yeniIsletmeler.forEach(function(i){
+        var anahtar = isletmeKarsilastirmaAnahtari(i);
+        if (anahtar) yeniKayitlar[anahtar] = i;
+      });
 
       // İstatistikler
       var eskiKayitlar = {};
-      ISLETMELER.forEach(function(i){ eskiKayitlar[i.kayitNo] = i; });
+      ISLETMELER.forEach(function(i){
+        var anahtar = isletmeKarsilastirmaAnahtari(i);
+        if (anahtar) eskiKayitlar[anahtar] = i;
+      });
       var eklenen = 0, silinen = 0, tarihGuncellenen = 0;
       var eklenenListe = [], tarihListe = [], silinenListe = [], degisenListe = [];
-      Object.keys(eskiKayitlar).forEach(function(k){ if (!yeniKayitlar[k]) { silinen++; var _e=eskiKayitlar[k]; silinenListe.push({ad:(_e&&_e.isletmeAdi)||k, kayitNo:k}); } });
+      Object.keys(eskiKayitlar).forEach(function(k){ if (!yeniKayitlar[k]) { silinen++; var _e=eskiKayitlar[k]; silinenListe.push({ad:(_e&&_e.isletmeAdi)||k, kayitNo:(_e&&_e.kayitNo)||''}); } });
       yeniIsletmeler.forEach(function(i) {
-        var eskiI = eskiKayitlar[i.kayitNo];
+        var _anahtar = isletmeKarsilastirmaAnahtari(i);
+        var eskiI = _anahtar ? eskiKayitlar[_anahtar] : null;
         if (!eskiI) { eklenen++; eklenenListe.push({ad:i.isletmeAdi||'', kayitNo:i.kayitNo||'', tarih:i.riskeDayaliDenetimTarihi||'', etiket:isletmeExcelRaporEtiketi(i)}); }
         else {
           var farklar = isletmeAlanDegisimleri(eskiI, i);
@@ -6979,7 +7005,8 @@ function excelYukle(file) {
 
       // ISLETMELER güncelle — konum hariç tüm alanlarda Excel/GGBS verisi esastır.
       var birlesikIsletmeler = yeniIsletmeler.map(function(i){
-        var eskiVeri = eskiKayitlar[i.kayitNo];
+        var _anahtar = isletmeKarsilastirmaAnahtari(i);
+        var eskiVeri = _anahtar ? eskiKayitlar[_anahtar] : null;
         if (eskiVeri) {
           var korunan = {};
           if (eskiVeri.koordinatlar) korunan.koordinatlar = eskiVeri.koordinatlar;
@@ -7010,16 +7037,20 @@ function excelYukle(file) {
       try {
         var eskiKayitliYeniIsletmeler = JSON.parse(localStorage.getItem('yeni_isletmeler') || '[]');
         var eskiKayitliMap = {};
-        eskiKayitliYeniIsletmeler.forEach(function(i) { if (i.kayitNo) eskiKayitliMap[i.kayitNo] = true; });
+        eskiKayitliYeniIsletmeler.forEach(function(i) {
+          var anahtar = isletmeKarsilastirmaAnahtari(i);
+          if (anahtar) eskiKayitliMap[anahtar] = true;
+        });
         // Yeni gelenleri ekle (eskide hiç olmayan kayıt numaraları)
         yeniIsletmeler.forEach(function(i) {
-          if (i.kayitNo && !eskiKayitlar[i.kayitNo] && !eskiKayitliMap[i.kayitNo]) {
+          var anahtar = isletmeKarsilastirmaAnahtari(i);
+          if (anahtar && !eskiKayitlar[anahtar] && !eskiKayitliMap[anahtar]) {
             eskiKayitliYeniIsletmeler.push(i);
-            eskiKayitliMap[i.kayitNo] = true;
-          } else if (i.kayitNo && eskiKayitliMap[i.kayitNo]) {
+            eskiKayitliMap[anahtar] = true;
+          } else if (anahtar && eskiKayitliMap[anahtar]) {
             // Var olanı güncelle
             for (var ei = 0; ei < eskiKayitliYeniIsletmeler.length; ei++) {
-              if (eskiKayitliYeniIsletmeler[ei].kayitNo === i.kayitNo) {
+              if (isletmeKarsilastirmaAnahtari(eskiKayitliYeniIsletmeler[ei]) === anahtar) {
                 eskiKayitliYeniIsletmeler[ei] = i;
                 break;
               }
@@ -7031,8 +7062,9 @@ function excelYukle(file) {
         if (typeof firebase !== 'undefined' && mevcutKullanici) {
           var db2 = firebase.firestore();
           yeniIsletmeler.forEach(function(i) {
-            if (i.kayitNo && !eskiKayitlar[i.kayitNo]) {
-              db2.collection('extra_isletmeler').doc(i.kayitNo).set(i).catch(function(e){ console.warn('extra kayıt hatası:', e); });
+            var anahtar = isletmeKarsilastirmaAnahtari(i);
+            if (anahtar && !eskiKayitlar[anahtar]) {
+              db2.collection('extra_isletmeler').doc(isletmeDocId(i)).set(i).catch(function(e){ console.warn('extra kayıt hatası:', e); });
             }
           });
         }
@@ -7043,7 +7075,7 @@ function excelYukle(file) {
       // URETIM_YERLERI güncelle - GGBS tarihi her zaman kullan
       var uretimGunc = 0;
       URETIM_YERLERI.forEach(function(u) {
-        var yeni = yeniKayitlar[u.kayitNo];
+        var yeni = yeniKayitlar[isletmeKarsilastirmaAnahtari(u)];
         if (yeni) {
           if (yeni.riskeDayaliDenetimTarihi) {
             if (u.riskeDayaliDenetimTarihi !== yeni.riskeDayaliDenetimTarihi) uretimGunc++;
@@ -7059,7 +7091,7 @@ function excelYukle(file) {
       // KOY_ISLETMELERI güncelle
       Object.keys(KOY_ISLETMELERI).forEach(function(k) {
         KOY_ISLETMELERI[k].forEach(function(u) {
-          var yeni = yeniKayitlar[u.kayitNo];
+          var yeni = yeniKayitlar[isletmeKarsilastirmaAnahtari(u)];
           if (yeni) {
             if (yeni.riskeDayaliDenetimTarihi) {
               u.riskeDayaliDenetimTarihi = yeni.riskeDayaliDenetimTarihi;
@@ -7129,7 +7161,8 @@ function excelYukle(file) {
 
       // Sorumluluğa giren yeni işletmeleri bildir (kategori bilgisiyle)
       var yeniSorumlu = birlesikIsletmeler.filter(function(i) {
-        return !eskiKayitlar[i.kayitNo] && isletmeSorumluMu(i);
+        var anahtar = isletmeKarsilastirmaAnahtari(i);
+        return anahtar && !eskiKayitlar[anahtar] && isletmeSorumluMu(i);
       });
       if (yeniSorumlu.length > 0) {
         var uyariDiv = document.createElement('div');
@@ -7524,14 +7557,18 @@ function ggbsRiskTarihleriniYukle() {
       return firebase.firestore().collection('extra_isletmeler').get().then(function(snapshot) {
         if (snapshot.empty) return false;
         var mevcutKayitlar = {};
-        ISLETMELER.forEach(function(i) { if (i.kayitNo) mevcutKayitlar[i.kayitNo] = true; });
+        ISLETMELER.forEach(function(i) {
+          var anahtar = isletmeKarsilastirmaAnahtari(i);
+          if (anahtar) mevcutKayitlar[anahtar] = true;
+        });
         snapshot.forEach(function(doc) {
           var i = doc.data();
-          if (i.kayitNo && !mevcutKayitlar[i.kayitNo]) {
+          var anahtar = isletmeKarsilastirmaAnahtari(i);
+          if (anahtar && !mevcutKayitlar[anahtar]) {
             ISLETMELER.push(i);
-            mevcutKayitlar[i.kayitNo] = true;
-          } else if (i.kayitNo && mevcutKayitlar[i.kayitNo]) {
-            var idx = ISLETMELER.findIndex(function(x){ return x.kayitNo === i.kayitNo; });
+            mevcutKayitlar[anahtar] = true;
+          } else if (anahtar && mevcutKayitlar[anahtar]) {
+            var idx = ISLETMELER.findIndex(function(x){ return isletmeKarsilastirmaAnahtari(x) === anahtar; });
             if (idx >= 0) ISLETMELER[idx] = Object.assign({}, ISLETMELER[idx], i);
           }
         });
