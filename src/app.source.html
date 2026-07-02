@@ -1011,6 +1011,31 @@ function manuelKonumTohumUygula(liste) {
   });
 }
 
+function isletmelerYerelYeniBirlesir(liste) {
+  if (!Array.isArray(liste)) return false;
+  var eklendi = false;
+  try {
+    var kayitliYeniIsletmeler = JSON.parse(localStorage.getItem('yeni_isletmeler') || '[]');
+    if (!Array.isArray(kayitliYeniIsletmeler) || !kayitliYeniIsletmeler.length) return false;
+    var mevcutKayitlar = {};
+    liste.forEach(function(i) {
+      var anahtar = (typeof isletmeKarsilastirmaAnahtari === 'function') ? isletmeKarsilastirmaAnahtari(i) : ((i && i.kayitNo) || '');
+      if (anahtar) mevcutKayitlar[anahtar] = true;
+    });
+    kayitliYeniIsletmeler.forEach(function(i) {
+      if (!i || !i.isletmeAdi) return;
+      var temiz = (typeof isletmeNormalize === 'function') ? isletmeNormalize(i) : i;
+      var anahtar = (typeof isletmeKarsilastirmaAnahtari === 'function') ? isletmeKarsilastirmaAnahtari(temiz) : (temiz.kayitNo || '');
+      if (anahtar && !mevcutKayitlar[anahtar]) {
+        liste.push(temiz);
+        mevcutKayitlar[anahtar] = true;
+        eklendi = true;
+      }
+    });
+  } catch(e) { console.warn('Yerel yeni işletmeler birleştirilemedi:', e); }
+  return eklendi;
+}
+
 function isletmelerCacheYukle() {
   try {
     var raw = localStorage.getItem(ISLETME_CACHE_KEY) || '';
@@ -1018,6 +1043,7 @@ function isletmelerCacheYukle() {
     var liste = JSON.parse(raw);
     if (!Array.isArray(liste) || liste.length < 10) return false;
     manuelKonumTohumUygula(liste);
+    var yerelYeniEklendi = isletmelerYerelYeniBirlesir(liste);
     ISLETMELER.length = 0;
     liste.forEach(function(i){ if (i && i.isletmeAdi) ISLETMELER.push(i); });
     if (typeof URETIM_YERLERI !== 'undefined') {
@@ -1026,6 +1052,7 @@ function isletmelerCacheYukle() {
     }
     try { if (typeof vergiLookupUygula === 'function') vergiLookupUygula(ISLETMELER); } catch(e) {}
     try { if (typeof vergiLookupUygula === 'function' && typeof URETIM_YERLERI !== 'undefined') vergiLookupUygula(URETIM_YERLERI); } catch(e) {}
+    if (yerelYeniEklendi) isletmelerCacheKaydet(ISLETMELER);
     return ISLETMELER.length > 0;
   } catch(e) { console.warn('İşletme önbelleği okunamadı:', e); return false; }
 }
@@ -6433,6 +6460,7 @@ function isletmelerBellegeUygula(liste, kaynak) {
 
   ISLETMELER.length = 0;
   temiz.forEach(function(i){ ISLETMELER.push(i); });
+  isletmelerYerelYeniBirlesir(ISLETMELER);
   // Hızlandırılmış sürümde üretim verisi HTML'den gelmediği için, üretim sekmesi/risk listesi
   // aynı master listeden kategori filtresiyle çalışır.
   if (typeof URETIM_YERLERI !== 'undefined') {
