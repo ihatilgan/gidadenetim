@@ -7072,7 +7072,7 @@ function excelYukle(file) {
         // Yeni gelenleri ekle (eskide hiç olmayan kayıt numaraları)
         yeniIsletmeler.forEach(function(i) {
           var anahtar = isletmeKarsilastirmaAnahtari(i);
-          if (anahtar && !eskiKayitlar[anahtar] && !eskiKayitliMap[anahtar]) {
+          if (anahtar && (!eskiKayitlar[anahtar] || !i.kayitNo) && !eskiKayitliMap[anahtar]) {
             eskiKayitliYeniIsletmeler.push(i);
             eskiKayitliMap[anahtar] = true;
           } else if (anahtar && eskiKayitliMap[anahtar]) {
@@ -7091,7 +7091,7 @@ function excelYukle(file) {
           var db2 = firebase.firestore();
           yeniIsletmeler.forEach(function(i) {
             var anahtar = isletmeKarsilastirmaAnahtari(i);
-            if (anahtar && !eskiKayitlar[anahtar]) {
+            if (anahtar && (!eskiKayitlar[anahtar] || !i.kayitNo)) {
               db2.collection('extra_isletmeler').doc(isletmeDocId(i)).set(i).catch(function(e){ console.warn('extra kayıt hatası:', e); });
             }
           });
@@ -7578,10 +7578,7 @@ function ggbsRiskTarihleriniYukle() {
       localStorage.setItem('orijinalRiskTarihleri', JSON.stringify(orijinalRiskTarihleri));
     }).catch(function(e) { console.warn('ggbs_kayitlar yükleme hatası:', e); });
 
-    // Ana işletme listesini Firestore'daki isletmeler_master koleksiyonundan yükle.
-    // Geriye uyumluluk için isletmeler_master boşsa eski extra_isletmeler de okunur.
-    var p2 = isletmelerMasterFirestoreCek().then(function(ok) {
-      if (ok) return true;
+    function extraIsletmeleriBirlesir() {
       return firebase.firestore().collection('extra_isletmeler').get().then(function(snapshot) {
         if (snapshot.empty) return false;
         var mevcutKayitlar = {};
@@ -7589,19 +7586,41 @@ function ggbsRiskTarihleriniYukle() {
           var anahtar = isletmeKarsilastirmaAnahtari(i);
           if (anahtar) mevcutKayitlar[anahtar] = true;
         });
+        var degisti = false;
         snapshot.forEach(function(doc) {
-          var i = doc.data();
+          var i = isletmeNormalize(doc.data() || {});
           var anahtar = isletmeKarsilastirmaAnahtari(i);
-          if (anahtar && !mevcutKayitlar[anahtar]) {
+          if (!anahtar || !i.isletmeAdi) return;
+          if (!mevcutKayitlar[anahtar]) {
             ISLETMELER.push(i);
             mevcutKayitlar[anahtar] = true;
-          } else if (anahtar && mevcutKayitlar[anahtar]) {
+            degisti = true;
+          } else {
             var idx = ISLETMELER.findIndex(function(x){ return isletmeKarsilastirmaAnahtari(x) === anahtar; });
-            if (idx >= 0) ISLETMELER[idx] = Object.assign({}, ISLETMELER[idx], i);
+            if (idx >= 0) {
+              ISLETMELER[idx] = Object.assign({}, ISLETMELER[idx], i);
+              degisti = true;
+            }
           }
         });
+        if (degisti) {
+          if (typeof URETIM_YERLERI !== 'undefined') {
+            URETIM_YERLERI.length = 0;
+            ISLETMELER.forEach(function(i){ URETIM_YERLERI.push(i); });
+          }
+          try { if (typeof koyIsletmeleriDoldur === 'function') koyIsletmeleriDoldur(); } catch(e) {}
+          try { if (typeof isletmelerCacheKaydet === 'function') isletmelerCacheKaydet(ISLETMELER); } catch(e) {}
+          try { if (typeof isletmeSorguSecenekleriDoldur === 'function') isletmeSorguSecenekleriDoldur(true); } catch(e) {}
+          try { if (typeof isletmeListesiGuncelle === 'function' && document.getElementById('sayfa-isletmeler') && document.getElementById('sayfa-isletmeler').classList.contains('aktif')) isletmeListesiGuncelle(); } catch(e) {}
+        }
         return true;
       });
+    }
+
+    // Ana işletme listesini Firestore'daki isletmeler_master koleksiyonundan yükle.
+    // Geriye uyumluluk ve kayıt no boş kayıtlar için extra_isletmeler her zaman birleştirilir.
+    var p2 = isletmelerMasterFirestoreCek().then(function(ok) {
+      return extraIsletmeleriBirlesir().then(function(extraOk){ return ok || extraOk; });
     }).catch(function(e) { console.warn('işletme master/extra yükleme hatası:', e); return false; });
 
     // p2 (isletmeler master) önce, p1 (ggbs tarihleri) sonra
