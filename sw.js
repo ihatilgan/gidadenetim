@@ -1,5 +1,5 @@
 // Gıda Denetim - Service Worker
-const CACHE_ADI = 'gida-denetim-v147';
+const CACHE_ADI = 'gida-denetim-v148';
 
 const STATIK_KAYNAKLAR = [
   'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js',
@@ -54,7 +54,13 @@ self.addEventListener('fetch', function(e) {
   if (e.request.mode === 'navigate') {
     e.respondWith(
       caches.open(CACHE_ADI).then(function(cache) {
-        return cache.match(e.request).then(function(cached) {
+        // index.html her açılışta app.html'e ?v=zamandamgası ile yönlendirir.
+        // Sorgu dizesi anahtara dahil edilirse önbellek hiç isabet etmez: SWR
+        // devreye girmez, "yeni sürüm" bildirimi hiç çıkmaz ve her zaman
+        // damgası önbellekte ayrı bir kopya olarak birikirdi. Bu yüzden hem
+        // eşleştirme hem yazma sorgusuz URL anahtarıyla yapılır.
+        var anahtar = e.request.url.split('?')[0];
+        return cache.match(anahtar).then(function(cached) {
           var agdan = fetch(e.request).then(function(response) {
             if (response && response.status === 200 && response.type !== 'opaque') {
               if (cached) {
@@ -64,7 +70,7 @@ self.addEventListener('fetch', function(e) {
                 var cacheKlon = response.clone();  // önbelleğe yazmak için
                 Promise.all([cached.clone().text(), karsKlon.text()]).then(function(metinler) {
                   if (metinler[0] !== metinler[1]) {
-                    cache.put(e.request, cacheKlon);
+                    cache.put(anahtar, cacheKlon);
                     self.clients.matchAll({ type: 'window' }).then(function(clients) {
                       clients.forEach(function(client) {
                         client.postMessage({ tip: 'yeni-surum-hazir' });
@@ -73,12 +79,15 @@ self.addEventListener('fetch', function(e) {
                   }
                 }).catch(function() {});
               } else {
-                cache.put(e.request, response.clone());
+                cache.put(anahtar, response.clone());
               }
             }
             return response;
           }).catch(function() {
-            return cached || cache.match('index.html') || cache.match('gida-denetim.html');
+            if (cached) return cached;
+            return cache.match('index.html').then(function(idx) {
+              return idx || cache.match('gida-denetim.html');
+            });
           });
           return cached || agdan;
         });

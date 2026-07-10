@@ -10,7 +10,7 @@ function kullaniciAyarlariAc(){
   var ekip=(typeof aktifEkip==='function')?aktifEkip():null;
   var ad=(typeof mevcutKullaniciAdi!=='undefined'?mevcutKullaniciAdi:'');
   var email=(typeof mevcutKullanici!=='undefined'&&mevcutKullanici?mevcutKullanici.email:'');
-  var appSurum='v147';
+  var appSurum='v148';
   try { appSurum = localStorage.getItem('app_surum') || appSurum; } catch(e) {}
   var box=document.createElement('div');
   box.style.cssText='background:#fff;border-radius:14px;padding:20px;max-width:340px;width:100%;';
