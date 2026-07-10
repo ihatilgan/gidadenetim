@@ -2186,10 +2186,10 @@ DEVRE_DISI_BITIS */
         <summary style="cursor:pointer;font-weight:700;font-size:15px;">⚙️ Ortak Bilgiler <span style="font-size:12px;font-weight:400;color:var(--gri);">(3 form için tek sefer doldurun — Yıl/Ay/izinler hepsinde aynı kullanılır)</span></summary>
         <div style="margin-top:12px;">
           <div class="form-grid" style="margin-bottom:12px;">
-            <div class="alan"><label>Yıl</label><input type="number" id="ortak-yil" min="2020" max="2099" step="1"></div>
+            <div class="alan"><label>Yıl</label><input type="number" id="ortak-yil" min="2020" max="2099" step="1" onchange="if(typeof izinGunButonlariYenile==='function')izinGunButonlariYenile()"></div>
             <div class="alan">
               <label>Ay</label>
-              <select id="ortak-ay">
+              <select id="ortak-ay" onchange="if(typeof izinGunButonlariYenile==='function')izinGunButonlariYenile()">
                 <option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option>
                 <option value="4">Nisan</option><option value="5">Mayıs</option><option value="6">Haziran</option>
                 <option value="7">Temmuz</option><option value="8">Ağustos</option><option value="9">Eylül</option>
@@ -2209,13 +2209,11 @@ DEVRE_DISI_BITIS */
             <label class="kontrol-item" style="font-size:13px;"><input type="checkbox" class="ortak-ktur" value="İşletme Kayıt Belgesi"> İşletme Kayıt Belgesi</label>
             <label class="kontrol-item" style="font-size:13px;"><input type="checkbox" class="ortak-ktur" value="İhracat Denetimi"> İhracat Denetimi</label>
           </div>
+          <div style="font-size:13px;font-weight:600;color:var(--gri-koyu);margin-bottom:6px;">İzin / rapor günleri (takvimden ayrı ayrı gün işaretleyin, art arda olması gerekmez):</div>
           <div class="form-grid" style="margin-bottom:10px;">
-            <div class="alan"><label>Sağlık Raporu Başlangıç</label><input type="date" id="ortak-rapor-bas"></div>
-            <div class="alan"><label>Sağlık Raporu Bitiş</label><input type="date" id="ortak-rapor-bit"></div>
-            <div class="alan"><label>Yıllık İzin Başlangıç</label><input type="date" id="ortak-izin-bas"></div>
-            <div class="alan"><label>Yıllık İzin Bitiş</label><input type="date" id="ortak-izin-bit"></div>
-            <div class="alan"><label>İdari İzin Başlangıç</label><input type="date" id="ortak-idari-bas"></div>
-            <div class="alan"><label>İdari İzin Bitiş</label><input type="date" id="ortak-idari-bit"></div>
+            <div class="alan"><label>Sağlık Raporlu Günler</label><button type="button" id="ortak-gun-rapor-btn" class="btn btn-gri" style="width:100%;text-align:left;" onclick="izinTakvimAc('rapor')">📅 Gün seç...</button></div>
+            <div class="alan"><label>Yıllık İzin Günleri</label><button type="button" id="ortak-gun-izin-btn" class="btn btn-gri" style="width:100%;text-align:left;" onclick="izinTakvimAc('izin')">📅 Gün seç...</button></div>
+            <div class="alan"><label>İdari İzin Günleri</label><button type="button" id="ortak-gun-idari-btn" class="btn btn-gri" style="width:100%;text-align:left;" onclick="izinTakvimAc('idari')">📅 Gün seç...</button></div>
           </div>
           <label class="kontrol-item" id="ortak-sendika-wrap" style="font-size:13px;margin-bottom:2px;display:none;width:fit-content;"><input type="checkbox" id="ortak-sendika"> Pazartesi günleri Sendika İzni (yalnızca size özel)</label>
         </div>
@@ -9685,6 +9683,7 @@ function ortakVarsayilan(){
   if(_sw){ _sw.style.display=_adm?'inline-flex':'none'; }
   if(_sb && _adm && !_sb.dataset.init){ _sb.dataset.init='1'; _sb.checked=true; }
   var _sn=document.getElementById('ortak-sicil'); if(_sn && !_sn.value && _adm) _sn.value='2023-02348';
+  if(typeof izinGunButonlariYenile==='function') izinGunButonlariYenile();
 }
 
 function _raporKisiNorm(s){
@@ -9735,6 +9734,130 @@ function _raporDenetimPersoneleAitMi(d, personel){
 }
 function puantajVarsayilan(){ return ortakVarsayilan(); }
 
+// ---- İZİN / RAPOR GÜN SEÇİMİ ----
+// İzin ve rapor günleri ay içinde dağınık olabilir; başlangıç/bitiş aralığı
+// yerine takvimden tek tek gün işaretlenir. Seçimler ISO tarih ('YYYY-AA-GG')
+// dizileri olarak tutulur; rapor üreticileri gün bazında kontrol eder.
+var ortakIzinGunleri = { rapor: [], izin: [], idari: [] };
+var _IZIN_TAKVIM_BASLIK = { rapor: 'Sağlık Raporlu Günler', izin: 'Yıllık İzin Günleri', idari: 'İdari İzin Günleri' };
+
+function ortakIzinGunSecili(tip, iso) {
+  return (ortakIzinGunleri[tip] || []).indexOf(iso) >= 0;
+}
+
+function izinGunButonYenile(tip) {
+  var btn = document.getElementById('ortak-gun-' + tip + '-btn');
+  if (!btn) return;
+  var yil = parseInt((document.getElementById('ortak-yil') || {}).value, 10);
+  var ay = parseInt((document.getElementById('ortak-ay') || {}).value, 10);
+  var on = (yil && ay) ? yil + '-' + ('0' + ay).slice(-2) : '';
+  var arr = (ortakIzinGunleri[tip] || []).filter(function(iso) { return !on || iso.slice(0, 7) === on; }).sort();
+  if (!arr.length) {
+    btn.textContent = '📅 Gün seç...';
+    btn.style.fontWeight = '';
+    return;
+  }
+  btn.textContent = '📅 ' + arr.map(function(iso) { return parseInt(iso.slice(8, 10), 10); }).join(', ');
+  btn.style.fontWeight = '600';
+}
+
+function izinGunButonlariYenile() {
+  ['rapor', 'izin', 'idari'].forEach(izinGunButonYenile);
+}
+
+function izinTakvimAc(tip) {
+  ortakVarsayilan();
+  var yil = parseInt((document.getElementById('ortak-yil') || {}).value, 10);
+  var ay = parseInt((document.getElementById('ortak-ay') || {}).value, 10);
+  if (!yil || !ay) { bildirimGoster('Önce yıl ve ay seçin.', 'uyari'); return; }
+  var eski = document.getElementById('izin-takvim-ov');
+  if (eski) eski.remove();
+
+  var ov = document.createElement('div');
+  ov.id = 'izin-takvim-ov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:99998;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.addEventListener('click', function(e) { if (e.target === ov) kapat(); });
+
+  var kutu = document.createElement('div');
+  kutu.style.cssText = 'background:#fff;border-radius:14px;padding:16px;max-width:380px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,0.3);';
+  var ayAdlari = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  var baslik = document.createElement('div');
+  baslik.style.cssText = 'font-weight:700;font-size:15px;margin-bottom:2px;';
+  baslik.textContent = _IZIN_TAKVIM_BASLIK[tip] || 'Gün Seçimi';
+  var altBaslik = document.createElement('div');
+  altBaslik.style.cssText = 'font-size:13px;color:var(--gri);margin-bottom:12px;';
+  altBaslik.textContent = ayAdlari[ay - 1] + ' ' + yil + ' — günlere dokunarak işaretleyin';
+  kutu.appendChild(baslik);
+  kutu.appendChild(altBaslik);
+
+  var grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(7,1fr);gap:4px;';
+  kutu.appendChild(grid);
+
+  function ciz() {
+    grid.innerHTML = '';
+    ['Pt','Sa','Ça','Pe','Cu','Ct','Pz'].forEach(function(g, ix) {
+      var h = document.createElement('div');
+      h.style.cssText = 'text-align:center;font-size:11px;font-weight:700;color:' + (ix >= 5 ? '#c0392b' : 'var(--gri)') + ';padding:4px 0;';
+      h.textContent = g;
+      grid.appendChild(h);
+    });
+    var ilkGun = new Date(yil, ay - 1, 1);
+    var bosluk = (ilkGun.getDay() + 6) % 7; // Pazartesi başlangıçlı
+    for (var b = 0; b < bosluk; b++) grid.appendChild(document.createElement('div'));
+    var dt = new Date(yil, ay - 1, 1);
+    while (dt.getMonth() === ay - 1) {
+      (function(gun, wd) {
+        var iso = yil + '-' + ('0' + ay).slice(-2) + '-' + ('0' + gun).slice(-2);
+        var hucre = document.createElement('button');
+        hucre.type = 'button';
+        var secili = ortakIzinGunSecili(tip, iso);
+        hucre.style.cssText = 'height:40px;border-radius:8px;border:1px solid var(--sinir);cursor:pointer;font-size:14px;' +
+          (secili ? 'background:var(--yesil);color:#fff;font-weight:700;border-color:var(--yesil);'
+                  : 'background:#fff;color:' + ((wd === 0 || wd === 6) ? '#c0392b' : '#222') + ';');
+        hucre.textContent = gun;
+        hucre.onclick = function() {
+          var arr = ortakIzinGunleri[tip] = ortakIzinGunleri[tip] || [];
+          var ix = arr.indexOf(iso);
+          if (ix >= 0) arr.splice(ix, 1); else arr.push(iso);
+          ciz();
+          izinGunButonYenile(tip);
+        };
+        grid.appendChild(hucre);
+      })(dt.getDate(), dt.getDay());
+      dt.setDate(dt.getDate() + 1);
+    }
+  }
+  ciz();
+
+  var altBar = document.createElement('div');
+  altBar.style.cssText = 'display:flex;justify-content:space-between;gap:10px;margin-top:14px;';
+  var temizleBtn = document.createElement('button');
+  temizleBtn.type = 'button';
+  temizleBtn.className = 'btn btn-gri';
+  temizleBtn.textContent = 'Temizle';
+  temizleBtn.onclick = function() {
+    var on = yil + '-' + ('0' + ay).slice(-2);
+    ortakIzinGunleri[tip] = (ortakIzinGunleri[tip] || []).filter(function(iso) { return iso.slice(0, 7) !== on; });
+    ciz();
+    izinGunButonYenile(tip);
+  };
+  var tamamBtn = document.createElement('button');
+  tamamBtn.type = 'button';
+  tamamBtn.className = 'btn btn-yesil';
+  tamamBtn.textContent = 'Tamam';
+  function kapat() {
+    ov.remove();
+    izinGunButonYenile(tip);
+  }
+  tamamBtn.onclick = kapat;
+  altBar.appendChild(temizleBtn);
+  altBar.appendChild(tamamBtn);
+  kutu.appendChild(altBar);
+  ov.appendChild(kutu);
+  document.body.appendChild(ov);
+}
+
 // Seçilen ay için tüm günleri tipine göre doldur
 function _puantajVeri(){
   puantajVarsayilan();
@@ -9747,15 +9870,10 @@ function _puantajVeri(){
   var turler=[]; document.querySelectorAll('.ortak-ktur:checked').forEach(function(c){ turler.push(c.value); });
   var kontrolTuruDenetim = turler.length ? turler.join(' / ') : 'Riske Dayalı Denetim';
 
-  // İzin / rapor tarih aralıkları + Sendika İzni (yalnızca admin)
-  function _gd(id){ var e=document.getElementById(id); return (e&&e.value)?e.value:''; }
-  var raporBas=_gd('ortak-rapor-bas'), raporBit=_gd('ortak-rapor-bit');
-  var izinBas=_gd('ortak-izin-bas'), izinBit=_gd('ortak-izin-bit');
-  var idariBas=_gd('ortak-idari-bas'), idariBit=_gd('ortak-idari-bit');
+  // İzin / rapor günleri (takvimden seçilen) + Sendika İzni (yalnızca admin)
   var sendikaEl=document.getElementById('ortak-sendika');
   var adminMi=(typeof isAdmin!=='undefined' && isAdmin);
   var sendikaAktif = adminMi && sendikaEl && sendikaEl.checked;
-  function _araliktaMi(iso, bas, bit){ if(!bas && !bit) return false; var b=bas||bit, s=bit||bas; if(b>s){ var t=b; b=s; s=t; } return iso>=b && iso<=s; }
 
   // HER DENETÇİ KENDİ PUANTAJINI ALIR: personel adı denetçiler listesinde geçen
   // VEYA (kendi puantajıysa) kullanıcının oluşturduğu denetimler alınır.
@@ -9779,9 +9897,9 @@ function _puantajVeri(){
     var s={tarih:trh, kontrolTuru:'', mevzuat:'', aciklama:'', saat:'', kirmizi:false};
     if(wd===0||wd===6){ s.kontrolTuru='Haftasonu'; s.kirmizi=true; }
     else if(tatilAdi){ s.kontrolTuru='Resmi Tatil'; s.kirmizi=true; }
-    else if(_araliktaMi(iso, raporBas, raporBit)){ s.kontrolTuru='Rapor'; }
-    else if(_araliktaMi(iso, izinBas, izinBit)){ s.kontrolTuru='Yıllık İzin'; }
-    else if(_araliktaMi(iso, idariBas, idariBit)){ s.kontrolTuru='İdari İzin'; }
+    else if(ortakIzinGunSecili('rapor', iso)){ s.kontrolTuru='Rapor'; }
+    else if(ortakIzinGunSecili('izin', iso)){ s.kontrolTuru='Yıllık İzin'; }
+    else if(ortakIzinGunSecili('idari', iso)){ s.kontrolTuru='İdari İzin'; }
     else if(sendikaAktif && wd===1){ s.kontrolTuru='Sendika İzni'; }
     else if(gunMap[iso] && gunMap[iso].length){
       s.kontrolTuru=kontrolTuruDenetim;
@@ -9977,14 +10095,9 @@ function _cetvelVeri(){
   var unvan=(document.getElementById('ortak-unvan').value||'').trim();
   var sicil=(document.getElementById('ortak-sicil').value||'').trim();
 
-  function _gd(id){ var e=document.getElementById(id); return (e&&e.value)?e.value:''; }
-  var raporBas=_gd('ortak-rapor-bas'), raporBit=_gd('ortak-rapor-bit');
-  var izinBas=_gd('ortak-izin-bas'), izinBit=_gd('ortak-izin-bit');
-  var idariBas=_gd('ortak-idari-bas'), idariBit=_gd('ortak-idari-bit');
   var sendEl=document.getElementById('ortak-sendika');
   var adminMi=(typeof isAdmin!=='undefined' && isAdmin);
   var sendikaAktif=adminMi && sendEl && sendEl.checked;
-  function _araliktaMi(iso,bas,bit){ if(!bas && !bit) return false; var b=bas||bit, s=bit||bas; if(b>s){ var t=b; b=s; s=t; } return iso>=b && iso<=s; }
 
   var ayStr=yil+'-'+('0'+ay).slice(-2);
 
@@ -10009,9 +10122,9 @@ function _cetvelVeri(){
     var row={sno:'', tarih:trh, gun:'', yer:'', ozet:'', kirmizi:false};
     if(wd===0||wd===6){ row.ozet='Haftasonu'; row.kirmizi=true; }
     else if(tatilAdi){ row.ozet='Resmi Tatil'; row.kirmizi=true; }
-    else if(_araliktaMi(iso,raporBas,raporBit)){ row.ozet='Rapor'; }
-    else if(_araliktaMi(iso,izinBas,izinBit)){ row.ozet='Yıllık İzin'; }
-    else if(_araliktaMi(iso,idariBas,idariBit)){ row.ozet='İdari İzin'; }
+    else if(ortakIzinGunSecili('rapor', iso)){ row.ozet='Rapor'; }
+    else if(ortakIzinGunSecili('izin', iso)){ row.ozet='Yıllık İzin'; }
+    else if(ortakIzinGunSecili('idari', iso)){ row.ozet='İdari İzin'; }
     else if(sendikaAktif && wd===1){ row.ozet='Sendika İzni'; }
     else if(gunMap[iso] && gunMap[iso].isimler.length){
       sno++; toplamGun++; row.sno=sno; row.gun=_CETVEL_GUNLER[wd];
@@ -10194,14 +10307,9 @@ function _faaliyetVeri(){
   var gorev=(document.getElementById('ortak-gorev').value||'').trim();
   var unvan=(document.getElementById('ortak-unvan').value||'').trim();
 
-  function _gd(id){ var e=document.getElementById(id); return (e&&e.value)?e.value:''; }
-  var raporBas=_gd('ortak-rapor-bas'), raporBit=_gd('ortak-rapor-bit');
-  var izinBas=_gd('ortak-izin-bas'), izinBit=_gd('ortak-izin-bit');
-  var idariBas=_gd('ortak-idari-bas'), idariBit=_gd('ortak-idari-bit');
   var sendEl=document.getElementById('ortak-sendika');
   var adminMi=(typeof isAdmin!=='undefined' && isAdmin);
   var sendikaAktif=adminMi && sendEl && sendEl.checked;
-  function _araliktaMi(iso,bas,bit){ if(!bas && !bit) return false; var b=bas||bit, s=bit||bas; if(b>s){ var t=b; b=s; s=t; } return iso>=b && iso<=s; }
 
   var ayStr=yil+'-'+('0'+ay).slice(-2);
 
@@ -10224,9 +10332,9 @@ function _faaliyetVeri(){
     var row={tarih:trh, faaliyet:'', kirmizi:false};
     if(wd===0||wd===6){ dt.setDate(dt.getDate()+1); continue; }
     else if(tatilAdi){ row.faaliyet=tatilAdi; row.kirmizi=true; }
-    else if(_araliktaMi(iso,raporBas,raporBit)){ row.faaliyet='Hastalık Raporu'; }
-    else if(_araliktaMi(iso,izinBas,izinBit)){ row.faaliyet='Yıllık İzin'; }
-    else if(_araliktaMi(iso,idariBas,idariBit)){ row.faaliyet='İdari İzin'; }
+    else if(ortakIzinGunSecili('rapor', iso)){ row.faaliyet='Hastalık Raporu'; }
+    else if(ortakIzinGunSecili('izin', iso)){ row.faaliyet='Yıllık İzin'; }
+    else if(ortakIzinGunSecili('idari', iso)){ row.faaliyet='İdari İzin'; }
     else if(sendikaAktif && wd===1){ row.faaliyet='Sendika izni'; }
     else if(gunMap[iso] && gunMap[iso].length){
       row.faaliyet=gunMap[iso].join(', ')+' işletmelerinin içi ve çevresinde resmi kontrol gerçekleştirilmiştir.';
