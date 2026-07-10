@@ -1,5 +1,5 @@
 // Gıda Denetim - Service Worker
-const CACHE_ADI = 'gida-denetim-v150';
+const CACHE_ADI = 'gida-denetim-v151';
 
 const STATIK_KAYNAKLAR = [
   'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js',

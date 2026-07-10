@@ -9738,8 +9738,24 @@ function puantajVarsayilan(){ return ortakVarsayilan(); }
 // İzin ve rapor günleri ay içinde dağınık olabilir; başlangıç/bitiş aralığı
 // yerine takvimden tek tek gün işaretlenir. Seçimler ISO tarih ('YYYY-AA-GG')
 // dizileri olarak tutulur; rapor üreticileri gün bazında kontrol eder.
-var ortakIzinGunleri = { rapor: [], izin: [], idari: [] };
+// Seçimler cihazda saklanır (localStorage), sayfa yenilense de kaybolmaz.
+var ortakIzinGunleri = (function() {
+  var bos = { rapor: [], izin: [], idari: [] };
+  try {
+    var ham = JSON.parse(localStorage.getItem('ortak_izin_gunleri') || '{}');
+    ['rapor', 'izin', 'idari'].forEach(function(t) {
+      if (Object.prototype.toString.call(ham[t]) === '[object Array]') {
+        bos[t] = ham[t].filter(function(v) { return /^\d{4}-\d{2}-\d{2}$/.test(String(v)); });
+      }
+    });
+  } catch (e) {}
+  return bos;
+})();
 var _IZIN_TAKVIM_BASLIK = { rapor: 'Sağlık Raporlu Günler', izin: 'Yıllık İzin Günleri', idari: 'İdari İzin Günleri' };
+
+function _izinGunleriKaydet() {
+  try { localStorage.setItem('ortak_izin_gunleri', JSON.stringify(ortakIzinGunleri)); } catch (e) {}
+}
 
 function ortakIzinGunSecili(tip, iso) {
   return (ortakIzinGunleri[tip] || []).indexOf(iso) >= 0;
@@ -9820,6 +9836,7 @@ function izinTakvimAc(tip) {
           var arr = ortakIzinGunleri[tip] = ortakIzinGunleri[tip] || [];
           var ix = arr.indexOf(iso);
           if (ix >= 0) arr.splice(ix, 1); else arr.push(iso);
+          _izinGunleriKaydet();
           ciz();
           izinGunButonYenile(tip);
         };
@@ -9839,6 +9856,7 @@ function izinTakvimAc(tip) {
   temizleBtn.onclick = function() {
     var on = yil + '-' + ('0' + ay).slice(-2);
     ortakIzinGunleri[tip] = (ortakIzinGunleri[tip] || []).filter(function(iso) { return iso.slice(0, 7) !== on; });
+    _izinGunleriKaydet();
     ciz();
     izinGunButonYenile(tip);
   };
