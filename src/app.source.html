@@ -1926,7 +1926,7 @@ DEVRE_DISI_BITIS */
     <div class="kart">
       <div class="kart-baslik">🔍 İşletme Sorgulama</div>
       <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
-        <input type="text" id="isletme-filtre" placeholder="🔍 İşletme adı, kayıt no, ilçe, adres..." style="flex:1;min-width:200px;" oninput="isletmeListesiGuncelle()">
+        <input type="text" id="isletme-filtre" placeholder="🔍 İşletme adı, kayıt no, ilçe, adres..." style="flex:1;min-width:200px;" oninput="isletmeFiltreYazildi()">
         <!-- QR_DEVRE_DISI <button class="btn btn-gri" onclick="qrTara()" title="QR kod ile işletme ara" style="padding:9px 14px;font-size:18px;line-height:1;flex-shrink:0;">📷</button> QR_DEVRE_DISI -->
         <div class="coklu-filtre" style="position:relative;">
           <button type="button" id="isletme-ilce-btn" class="btn btn-gri" onclick="isletmeCokluPanelToggle('ilce')" style="min-width:130px;">Tüm İlçeler</button>
@@ -5673,12 +5673,20 @@ function sorumlulukFiltresiToggle() {
   isletmeListesiGuncelle();
 }
 
+// Tekilleştirme anahtarı (regex + tr büyütme) pahalı; nesne başına bir kez
+// hesaplanır. Nesne alanları değişirse liste yeniden yüklenirken nesneler de
+// yenilendiğinden önbellek kendiliğinden düşer.
+var _isletmeAnahtarCache = new WeakMap();
 function isletmeTumListeGetir() {
   var tumListe = [];
   var gorulen = {};
   function ekle(i) {
     if (!i || !i.isletmeAdi) return;
-    var key = (typeof isletmeKarsilastirmaAnahtari === 'function' ? isletmeKarsilastirmaAnahtari(i) : '') || i.kayitNo || i.isletmeAdi;
+    var key = (typeof i === 'object') ? _isletmeAnahtarCache.get(i) : undefined;
+    if (key === undefined) {
+      key = (typeof isletmeKarsilastirmaAnahtari === 'function' ? isletmeKarsilastirmaAnahtari(i) : '') || i.kayitNo || i.isletmeAdi;
+      if (typeof i === 'object') _isletmeAnahtarCache.set(i, key);
+    }
     if (gorulen[key]) return;
     gorulen[key] = true;
     tumListe.push(i);
@@ -5860,37 +5868,77 @@ function isletmeFaaliyetSecimUyuyorMu(i, secimler) {
   return false;
 }
 
+// Yer sırası hesabı pahalı (96 mahalle/köy kalıbının adreste taranması).
+// Sonuç işletme nesnesi başına önbelleğe alınır; aday listesi de master
+// diziler büyümedikçe yeniden kurulmaz. Master değişirse önbellek sıfırlanır.
+var _yerSirasiCache = new WeakMap();
+var _yerAdayCache = null;
+var _yerAdayImza = '';
+function _yerAdaylariGetir() {
+  var mah = (typeof MERKEZ_MAHALLE_MASTER !== 'undefined') ? MERKEZ_MAHALLE_MASTER : [];
+  var koy = (typeof KOY_MASTER !== 'undefined') ? KOY_MASTER : [];
+  var imza = mah.length + ':' + koy.length;
+  if (!_yerAdayCache || _yerAdayImza !== imza) {
+    _yerAdayCache = mah.map(function(x){ return {tip:'mahalle', ad:x}; })
+      .concat(koy.map(function(x){ return {tip:'koy', ad:x}; }));
+    _yerAdayImza = imza;
+    _yerSirasiCache = new WeakMap();
+  }
+  return _yerAdayCache;
+}
 function isletmeSorguYerSirasi(i) {
+  var nesneMi = i && typeof i === 'object';
+  var adaylar = _yerAdaylariGetir();
+  if (nesneMi) {
+    var hazir = _yerSirasiCache.get(i);
+    if (hazir !== undefined) return hazir;
+  }
   var adres = String((i && i.adres) || '');
   var ilce = String((i && i.ilce) || '');
-  var adaylar = [];
-  if (typeof MERKEZ_MAHALLE_MASTER !== 'undefined') adaylar = adaylar.concat(MERKEZ_MAHALLE_MASTER.map(function(x){ return {tip:'mahalle', ad:x}; }));
-  if (typeof KOY_MASTER !== 'undefined') adaylar = adaylar.concat(KOY_MASTER.map(function(x){ return {tip:'koy', ad:x}; }));
+  var sonuc = '';
   for (var a = 0; a < adaylar.length; a++) {
     var yer = adaylar[a];
-    if (yer.tip === 'mahalle' && typeof mahalleAdreseUyuyorMu === 'function' && mahalleAdreseUyuyorMu(adres, yer.ad)) return yer.ad;
-    if (yer.tip === 'koy' && typeof koyAdreseUyuyorMu === 'function' && koyAdreseUyuyorMu(adres + ' ' + ilce, yer.ad)) return yer.ad;
+    if (yer.tip === 'mahalle' && typeof mahalleAdreseUyuyorMu === 'function' && mahalleAdreseUyuyorMu(adres, yer.ad)) { sonuc = yer.ad; break; }
+    if (yer.tip === 'koy' && typeof koyAdreseUyuyorMu === 'function' && koyAdreseUyuyorMu(adres + ' ' + ilce, yer.ad)) { sonuc = yer.ad; break; }
   }
-  var m = adres.match(/([A-Za-zÇĞİÖŞÜçğıöşü\s]+)\s+Mah(?:\.|allesi)?/i);
-  if (m && m[1]) return m[1].trim();
-  return ilce || '';
+  if (!sonuc) {
+    var m = adres.match(/([A-Za-zÇĞİÖŞÜçğıöşü\s]+)\s+Mah(?:\.|allesi)?/i);
+    sonuc = (m && m[1]) ? m[1].trim() : (ilce || '');
+  }
+  if (nesneMi) _yerSirasiCache.set(i, sonuc);
+  return sonuc;
+}
+
+var _trSiralayici = (typeof Intl !== 'undefined' && Intl.Collator) ? new Intl.Collator('tr') : null;
+function _trKiyasla(a, b) {
+  return _trSiralayici ? _trSiralayici.compare(a, b) : String(a).localeCompare(String(b), 'tr');
 }
 
 function isletmeSorguSirala(liste) {
-  return (liste || []).slice().sort(function(a, b) {
-    var aMerkez = _normTR(a && a.ilce) === 'merkez' ? 0 : 1;
-    var bMerkez = _normTR(b && b.ilce) === 'merkez' ? 0 : 1;
-    if (aMerkez !== bMerkez) return aMerkez - bMerkez;
-    if (aMerkez === 0) {
-      var yer = isletmeSorguYerSirasi(a).localeCompare(isletmeSorguYerSirasi(b), 'tr');
+  // Sıralama anahtarları karşılaştırıcı içinde değil, öğe başına bir kez
+  // hesaplanır; büyük listelerde sorgu sayfasını donduran yer burasıydı.
+  var dekor = (liste || []).map(function(i) {
+    return {
+      i: i,
+      merkez: _normTR(i && i.ilce) === 'merkez' ? 0 : 1,
+      yer: isletmeSorguYerSirasi(i),
+      ilce: String((i && i.ilce) || ''),
+      ad: String((i && i.isletmeAdi) || '')
+    };
+  });
+  dekor.sort(function(a, b) {
+    if (a.merkez !== b.merkez) return a.merkez - b.merkez;
+    if (a.merkez === 0) {
+      var yer = _trKiyasla(a.yer, b.yer);
       if (yer) return yer;
     }
-    var ilceSirasi = String((a && a.ilce) || '').localeCompare(String((b && b.ilce) || ''), 'tr');
+    var ilceSirasi = _trKiyasla(a.ilce, b.ilce);
     if (ilceSirasi) return ilceSirasi;
-    var adresSirasi = isletmeSorguYerSirasi(a).localeCompare(isletmeSorguYerSirasi(b), 'tr');
+    var adresSirasi = _trKiyasla(a.yer, b.yer);
     if (adresSirasi) return adresSirasi;
-    return String((a && a.isletmeAdi) || '').localeCompare(String((b && b.isletmeAdi) || ''), 'tr');
+    return _trKiyasla(a.ad, b.ad);
   });
+  return dekor.map(function(d) { return d.i; });
 }
 
 function isletmeSorguTemizle() {
@@ -5902,7 +5950,38 @@ function isletmeSorguTemizle() {
 
 var sonIsletmeSorguSonuclari = [];
 
-function isletmeListesiGuncelle() {
+// Aranabilir metin (5 alanın normalize hali) işletme başına bir kez üretilir.
+// Alanlar U+0001 ile ayrılır ki arama terimi alan sınırını aşarak eşleşmesin.
+var _isletmeAramaCache = new WeakMap();
+function _isletmeAramaMetni(i) {
+  var nesneMi = i && typeof i === 'object';
+  if (nesneMi) {
+    var hazir = _isletmeAramaCache.get(i);
+    if (hazir !== undefined) return hazir;
+  }
+  var metin = _normTR(i.isletmeAdi || '') + '\u0001' +
+    _normTR(i.kayitNo || '') + '\u0001' +
+    _normTR(i.ilce || '') + '\u0001' +
+    _normTR(i.faaliyetAlani || '') + '\u0001' +
+    _normTR(i.adres || '');
+  if (nesneMi) _isletmeAramaCache.set(i, metin);
+  return metin;
+}
+
+// Arama kutusu debounce: her tuşta değil, yazma durunca (200 ms) filtrele.
+var _isletmeFiltreZamanlayici = null;
+function isletmeFiltreYazildi() {
+  if (_isletmeFiltreZamanlayici) clearTimeout(_isletmeFiltreZamanlayici);
+  _isletmeFiltreZamanlayici = setTimeout(function() {
+    _isletmeFiltreZamanlayici = null;
+    isletmeListesiGuncelle();
+  }, 200);
+}
+
+var isletmeSorguGorunurLimit = 100;
+
+function isletmeListesiGuncelle(limitKoru) {
+  if (!limitKoru) isletmeSorguGorunurLimit = 100;
   if (typeof isletmeSorguSecenekleriDoldur === 'function') {
     if (!isletmeSorguSecenekCache.ilce || !isletmeSorguSecenekCache.ilce.length) isletmeSorguSecenekleriDoldur(true);
   }
@@ -5917,11 +5996,7 @@ function isletmeListesiGuncelle() {
 
   var sonuclar = isletmeTumListeGetir();
   if (q) sonuclar = sonuclar.filter(function(i) {
-    return _normTR(i.isletmeAdi||'').indexOf(q) >= 0 ||
-      _normTR(i.kayitNo||'').indexOf(q) >= 0 ||
-      _normTR(i.ilce||'').indexOf(q) >= 0 ||
-      _normTR(i.faaliyetAlani||'').indexOf(q) >= 0 ||
-      _normTR(i.adres||'').indexOf(q) >= 0;
+    return _isletmeAramaMetni(i).indexOf(q) >= 0;
   });
   if (ilcelerSecili.length) sonuclar = sonuclar.filter(function(i) { return ilcelerSecili.indexOf(i.ilce || '') >= 0; });
   if (gruplarSecili.length) {
@@ -5946,9 +6021,16 @@ function isletmeListesiGuncelle() {
     return;
   }
 
-  var aktifFiltreSayisi = (q ? 1 : 0) + ilcelerSecili.length + gruplarSecili.length + altSecili.length + faaliyetSecili.length + (sorumlulukFiltreAktif ? 1 : 0);
-  var limitUygula = aktifFiltreSayisi <= 1;
-  var goster = limitUygula ? sonuclar.slice(0, 100) : sonuclar.slice();
+  // Kaç filtre olursa olsun ilk N satır çizilir; binlerce satırı tek seferde
+  // DOM'a basmak sayfayı donduruyordu. Devamı "Devamını göster" ile yüklenir.
+  // (PDF çıktısı etkilenmez: sonIsletmeSorguSonuclari tam listeyi tutar.)
+  var eskiKaydirma = limitKoru ? el.scrollTop : 0;
+  var goster = sonuclar.slice(0, isletmeSorguGorunurLimit);
+  var planliVar = {};
+  if (typeof planliDenetimler !== 'undefined') {
+    (planliDenetimler || []).forEach(function(p) { if (p && p.kayitNo) planliVar[p.kayitNo] = true; });
+  }
+  var parca = document.createDocumentFragment();
   goster.forEach(function(isletme) {
     var row = document.createElement('div');
     row.style.cssText = 'border-bottom:1px solid var(--sinir);padding:10px 4px;cursor:pointer;position:relative;padding-right:72px;';
@@ -5969,18 +6051,27 @@ function isletmeListesiGuncelle() {
     var _pBtn = document.createElement('button');
     _pBtn.style.cssText = 'position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:1px solid var(--sinir);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:12px;';
     _pBtn.title = 'Planladığım Denetimler listesine ekle';
-    _pBtn.textContent = (typeof planliDenetimler !== 'undefined' && planliDenetimler.some(function(p){return p.kayitNo===isletme.kayitNo;})) ? '✅' : '📅';
+    _pBtn.textContent = planliVar[isletme.kayitNo] ? '✅' : '📅';
     (function(i){ _pBtn.onclick = function(e){ e.stopPropagation(); if(typeof planliEkle==='function') planliEkle(i); }; })(isletme);
     row.appendChild(_pBtn);
-    el.appendChild(row);
+    parca.appendChild(row);
   });
+  el.appendChild(parca);
 
-  if (limitUygula && sonuclar.length > 100) {
+  if (sonuclar.length > goster.length) {
     var more = document.createElement('div');
-    more.style.cssText = 'text-align:center;padding:14px;color:var(--gri);font-size:13px;';
-    more.textContent = '... ve ' + (sonuclar.length-100).toLocaleString('tr-TR') + ' kayıt daha. Aramayı daraltın.';
+    more.style.cssText = 'text-align:center;padding:14px;';
+    var moreBtn = document.createElement('button');
+    moreBtn.className = 'btn btn-gri btn-kucuk';
+    moreBtn.textContent = 'Devamını göster (' + (sonuclar.length - goster.length).toLocaleString('tr-TR') + ' kayıt daha)';
+    moreBtn.onclick = function() {
+      isletmeSorguGorunurLimit += 200;
+      isletmeListesiGuncelle(true);
+    };
+    more.appendChild(moreBtn);
     el.appendChild(more);
   }
+  if (limitKoru && eskiKaydirma) el.scrollTop = eskiKaydirma;
 }
 
 function isletmeSorguFiltreOzetiHtml() {
