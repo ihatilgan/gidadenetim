@@ -6605,6 +6605,7 @@ function formKonumEkle() {
 var isletmelerMasterDinleyici = null;
 var isletmelerMasterYukleniyor = false;
 var isletmelerMasterSonVersion = localStorage.getItem('isletmeler_master_version') || '';
+var isletmelerMasterIlkCekildi = false;
 
 function isletmeDocId(i) {
   var raw = String((i && i.kayitNo) || '').trim();
@@ -7159,7 +7160,7 @@ var isletmelerMasterZorunlu = false;
 function isletmelerMasterFirestoreCek() {
   if (!mevcutKullanici || typeof firebase === 'undefined') return Promise.resolve(false);
   if (isletmelerMasterYukleniyor) return Promise.resolve(false);
-  if (ISLETMELER.length >= 10 && !isletmelerMasterZorunlu) return Promise.resolve(true);
+  if (ISLETMELER.length >= 10 && !isletmelerMasterZorunlu && isletmelerMasterIlkCekildi) return Promise.resolve(true);
   isletmelerMasterYukleniyor = true;
   return firebase.firestore().collection('isletmeler_master').get().then(function(snapshot) {
     if (snapshot.empty) return false;
@@ -7167,6 +7168,7 @@ function isletmelerMasterFirestoreCek() {
     snapshot.forEach(function(doc){ var d = doc.data() || {}; if (d.aktif !== false) liste.push(d); });
     var ok = isletmelerBellegeUygula(liste, 'Firestore isletmeler_master');
     if (ok) {
+      isletmelerMasterIlkCekildi = true;
       isletmelerGuncellemeTarihiKaydet();
       if (typeof riskBildirimYenile === 'function') setTimeout(riskBildirimYenile, 0);
     }
