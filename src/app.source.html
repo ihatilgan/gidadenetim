@@ -1044,6 +1044,7 @@ function isletmelerCacheYukle() {
     if (!Array.isArray(liste) || liste.length < 10) return false;
     manuelKonumTohumUygula(liste);
     var yerelYeniEklendi = isletmelerYerelYeniBirlesir(liste);
+    if (typeof isletmeKayitlariniTekillestir === 'function') liste = isletmeKayitlariniTekillestir(liste);
     ISLETMELER.length = 0;
     liste.forEach(function(i){ if (i && i.isletmeAdi) ISLETMELER.push(i); });
     if (typeof URETIM_YERLERI !== 'undefined') {
@@ -6671,6 +6672,47 @@ function yeniIsletmeBildirimleriniKaydet(liste, mevcutMap) {
   try { localStorage.setItem('excel_yeni_sorumlu_bildirilen_v1', JSON.stringify(Object.keys(map).slice(-1000))); } catch(e) {}
 }
 
+function isletmeTekilAnahtari(i) {
+  i = i || {};
+  var kn = String(i.kayitNo || i['(5996 Sayılı Kanun) Kayıt Numarası'] || '').trim();
+  if (kn) return 'KN:' + kn.toLocaleUpperCase('tr');
+  var ad = String(i.isletmeAdi || i['İşletme Adı'] || '').trim();
+  if (ad && typeof _normTR === 'function') return 'AD:' + _normTR(ad);
+  return isletmeKarsilastirmaAnahtari(i);
+}
+
+function isletmeKayitlariniTekillestir(liste) {
+  if (!Array.isArray(liste)) return [];
+  var map = {};
+  var sonuc = [];
+  liste.forEach(function(kayit) {
+    if (!kayit || !kayit.isletmeAdi) return;
+    var key = isletmeTekilAnahtari(kayit);
+    if (!key) { sonuc.push(kayit); return; }
+    if (!map[key]) {
+      map[key] = kayit;
+      sonuc.push(kayit);
+      return;
+    }
+    var eski = map[key];
+    var birlesik = Object.assign({}, eski);
+    Object.keys(kayit).forEach(function(alan) {
+      var deger = kayit[alan];
+      if (deger === '' || deger == null) return;
+      if (Array.isArray(deger) && !deger.length) return;
+      birlesik[alan] = deger;
+    });
+    if (!birlesik.koordinatlar && eski.koordinatlar) birlesik.koordinatlar = eski.koordinatlar;
+    if ((!birlesik.koordinatGecmisi || !birlesik.koordinatGecmisi.length) && Array.isArray(eski.koordinatGecmisi)) birlesik.koordinatGecmisi = eski.koordinatGecmisi;
+    if (!birlesik.telefon && eski.telefon) birlesik.telefon = eski.telefon;
+    if ((!birlesik.ekTelefonlar || !birlesik.ekTelefonlar.length) && Array.isArray(eski.ekTelefonlar)) birlesik.ekTelefonlar = eski.ekTelefonlar;
+    map[key] = birlesik;
+    var ix = sonuc.indexOf(eski);
+    if (ix >= 0) sonuc[ix] = birlesik;
+  });
+  return sonuc;
+}
+
 function isletmeNormalize(i) {
   i = i || {};
   function telefonListeNormalize(v) {
@@ -6723,7 +6765,7 @@ function isletmeNormalize(i) {
 
 function isletmelerBellegeUygula(liste, kaynak) {
   if (!Array.isArray(liste) || liste.length < 10) return false;
-  var temiz = liste.map(isletmeNormalize).filter(function(i){ return i.isletmeAdi; });
+  var temiz = isletmeKayitlariniTekillestir(liste.map(isletmeNormalize).filter(function(i){ return i.isletmeAdi; }));
   if (temiz.length < 10) return false;
   manuelKonumTohumUygula(temiz);
 
@@ -7037,7 +7079,7 @@ function isletmelerMasterFirestoreYukle(liste, durumEl) {
 
   var db = firebase.firestore();
   var version = new Date().toISOString();
-  var temiz = liste.map(isletmeNormalize).filter(function(i){ return i.isletmeAdi; });
+  var temiz = isletmeKayitlariniTekillestir(liste.map(isletmeNormalize).filter(function(i){ return i.isletmeAdi; }));
   var yeniMap = {};
   temiz.forEach(function(i){ i.aktif = true; i.updatedAtClient = version; yeniMap[isletmeDocId(i)] = i; });
   var toplam = temiz.length;
@@ -7270,6 +7312,7 @@ function excelYukle(file) {
           firmaTuru: String(row['Firma Türü'] || ''),
         };
       }).filter(function(i){ return i.isletmeAdi; });
+      yeniIsletmeler = isletmeKayitlariniTekillestir(yeniIsletmeler);
 
       if (yeniIsletmeler.length < 10) {
         durumEl.innerHTML = '<div class="ikaz ikaz-kirmizi"><span class="ikaz-ikon">❌</span><span>Dosya okunamadı veya yanlış format.</span></div>';
@@ -7279,14 +7322,14 @@ function excelYukle(file) {
       // Yeni liste indeksi - kayıt no yoksa Excel sıra/ad/adres/faaliyet yedek anahtarıyla hızlı erişim
       var yeniKayitlar = {};
       yeniIsletmeler.forEach(function(i){
-        var anahtar = isletmeKarsilastirmaAnahtari(i);
+        var anahtar = isletmeTekilAnahtari(i);
         if (anahtar) yeniKayitlar[anahtar] = i;
       });
 
       // İstatistikler
       var eskiKayitlar = {};
-      ISLETMELER.forEach(function(i){
-        var anahtar = isletmeKarsilastirmaAnahtari(i);
+      isletmeKayitlariniTekillestir(ISLETMELER).forEach(function(i){
+        var anahtar = isletmeTekilAnahtari(i);
         if (anahtar) eskiKayitlar[anahtar] = i;
       });
       var oncekiYeniBildirimler = oncekiYeniIsletmeBildirimMap();
@@ -7294,7 +7337,7 @@ function excelYukle(file) {
       var eklenenListe = [], tarihListe = [], silinenListe = [], degisenListe = [];
       Object.keys(eskiKayitlar).forEach(function(k){ if (!yeniKayitlar[k]) { silinen++; var _e=eskiKayitlar[k]; silinenListe.push({ad:(_e&&_e.isletmeAdi)||k, kayitNo:(_e&&_e.kayitNo)||''}); } });
       yeniIsletmeler.forEach(function(i) {
-        var _anahtar = isletmeKarsilastirmaAnahtari(i);
+        var _anahtar = isletmeTekilAnahtari(i);
         var eskiI = _anahtar ? eskiKayitlar[_anahtar] : null;
         if (!eskiI) { eklenen++; eklenenListe.push({ad:i.isletmeAdi||'', kayitNo:i.kayitNo||'', tarih:i.riskeDayaliDenetimTarihi||'', etiket:isletmeExcelRaporEtiketi(i)}); }
         else {
@@ -7310,7 +7353,7 @@ function excelYukle(file) {
 
       // ISLETMELER güncelle — konum hariç tüm alanlarda Excel/GGBS verisi esastır.
       var birlesikIsletmeler = yeniIsletmeler.map(function(i){
-        var _anahtar = isletmeKarsilastirmaAnahtari(i);
+        var _anahtar = isletmeTekilAnahtari(i);
         var eskiVeri = _anahtar ? eskiKayitlar[_anahtar] : null;
         if (eskiVeri) {
           var korunan = {};
@@ -7323,6 +7366,7 @@ function excelYukle(file) {
         }
         return i;
       });
+      birlesikIsletmeler = isletmeKayitlariniTekillestir(birlesikIsletmeler);
       ISLETMELER.length = 0;
       birlesikIsletmeler.forEach(function(i){ ISLETMELER.push(i); });
       isletmelerGuncellemeTarihiKaydet();
@@ -7343,19 +7387,19 @@ function excelYukle(file) {
         var eskiKayitliYeniIsletmeler = JSON.parse(localStorage.getItem('yeni_isletmeler') || '[]');
         var eskiKayitliMap = {};
         eskiKayitliYeniIsletmeler.forEach(function(i) {
-          var anahtar = isletmeKarsilastirmaAnahtari(i);
+          var anahtar = isletmeTekilAnahtari(i);
           if (anahtar) eskiKayitliMap[anahtar] = true;
         });
         // Yeni gelenleri ekle (eskide hiç olmayan kayıt numaraları)
         yeniIsletmeler.forEach(function(i) {
-          var anahtar = isletmeKarsilastirmaAnahtari(i);
+          var anahtar = isletmeTekilAnahtari(i);
           if (anahtar && (!eskiKayitlar[anahtar] || !i.kayitNo) && !eskiKayitliMap[anahtar]) {
             eskiKayitliYeniIsletmeler.push(i);
             eskiKayitliMap[anahtar] = true;
           } else if (anahtar && eskiKayitliMap[anahtar]) {
             // Var olanı güncelle
             for (var ei = 0; ei < eskiKayitliYeniIsletmeler.length; ei++) {
-              if (isletmeKarsilastirmaAnahtari(eskiKayitliYeniIsletmeler[ei]) === anahtar) {
+              if (isletmeTekilAnahtari(eskiKayitliYeniIsletmeler[ei]) === anahtar) {
                 eskiKayitliYeniIsletmeler[ei] = i;
                 break;
               }
@@ -7367,7 +7411,7 @@ function excelYukle(file) {
         if (typeof firebase !== 'undefined' && mevcutKullanici) {
           var db2 = firebase.firestore();
           yeniIsletmeler.forEach(function(i) {
-            var anahtar = isletmeKarsilastirmaAnahtari(i);
+            var anahtar = isletmeTekilAnahtari(i);
             if (anahtar && (!eskiKayitlar[anahtar] || !i.kayitNo)) {
               db2.collection('extra_isletmeler').doc(isletmeDocId(i)).set(i).catch(function(e){ console.warn('extra kayıt hatası:', e); });
             }
@@ -7380,7 +7424,7 @@ function excelYukle(file) {
       // URETIM_YERLERI güncelle - GGBS tarihi her zaman kullan
       var uretimGunc = 0;
       URETIM_YERLERI.forEach(function(u) {
-        var yeni = yeniKayitlar[isletmeKarsilastirmaAnahtari(u)];
+        var yeni = yeniKayitlar[isletmeTekilAnahtari(u)];
         if (yeni) {
           if (yeni.riskeDayaliDenetimTarihi) {
             if (u.riskeDayaliDenetimTarihi !== yeni.riskeDayaliDenetimTarihi) uretimGunc++;
@@ -7396,7 +7440,7 @@ function excelYukle(file) {
       // KOY_ISLETMELERI güncelle
       Object.keys(KOY_ISLETMELERI).forEach(function(k) {
         KOY_ISLETMELERI[k].forEach(function(u) {
-          var yeni = yeniKayitlar[isletmeKarsilastirmaAnahtari(u)];
+          var yeni = yeniKayitlar[isletmeTekilAnahtari(u)];
           if (yeni) {
             if (yeni.riskeDayaliDenetimTarihi) {
               u.riskeDayaliDenetimTarihi = yeni.riskeDayaliDenetimTarihi;
@@ -7466,7 +7510,7 @@ function excelYukle(file) {
 
       // Sorumluluğa giren yeni işletmeleri bildir (kategori bilgisiyle)
       var yeniSorumlu = birlesikIsletmeler.filter(function(i) {
-        var anahtar = isletmeKarsilastirmaAnahtari(i);
+        var anahtar = isletmeTekilAnahtari(i);
         var bildirimKey = isletmeYeniBildirimAnahtari(i);
         return anahtar && !eskiKayitlar[anahtar] && !oncekiYeniBildirimler[bildirimKey] && isletmeSorumluMu(i);
       });
@@ -7862,20 +7906,20 @@ function ggbsRiskTarihleriniYukle() {
         if (snapshot.empty) return false;
         var mevcutKayitlar = {};
         ISLETMELER.forEach(function(i) {
-          var anahtar = isletmeKarsilastirmaAnahtari(i);
+          var anahtar = isletmeTekilAnahtari(i);
           if (anahtar) mevcutKayitlar[anahtar] = true;
         });
         var degisti = false;
         snapshot.forEach(function(doc) {
           var i = isletmeNormalize(doc.data() || {});
-          var anahtar = isletmeKarsilastirmaAnahtari(i);
+          var anahtar = isletmeTekilAnahtari(i);
           if (!anahtar || !i.isletmeAdi) return;
           if (!mevcutKayitlar[anahtar]) {
             ISLETMELER.push(i);
             mevcutKayitlar[anahtar] = true;
             degisti = true;
           } else {
-            var idx = ISLETMELER.findIndex(function(x){ return isletmeKarsilastirmaAnahtari(x) === anahtar; });
+            var idx = ISLETMELER.findIndex(function(x){ return isletmeTekilAnahtari(x) === anahtar; });
             if (idx >= 0) {
               ISLETMELER[idx] = Object.assign({}, ISLETMELER[idx], i);
               degisti = true;
