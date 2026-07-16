@@ -5687,7 +5687,9 @@ function isletmeTumListeGetir() {
     if (!i || !i.isletmeAdi) return;
     var key = (typeof i === 'object') ? _isletmeAnahtarCache.get(i) : undefined;
     if (key === undefined) {
-      key = (typeof isletmeKarsilastirmaAnahtari === 'function' ? isletmeKarsilastirmaAnahtari(i) : '') || i.kayitNo || i.isletmeAdi;
+      key = (typeof isletmeTekilAnahtari === 'function' ? isletmeTekilAnahtari(i) : '') ||
+        (typeof isletmeKarsilastirmaAnahtari === 'function' ? isletmeKarsilastirmaAnahtari(i) : '') ||
+        i.kayitNo || i.isletmeAdi;
       if (typeof i === 'object') _isletmeAnahtarCache.set(i, key);
     }
     if (gorulen[key]) return;
@@ -6676,7 +6678,10 @@ function isletmeTekilAnahtari(i) {
   i = i || {};
   var kn = String(i.kayitNo || i['(5996 Sayılı Kanun) Kayıt Numarası'] || '').trim();
   if (kn) return 'KN:' + kn.toLocaleUpperCase('tr');
-  var ad = String(i.isletmeAdi || i['İşletme Adı'] || '').trim();
+  var ad = String(i.isletmeAdi || i['İşletme Adı'] || '').trim()
+    .replace(/\s*[-–—]\s*\d{10,11}\s*$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
   if (ad && typeof _normTR === 'function') return 'AD:' + _normTR(ad);
   return isletmeKarsilastirmaAnahtari(i);
 }
