@@ -9964,19 +9964,22 @@ function _puantajVeri(){
     var iso=yil+'-'+aa+'-'+gun, trh=gun+'.'+aa+'.'+yil, wd=dt.getDay();
     var tatilAdi=_puantajTatilAdi(dt);
     var s={tarih:trh, kontrolTuru:'', mevzuat:'', aciklama:'', saat:'', kirmizi:false};
-    if(wd===0||wd===6){ s.kontrolTuru='Haftasonu'; s.kirmizi=true; }
-    else if(tatilAdi){ s.kontrolTuru='Resmi Tatil'; s.kirmizi=true; }
-    else if(ortakIzinGunSecili('rapor', iso)){ s.kontrolTuru='Rapor'; }
-    else if(ortakIzinGunSecili('izin', iso)){ s.kontrolTuru='Yıllık İzin'; }
-    else if(ortakIzinGunSecili('idari', iso)){ s.kontrolTuru='İdari İzin'; }
-    else if(sendikaAktif && wd===1){ s.kontrolTuru='Sendika İzni'; }
-    else if(gunMap[iso] && gunMap[iso].length){
+    // Fiilen yapılan denetim, resmi tatil/hafta sonu etiketinden önceliklidir.
+    // Böylece tatil günündeki kayıt aylık formdan kaybolmaz.
+    if(gunMap[iso] && gunMap[iso].length){
       s.kontrolTuru=kontrolTuruDenetim;
       s.mevzuat='5996 Sayılı Kanun';
       s.aciklama=gunMap[iso].join(', ')+' İşletmelerinin içi ve çevresinde resmi kontrol gerçekleştirilmiştir.';
       s.saat='08:30 - 17:30';
       toplamGun++;
-    } else {
+    }
+    else if(wd===0||wd===6){ s.kontrolTuru='Haftasonu'; s.kirmizi=true; }
+    else if(tatilAdi){ s.kontrolTuru='Resmi Tatil'; s.kirmizi=true; }
+    else if(ortakIzinGunSecili('rapor', iso)){ s.kontrolTuru='Rapor'; }
+    else if(ortakIzinGunSecili('izin', iso)){ s.kontrolTuru='Yıllık İzin'; }
+    else if(ortakIzinGunSecili('idari', iso)){ s.kontrolTuru='İdari İzin'; }
+    else if(sendikaAktif && wd===1){ s.kontrolTuru='Sendika İzni'; }
+    else {
       s.kontrolTuru='Gözetim- İzleme';
       s.mevzuat='5996 Sayılı Kanun';
       s.aciklama='Değerlendirme, Planlama yazışmalar, GGBS Veri Girişi';
@@ -10189,17 +10192,18 @@ function _cetvelVeri(){
     var iso=yil+'-'+aa+'-'+gg, trh=gg+'.'+aa+'.'+yil, wd=dt.getDay();
     var tatilAdi=_puantajTatilAdi(dt);
     var row={sno:'', tarih:trh, gun:'', yer:'', ozet:'', kirmizi:false};
-    if(wd===0||wd===6){ row.ozet='Haftasonu'; row.kirmizi=true; }
+    // Kayıtlı denetimler tatil/hafta sonu bilgisinden önce değerlendirilir.
+    if(gunMap[iso] && gunMap[iso].isimler.length){
+      sno++; toplamGun++; row.sno=sno; row.gun=_CETVEL_GUNLER[wd];
+      row.yer=gunMap[iso].yerler.join(', ');
+      row.ozet=gunMap[iso].isimler.join(', ')+' işletmelerinin içi ve çevresinde resmi kontrol gerçekleştirilmiştir.';
+    }
+    else if(wd===0||wd===6){ row.ozet='Haftasonu'; row.kirmizi=true; }
     else if(tatilAdi){ row.ozet='Resmi Tatil'; row.kirmizi=true; }
     else if(ortakIzinGunSecili('rapor', iso)){ row.ozet='Rapor'; }
     else if(ortakIzinGunSecili('izin', iso)){ row.ozet='Yıllık İzin'; }
     else if(ortakIzinGunSecili('idari', iso)){ row.ozet='İdari İzin'; }
     else if(sendikaAktif && wd===1){ row.ozet='Sendika İzni'; }
-    else if(gunMap[iso] && gunMap[iso].isimler.length){
-      sno++; toplamGun++; row.sno=sno; row.gun=_CETVEL_GUNLER[wd];
-      row.yer=gunMap[iso].yerler.join(', ');
-      row.ozet=gunMap[iso].isimler.join(', ')+' işletmelerinin içi ve çevresinde resmi kontrol gerçekleştirilmiştir.';
-    }
     // diğer iş günleri tamamen boş bırakılır ve toplama sayılmaz
     satirlar.push(row);
     dt.setDate(dt.getDate()+1);
@@ -10399,15 +10403,17 @@ function _faaliyetVeri(){
     var iso=yil+'-'+aa+'-'+gg, trh=gg+'.'+aa+'.'+yil, wd=dt.getDay();
     var tatilAdi=_puantajTatilAdi(dt);
     var row={tarih:trh, faaliyet:'', kirmizi:false};
-    if(wd===0||wd===6){ dt.setDate(dt.getDate()+1); continue; }
+    // Tatil gününde denetim varsa faaliyet satırını atlama; gerçek kaydı göster.
+    if(gunMap[iso] && gunMap[iso].length){
+      row.faaliyet=gunMap[iso].join(', ')+' işletmelerinin içi ve çevresinde resmi kontrol gerçekleştirilmiştir.';
+    }
+    else if(wd===0||wd===6){ dt.setDate(dt.getDate()+1); continue; }
     else if(tatilAdi){ row.faaliyet=tatilAdi; row.kirmizi=true; }
     else if(ortakIzinGunSecili('rapor', iso)){ row.faaliyet='Hastalık Raporu'; }
     else if(ortakIzinGunSecili('izin', iso)){ row.faaliyet='Yıllık İzin'; }
     else if(ortakIzinGunSecili('idari', iso)){ row.faaliyet='İdari İzin'; }
     else if(sendikaAktif && wd===1){ row.faaliyet='Sendika izni'; }
-    else if(gunMap[iso] && gunMap[iso].length){
-      row.faaliyet=gunMap[iso].join(', ')+' işletmelerinin içi ve çevresinde resmi kontrol gerçekleştirilmiştir.';
-    } else {
+    else {
       row.faaliyet='İhracat Sağlık Sertifikası işlemleri yapıldı. GGBS veri giriş iş işlemleri yapıldı.';
     }
     satirlar.push(row);
